@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pluginApps>
+  <pluginApp applicationType="Custom" applicationWeight="200" entryButtonFocusID="32752" insertAfterFocusID="2270" insertStateID="20" text="Android Auto">
+    <comment/>
+    <entryButton action="2" id="1" model="3" imageModel="4" previewModel="13">
+      <properties/>
+    </entryButton>
+    <actions>
+      <raAction id="2"/>
+      <raAction id="21"/>
+      <raAction id="22"/>
+      <raAction id="24"/>
+      <hmiAction id="25" target="12"/>
+    </actions>
+    <models>
+      <textIdModel id="3" textId="1">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="37" textId="30">
+        <synonyms/>
+      </textIdModel>
+      <imageIdModel id="4" imageId="55001"/>
+      <imageIdModel id="12" imageId="55002"/>
+      <imageIdModel id="16" imageId="55003"/>
+      <raPreviewModel id="13" modelType="StatePreview" previewState="11"/>
+      <textIdModel id="31" textId="10">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="32" textId="11">
+        <synonyms/>
+      </textIdModel>
+      <raBoolModel id="34"/>
+      <textIdModel id="35" textId="15">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="36" textId="16">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="80" textId="20">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="81" textId="21">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="82" textId="22">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="83" textId="23">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="84" textId="24">
+        <synonyms/>
+      </textIdModel>
+      <raIntModel id="40" modelType="NativeStateID" value="1"/>
+    </models>
+    <events>
+      <focusEvent id="50" targetModel="40"/>
+      <focusEvent id="51" target="10"/>
+      <focusEvent id="52" target="13"/>
+    </events>
+    <hmiStates>
+      <hmiState id="10" text="Android Auto" textModel="3">
+        <components>
+          <button action="21" id="61" model="31" imageModel="4" text="Demarrer Android Auto"/>
+          <button action="22" id="62" model="32" text="Arreter Android Auto"/>
+          <separator id="66"/>
+          <checkbox action="24" id="64" model="34" text="Demarrage automatique" textModel="35"/>
+          <separator id="67"/>
+          <button action="25" id="65" model="36" text="Aide"/>
+        </components>
+      </hmiState>
+      <hmiState id="12" parentId="10" text="Aide" textModel="36">
+        <components>
+          <label id="90" model="80"/>
+          <label id="91" model="81"/>
+          <label id="92" model="82"/>
+          <label id="93" model="83"/>
+          <separator id="95"/>
+          <label id="94" model="84"/>
+        </components>
+      </hmiState>
+      <hmiState id="13" parentId="10" text=" " textModel="37">
+        <components>
+          <image id="71" model="16">
+            <properties>
+              <property id="2" value="false"/>
+              <property id="3" value="true"/>
+              <property id="9" value="549"/>
+              <property id="10" value="484"/>
+              <property id="20" value="0"/>
+              <property id="21" value="0"/>
+            </properties>
+          </image>
+        </components>
+      </hmiState>
+      <hmiState id="11" text="Android Auto" textModel="3">
+        <components>
+          <image id="70" model="12">
+            <properties>
+              <property id="3" value="true"/>
+              <property id="9" value="549"/>
+              <property id="10" value="484"/>
+              <property id="20" value="0"/>
+              <property id="21" value="0"/>
+            </properties>
+          </image>
+        </components>
+      </hmiState>
+    </hmiStates>
+  </pluginApp>
+</pluginApps>

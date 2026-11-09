@@ -1,0 +1,6 @@
+# Python packages for the checks and the tests: python3 -m pip install -r requirements-dev.txt
+# Also needed, outside pip: protoc (tests/test_gps_wire_oracle.py), qemu-arm and a copy of the car's system (ARM tests).
+clang-format==18.1.8  # tools/format_sources.py
+ruff==0.6.9  # tools/format_sources.py, ruff check .
+pyelftools>=0.29  # tools/verify_binary.py, tools/verify_wireless.py
+protobuf>=4.21  # tests/test_gps_wire_oracle.py

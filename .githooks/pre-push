@@ -1,0 +1,12 @@
+#!/bin/sh
+# Copyright (c) 2026 Jiraiya43
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Refuses a push if a commit being pushed holds the car's password, a compiled program or a local-only folder.
+# git gives the pushed refs on the standard input; verify_repo.py reads them from there.
+for python in python3 python py; do
+    if "$python" --version >/dev/null 2>&1; then
+        exec "$python" tools/verify_repo.py --pre-push
+    fi
+done
+echo "Python introuvable : envoi refuse." >&2
+exit 1

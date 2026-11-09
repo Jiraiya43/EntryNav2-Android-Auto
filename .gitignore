@@ -1,0 +1,58 @@
+# Everything stays local unless listed here: build outputs, car logs, copies of BMW files and personal notes never
+# reach git by accident. tools/verify_repo.py checks every pushed commit.
+/*
+!/.clang-format
+!/.editorconfig
+!/.gitattributes
+!/.githooks/
+!/.github/
+!/.gitignore
+!/CHANGELOG.md
+!/CODE_OF_CONDUCT.md
+!/CONTRIBUTING.md
+!/LICENSE.md
+!/Makefile
+!/README.md
+!/README.fr.md
+!/ROADMAP.md
+!/SECURITY.md
+!/VERSION
+!/core/
+!/docs/
+!/hmiapp/
+!/platform/
+!/pyproject.toml
+!/requirements-dev.txt
+!/tests/
+!/toolchain/
+!/tools/
+
+# Build outputs
+*.o
+*.d
+*.so
+__pycache__/
+/hmiapp/EntryAad_ALL_*.zip
+
+# tests/: sources and fixtures only, without the tests of the older kits
+/tests/*
+!/tests/*.c
+!/tests/*.cpp
+!/tests/*.hpp
+!/tests/*.py
+!/tests/fixtures/
+
+# tools/: what the build, the release and the checks use
+/tools/*
+!/tools/evo_capture.cpp
+!/tools/evo_check.cpp
+!/tools/evo_trial.cpp
+!/tools/format_sources.py
+!/tools/package_release.py
+!/tools/verify_binary.py
+!/tools/verify_core.py
+!/tools/verify_repo.py
+!/tools/verify_wireless.py
+
+# The build image is rebuilt from the Dockerfile; its wrapper is ours to keep
+/toolchain/test/

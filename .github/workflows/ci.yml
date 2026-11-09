@@ -1,0 +1,42 @@
+# Checks that need no copy of the car's system: style, repository content, PC tests.
+# The ARM build links against the car's libraries (BMW files), so it runs on a developer's machine, not here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Style, content and PC tests
+    runs-on: ubuntu-24.04
+    container: debian:12
+    timeout-minutes: 20
+    steps:
+      - name: Install the tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates dbus g++ gcc git libdbus-1-dev libssl-dev make \
+            pkg-config protobuf-compiler python3 python3-protobuf python3-venv shellcheck
+          python3 -m venv /opt/style
+          /opt/style/bin/pip install --quiet clang-format==18.1.8 ruff==0.6.9
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # verify_repo.py reads every commit
+      - name: Style
+        run: make style STYLE_TOOLS=/opt/style/bin RUFF=/opt/style/bin/ruff
+      - name: Content
+        run: |
+          git config --global --add safe.directory "$PWD"
+          make verify_core verify_repo
+      - name: PC tests
+        run: make test-host HOST_CXX=g++
+

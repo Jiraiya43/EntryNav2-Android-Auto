@@ -1,0 +1,24 @@
+# The pull request title becomes the commit message when it is squashed into main: it must follow Conventional Commits.
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  conventional-commits:
+    name: Conventional Commits title
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Check the title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|refactor|perf|test|docs|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?: [^ ].{0,70}$'
+          if ! printf '%s' "$TITLE" | grep -Eq "$pattern"; then
+            echo "::error::Titre attendu : « type(portée): description », 72 caractères au plus (voir CONTRIBUTING.md). Reçu : $TITLE"
+            exit 1
+          fi

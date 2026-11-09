@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest an idea or an improvement (requests in French are welcome too).
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [roadmap](https://github.com/Jiraiya43/entry-aad/blob/main/ROADMAP.md) and the open issues first.
+  - type: textarea
+    id: need
+    attributes:
+      label: What would you like, and why?
+      description: The situation in the car, what happens today, what you would expect.
+    validations:
+      required: true
+  - type: textarea
+    id: ideas
+    attributes:
+      label: Ideas on how to do it
+      description: Optional. Anything known about how iDrive or the phone behaves here.

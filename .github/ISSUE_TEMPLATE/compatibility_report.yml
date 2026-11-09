@@ -1,0 +1,36 @@
+name: Compatibility report
+description: Share the compatibility check of a car not listed yet. The check changes nothing on the car.
+labels: [compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Run the check described in [docs/INSTALLATION.md](https://github.com/Jiraiya43/entry-aad/blob/main/docs/INSTALLATION.md)
+        ("Contrôler la voiture"). Its output contains no VIN or position; please do not add them.
+  - type: input
+    id: car
+    attributes:
+      label: Car
+      placeholder: G21 330i 2021
+    validations:
+      required: true
+  - type: input
+    id: software
+    attributes:
+      label: iDrive software (first line of /etc/version)
+      placeholder: "202111011321"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Output of the check
+      description: Every line printed by the check, as text.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: If you installed it, what works and what does not.

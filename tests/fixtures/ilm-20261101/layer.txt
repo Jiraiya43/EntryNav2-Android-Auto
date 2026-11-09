@@ -1,0 +1,13 @@
+layer 2147483648 (0x80000000)
+---------------------------------------
+- created by pid:       0
+- original size:        x=1280, y=480
+- destination region:   x=0, y=0, w=1280, h=480
+- source region:        x=0, y=0, w=1280, h=480
+- orientation:          0 (up is top)
+- opacity:              1
+- visibility:           1
+- type:                 0 (unknown)
+- chromakey:            disabled (r=0, g=0, b=0)
+- surface render order: 0(0x0), 
+- on screen:            0(0x0)

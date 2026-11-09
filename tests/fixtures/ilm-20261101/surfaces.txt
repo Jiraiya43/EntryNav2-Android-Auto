@@ -1,0 +1,7 @@
+6 Surface(s):
+- Surface 0 (0x0)
+- Surface 131072 (0x20000)
+- Surface 132710 (0x20666)
+- Surface 196608 (0x30000)
+- Surface 196609 (0x30001)
+- Surface 196610 (0x30002)

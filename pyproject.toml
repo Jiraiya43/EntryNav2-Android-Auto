@@ -1,0 +1,13 @@
+# Python style of the project (PEP 8). Apply with: python tools/format_sources.py; check with: ruff check .
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+extend-exclude = ["artifacts", "tests/fixtures"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, pyupgrade, bugbear, simplify. Long lines (E501) are errors past 120 columns.
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
