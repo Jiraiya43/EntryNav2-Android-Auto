@@ -52,7 +52,7 @@ public:
     void setNavStatusCallback(NavStatusCallback cb, void* user_data = nullptr);
     void setTouchForwarding(bool on) { inbox_.setTouchForwarding(on); }  // on by default; keys go either way
     // The file holding the car's model and year (SdrIdentity::loadVehicleFile), read at each service discovery; kept
-    // as given, so it must outlive the session. None by default: the reference car.
+    // as given, so it must outlive the session. None by default: the default model and year.
     void setVehicleFile(const char* path) { vehicleFile_ = path; }
     // The program's version, announced to the phone as the head unit's software version; kept as given. None by
     // default: "0.0.0".

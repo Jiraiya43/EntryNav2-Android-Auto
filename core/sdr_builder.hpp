@@ -16,9 +16,11 @@ namespace aa {
 struct SdrIdentity {
     std::string carMake, carModel, carYear, vehicleId;
     std::string huMake, huModel, swBuild, swVersion;
-    SdrIdentity();  // this car and head unit; swVersion "0.0.0" until the program gives its own
-    // Model and year of a car other than the reference one, written at installation ("model=320d xDrive",
-    // "year=2021", one per line). A missing file or an invalid line keeps the reference values. False if unreadable.
+    // A BMW "iDrive" of 2019 on an EntryNav2, swVersion "0.0.0": what is announced until the vehicle file and the
+    // program give their own.
+    SdrIdentity();
+    // The car's model and year, written at installation ("model=320d xDrive", "year=2021", one per line). A
+    // missing file or an invalid line keeps the default values. False if unreadable.
     bool loadVehicleFile(const char* path);
 };
 // Accepted model and year: 1 to 24 of A-Z a-z 0-9 space . _ -, and 1xxx or 2xxx.
@@ -46,7 +48,7 @@ using DiscoveryTrim = int (*)(std::vector<uint8_t>& sdr);
 void setDiscoveryTrim(DiscoveryTrim trim);
 
 // What the phone is told about this car: the template adapted by every step above. vehicleFile: the model
-// and year (SdrIdentity::loadVehicleFile), given by the platform; null keeps the reference car. softwareVersion: the
+// and year (SdrIdentity::loadVehicleFile), given by the platform; null keeps the default ones. softwareVersion: the
 // version of the program, announced as the head unit's software version; null keeps "0.0.0".
 std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile,
                                               const char* softwareVersion);
