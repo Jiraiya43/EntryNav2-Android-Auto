@@ -27,7 +27,7 @@ programmes restent dans `/tmp`, en mémoire.
 | `md5sum -c MD5SUMS` | Archive arrivée intacte | Recopier l'archive |
 | `df -k /` | 16 Mo libres sur le système | Bloquant |
 | Chargeur de l'unité, en mode liste | **Toutes les bibliothèques et fonctions appelées existent sur cette voiture** | Bloquant |
-| `evo-trial --compat` : `abi` | Interface de l'iDrive pour ses applis, de la même taille | Bloquant |
+| `aa-supervisor --compat` : `abi` | Interface de l'iDrive pour ses applis, de la même taille | Bloquant |
 | `vmost` | Fonctions de la molette et des touches, chargées à l'exécution | Bloquant |
 | `mic` | Fonctions du micro | Douteux |
 | `video`, `order` | **Démarrage à blanc :** emplacement de l'image, superposition des couches | Bloquant |
@@ -39,7 +39,7 @@ Deux mécanismes font ce travail :
 
 - **Le chargeur du système de la voiture, en mode liste,** résout toutes les fonctions sans rien exécuter. Il ne donne aucune
   fausse alerte sur le système de la voiture de référence, et il détecte une fonction ou une bibliothèque retirée exprès.
-- **`evo-trial --compat`** fait les mêmes lectures que le vrai démarrage, sans rien enregistrer. Il ne change rien au
+- **`aa-supervisor --compat`** fait les mêmes lectures que le vrai démarrage, sans rien enregistrer. Il ne change rien au
   Bluetooth, n'allume pas le Wi-Fi et n'affiche rien. Le Bluetooth est lu dans la mémoire du processus BMW, sans
   l'interrompre.
 

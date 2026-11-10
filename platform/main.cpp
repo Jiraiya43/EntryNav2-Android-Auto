@@ -12,8 +12,8 @@
 #include "evo_knob.hpp"
 #include "evo_control.hpp"
 #include "evo_spp_snapshot.hpp"
-#include "evo_trial_state.hpp"
-#include "evo_trial_wireless.hpp"
+#include "spp_baseline.hpp"
+#include "spp_advertisement.hpp"
 #include "evo_log.hpp"
 #include "evo_pill.hpp"
 #include "evo_bmw_guidance.hpp"
@@ -39,7 +39,7 @@ void onSignal(int) {
 // This car's fixed values, observed working on the car. There are no runtime settings.
 const unsigned kSppInstance = 0;  // Alps SPP instance of the head unit
 const uint16_t kAaPort = 50000;   // TCP port told to the phone during the Bluetooth handshake
-const unsigned kTrialMaxSeconds = 180;
+const unsigned kMaxLimitSeconds = 180;
 
 // Unsigned number from a command-line argument (decimal or 0x hex), at most max.
 bool parseNumber(const char* s, unsigned long max, unsigned long& out) {
@@ -55,13 +55,13 @@ bool parseNumber(const char* s, unsigned long max, unsigned long& out) {
     out = v;
     return true;
 }
-// What evo-trial hands over on the command line: the Alps state it saved, checked again before each step.
-struct TrialBaseline {
+// What aa-supervisor hands over on the command line: the Alps state it saved, checked again before each step.
+struct AlpsBaseline {
     const char* alpsPid;
     const char* alpsStart;
     const char* uuidPair;
 };
-bool trialReady(evo::SppSnapshotReader& reader, unsigned instance, const TrialBaseline& baseline) {
+bool alpsReady(evo::SppSnapshotReader& reader, unsigned instance, const AlpsBaseline& baseline) {
     const char* pid = baseline.alpsPid;
     const char* identity = baseline.alpsStart;
     const char* pair = baseline.uuidPair;
@@ -69,9 +69,9 @@ bool trialReady(evo::SppSnapshotReader& reader, unsigned instance, const TrialBa
     snprintf(expected, sizeof(expected), "%d", reader.pid());
     evo::SppSlotSnapshot slot;
     bool ok = pid && identity && pair && instance == 0 && !strcmp(expected, pid) && reader.identity() == identity &&
-              reader.read(instance, slot) && evo::trialSnapshotMatchesBaseline(slot, pair);
+              reader.read(instance, slot) && evo::snapshotMatchesBaseline(slot, pair);
     if (!ok) {
-        ELOG("Main", "Alps state changed since evo-trial saved it: start refused");
+        ELOG("Main", "Alps state changed since aa-supervisor saved it: start refused");
     }
     return ok;
 }
@@ -81,12 +81,12 @@ void usage(const char* argv0) {
         "  --monitor     watch SPP/DM; no UUID, DataReq or configuration change\n"
         "  --introspect  read the Alps API and the SPP configuration 0x6203\n"
         "  --run         register the Android Auto UUID and open the TCP server (50000)\n"
-        "Options of --run, given by evo-trial:\n"
+        "Options of --run, given by aa-supervisor:\n"
         "  --configure-spp        allow setting 0x6203 to 1 when needed\n"
         "  --no-video             no picture\n"
         "  --input forward|observe|off   controller and touchscreen to AA, only logged, or ignored\n"
-        "  --service | --trial-seconds N (180 at most)\n"
-        "  --alps-pid P --alps-start S --uuid-pair HEX   Alps state saved by evo-trial, checked before each step\n",
+        "  --service | --limit-seconds N (180 at most)\n"
+        "  --alps-pid P --alps-start S --uuid-pair HEX   Alps state saved by aa-supervisor, checked before each step\n",
         argv0);
 }
 }  // namespace
@@ -94,15 +94,15 @@ void usage(const char* argv0) {
 int main(int argc, char** argv) {
     bool run = false, monitor = false, introspect = false, configure = false, video = true, service = false;
     const char* inputArg = nullptr;
-    unsigned long trialSeconds = 0;
-    TrialBaseline baseline = {nullptr, nullptr, nullptr};
+    unsigned long limitSeconds = 0;
+    AlpsBaseline baseline = {nullptr, nullptr, nullptr};
     for (int i = 1; i < argc; ++i) {
         const char* value = i + 1 < argc ? argv[i + 1] : nullptr;
         if (!strcmp(argv[i], "--input") && value) {
             inputArg = value;
             ++i;
-        } else if (!strcmp(argv[i], "--trial-seconds") && value) {
-            if (!parseNumber(value, kTrialMaxSeconds, trialSeconds) || !trialSeconds) {
+        } else if (!strcmp(argv[i], "--limit-seconds") && value) {
+            if (!parseNumber(value, kMaxLimitSeconds, limitSeconds) || !limitSeconds) {
                 usage(argv[0]);
                 return 2;
             }
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
             baseline.uuidPair = value;
             ++i;
         } else if (!strcmp(argv[i], "--service")) {
-            service = true;  // started by the iDrive app through evo-trial: no time limit, same safety checks
+            service = true;  // started by the iDrive app through aa-supervisor: no time limit, same safety checks
         } else if (!strcmp(argv[i], "--run")) {
             run = true;
         } else if (!strcmp(argv[i], "--monitor")) {
@@ -170,11 +170,11 @@ int main(int argc, char** argv) {
         ELOG("Main", "invalid --input (forward, observe or off)");
         return 2;
     }
-    if (service && trialSeconds) {
-        ELOG("Main", "--service and --trial-seconds cannot be combined");
+    if (service && limitSeconds) {
+        ELOG("Main", "--service and --limit-seconds cannot be combined");
         return 2;
     }
-    const bool guarded = trialSeconds || service;   // Alps baseline/child snapshot checks
+    const bool guarded = limitSeconds || service;   // Alps baseline/child snapshot checks
     setenv("XDG_RUNTIME_DIR", "/run/system/0", 0);  // read by the Wayland library (picture, volume pill)
     evo::ServiceApp app(kAaPort, video, &quit);
     app.session.setTouchForwarding(input == evo::INPUT_FORWARD);
@@ -208,8 +208,8 @@ int main(int argc, char** argv) {
     if (!app.server.start()) {
         return 1;
     }
-    evo::SppSnapshotReader trialReader;
-    if (guarded && (!trialReader.open() || !trialReady(trialReader, instance, baseline))) {
+    evo::SppSnapshotReader alpsReader;
+    if (guarded && (!alpsReader.open() || !alpsReady(alpsReader, instance, baseline))) {
         return 1;
     }
     if (input != evo::INPUT_OFF) {
@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     ELOG("Main", "SPP interface %u confirmed: 0x6203=1", instance);
-    if (quit || (guarded && !trialReady(trialReader, instance, baseline))) {
+    if (quit || (guarded && !alpsReady(alpsReader, instance, baseline))) {
         return 1;
     }
     int status = app.bt.registerUuid(evo::kAaUuid, 3000);
@@ -237,7 +237,7 @@ int main(int argc, char** argv) {
     }
     if (guarded) {
         evo::SppSlotSnapshot advertised;
-        if (!trialReader.read(instance, advertised) || advertised.uuidPayload != evo::trialAaPair() ||
+        if (!alpsReader.read(instance, advertised) || advertised.uuidPayload != evo::androidAutoPair() ||
             advertised.transportUuidPayload != advertised.uuidPayload) {
             ELOG("Main", "Android Auto UUIDs not read back from Alps: stopping so that Bluetooth is restored");
             return 1;
@@ -289,10 +289,10 @@ int main(int argc, char** argv) {
         return 1;
     }
     bool failed = false;
-    const uint32_t trialStart = evo::monoMs();
-    evo::TrialAdvertisementSchedule advertisement(service ? 60000 : 0);
+    const uint32_t startedMs = evo::monoMs();
+    evo::AdvertisementSchedule advertisement(service ? 60000 : 0);
     while (!quit) {
-        if (trialSeconds && evo::monoMs() - trialStart >= trialSeconds * 1000) {
+        if (limitSeconds && evo::monoMs() - startedMs >= limitSeconds * 1000) {
             break;
         }
         app.session.postCarLocation(gpsFeed.next(carGps));
@@ -312,8 +312,8 @@ int main(int argc, char** argv) {
         if (failed) {
             break;
         }
-        if (guarded && turn.idleForAdvert && advertisement.due(evo::monoMs() - trialStart)) {
-            failed = !app.refreshAdvertisementIfIdle(service, trialReader);
+        if (guarded && turn.idleForAdvert && advertisement.due(evo::monoMs() - startedMs)) {
+            failed = !app.refreshAdvertisementIfIdle(service, alpsReader);
             if (failed) {
                 break;
             }
@@ -343,8 +343,8 @@ int main(int argc, char** argv) {
          "compositor_frame_callback=%u",
          app.sppLinks, app.wppReply ? 1 : 0, app.wppAccepted ? 1 : 0, app.tcpLinks, app.videoFrames.load(),
          firstFrame ? 1 : 0);
-    if (!firstFrame && trialSeconds) {
+    if (!firstFrame && limitSeconds) {
         ELOG("Main", "summary: NO FRAME CALLBACK FROM THE COMPOSITOR; see the steps above");
     }
-    return failed ? 1 : (trialSeconds && video && !firstFrame ? 2 : 0);
+    return failed ? 1 : (limitSeconds && video && !firstFrame ? 2 : 0);
 }

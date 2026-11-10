@@ -54,9 +54,9 @@ public:
     void markReady();    // callbacks may now start a projection
     void requestStop();  // the wireless loop and new connections stop
     // Session, focus and peeks into what shows: the video layer, its opacity, the pill. Holds videoMu while
-    // LayerManagerControl runs. service: started by the iDrive app (evo-trial --service).
+    // LayerManagerControl runs. service: started by the iDrive app (aa-supervisor --service).
     Turn turn(bool service);
-    // Registers the Android Auto UUID again while nothing is connected (refreshTrialAdvertisement). False when that
+    // Registers the Android Auto UUID again while nothing is connected (refreshAdvertisement). False when that
     // failed and the service must stop.
     bool refreshAdvertisementIfIdle(bool service, SppSnapshotReader& reader);
     // Car day/night (CDS vehicle.dayNightChangeOver via the iDrive app): 1 day, 2 night, 0 no change, 3 invalid.

@@ -19,7 +19,7 @@
 //   bmw_framework  stand-ins for BMW's framework: declarations, the app's Runnable, the PluginApp vtable hooks
 //   app_log        app.log, maintenance profile only
 //   app_guards     off switch, crash guard, start automatically and its boot-loop guard
-//   service_link   the supervisor /opt/aa/evo-trial, control messages, the service's state, the stop sequence
+//   service_link   the supervisor /opt/aa/aa-supervisor, control messages, the service's state, the stop sequence
 //   car_signals    gear, phone calls, day/night and driving mode from the car's CDS
 //   hold_machine   iDrive kept on the blank state while Android Auto is on screen (pure, tested on the PC)
 // Uninstall: delete the plugin folder and reboot.

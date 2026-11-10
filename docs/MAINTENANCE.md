@@ -67,5 +67,5 @@ reboot
 ```sh
 ls -la /opt/aa /opt/hmi/data/ro/Plugins/EntryAad /var/local/data/AA
 grep -c libEntryAad /proc/$(pidof HmiMain3D)/maps   # plus de 0 : l'iDrive a chargé l'appli
-pidof evo-trial entry-aad                           # Android Auto en marche
+pidof aa-supervisor entry-aad                           # Android Auto en marche
 ```

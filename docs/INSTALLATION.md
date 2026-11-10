@@ -45,21 +45,21 @@ df -k /
 ```
 
 Chaque fichier doit répondre `OK`, et il faut au moins 16 Mo libres (colonne `Available`, en Ko). Ensuite, le chargeur de
-l'unité vérifie que chaque bibliothèque et chaque fonction utilisée existe, sans rien exécuter, puis `evo-trial --compat`
+l'unité vérifie que chaque bibliothèque et chaque fonction utilisée existe, sans rien exécuter, puis `aa-supervisor --compat`
 répète à blanc le démarrage d'Android Auto :
 
 ```sh
 L=/usr/local/lib:/opt/hmi/lib:/usr/lib:/lib
-for f in opt/aa/entry-aad opt/aa/evo-trial opt/hmi/data/ro/Plugins/EntryAad/libEntryAad.so; do
+for f in opt/aa/entry-aad opt/aa/aa-supervisor opt/hmi/data/ro/Plugins/EntryAad/libEntryAad.so; do
     LD_TRACE_LOADED_OBJECTS=1 LD_WARN=yes LD_BIND_NOW=yes LD_LIBRARY_PATH=$L /lib/ld-linux-armhf.so.3 ./$f 2>&1 |
         grep -E 'not found|undefined symbol|not defined in file'
 done
 LD_LIBRARY_PATH=$L XDG_RUNTIME_DIR=/run/system/0 WAYLAND_DISPLAY=wayland-0 HOME=/tmp \
-    busybox timeout -t 60 ./opt/aa/evo-trial --compat
+    busybox timeout -t 60 ./opt/aa/aa-supervisor --compat
 ```
 
 - La boucle ne doit **rien** afficher : chaque ligne montre une fonction ou une bibliothèque absente de cette voiture.
-- `evo-trial --compat` répond une ligne par point : `@ok|…` réussi, `@warn|…` douteux, `@block|…` **bloquant**. Une seule
+- `aa-supervisor --compat` répond une ligne par point : `@ok|…` réussi, `@warn|…` douteux, `@block|…` **bloquant**. Une seule
   ligne `@block` : ne pas installer. Le sens de chaque point est dans [compatibilité](COMPATIBILITE.md).
 
 Ce résultat, avec la première ligne de `/etc/version`, fait un bon
@@ -77,7 +77,7 @@ mkdir -p /opt/hmi/data/ro/Plugins/EntryAad /opt/aa
 rm -f /opt/hmi/data/ro/Plugins/EntryAad/* /opt/aa/*
 cp opt/hmi/data/ro/Plugins/EntryAad/* /opt/hmi/data/ro/Plugins/EntryAad/
 cp opt/aa/* /opt/aa/
-chmod 755 /opt/aa/entry-aad /opt/aa/evo-trial /opt/hmi/data/ro/Plugins/EntryAad/libEntryAad.so
+chmod 755 /opt/aa/entry-aad /opt/aa/aa-supervisor /opt/hmi/data/ro/Plugins/EntryAad/libEntryAad.so
 touch /opt/aa/.installed-by-entryaad /opt/hmi/data/ro/Plugins/EntryAad/.installed-by-entryaad
 sync
 mount -o remount,ro /
@@ -112,7 +112,8 @@ voiture tout seul. La case *Démarrage automatique* du menu lance Android Auto a
 ## Mettre à jour
 
 Refaire les étapes 1 à 3 avec la nouvelle archive, après avoir arrêté Android Auto depuis son menu. Les réglages de
-`/var/local/data/AA` sont gardés.
+`/var/local/data/AA` sont gardés. L'étape 3 vide `/opt/aa` avant la copie : un programme qui a changé de nom entre
+deux versions (`evo-trial`, devenu `aa-supervisor` après la 0.10.0) ne reste pas sur l'unité.
 
 ## Désinstaller
 

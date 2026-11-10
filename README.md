@@ -59,7 +59,7 @@ Installation is a short manual procedure over SSH, described step by step in
    its SHA-256.
 2. Copy it to the head unit's `/tmp` with `scp`.
 3. **Check the car**: nothing is written. The unit's own loader confirms every library and function the programs need,
-   and `evo-trial --compat` rehearses the startup of Android Auto.
+   and `aa-supervisor --compat` rehearses the startup of Android Auto.
 4. **Install**: the system is remounted read-write only while two folders are copied (`/opt/aa` and
    `/opt/hmi/data/ro/Plugins/EntryAad`), then the unit restarts.
 5. On iDrive: *Media*, *Android Auto*, *Démarrer*.
@@ -73,7 +73,7 @@ folders.
 flowchart LR
     P[Android phone]
     subgraph HU[EntryNav2 head unit]
-        A[iDrive app<br/>libEntryAad.so] --> T[Supervisor<br/>evo-trial]
+        A[iDrive app<br/>libEntryAad.so] --> T[Supervisor<br/>aa-supervisor]
         T --> S[Service<br/>entry-aad]
         S --> V[H.264 on screen<br/>libxsvideo + LayerManager]
         I[Controller, keys, touch] --> S
