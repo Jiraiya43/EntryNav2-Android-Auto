@@ -28,9 +28,19 @@ bool matches(bool carGps, const uint8_t* golden, size_t goldenLen) {
         fclose(f);
     }
     evo::setCarGpsSourceForTest(ring);
+    // The golden description is the one of the car it was recorded on: its model and year come from a vehicle file,
+    // as on that car.
+    char vehicle[96];
+    snprintf(vehicle, sizeof(vehicle), "/tmp/entry-sdr-g20-vehicle-%d", int(getpid()));
+    FILE* v = fopen(vehicle, "w");
+    if (!v || fputs("model=M340i\nyear=2019\n", v) < 0) {
+        return false;
+    }
+    fclose(v);
     // "1.3.33": the software version the golden description was recorded with; the service announces its own.
     const std::vector<uint8_t> sdr =
-        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, "1.3.33");
+        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, vehicle, "1.3.33");
+    unlink(vehicle);
     if (sdr.size() != goldenLen) {
         printf("FAIL capteurs %s : %u octets, %u attendus\n", sensors, static_cast<unsigned>(sdr.size()),
                static_cast<unsigned>(goldenLen));

@@ -17,6 +17,8 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Modifié
 
+- Sans fichier `vehicle`, le téléphone voit une BMW « iDrive » au lieu d'une « M340i », le modèle de la voiture d'essai
+  ([#8](https://github.com/Jiraiya43/entry-aad/issues/8)). Le fichier `vehicle` donne le vrai modèle. Testé sur PC.
 - Le superviseur `evo-trial` s'appelle maintenant `aa-supervisor` ([#7](https://github.com/Jiraiya43/entry-aad/issues/7)) :
   son programme est `/opt/aa/aa-supervisor`, et l'option `--trial-seconds` du service devient `--limit-seconds`.
   L'étape 3 de l'installation retire l'ancien programme. Testé sur PC.

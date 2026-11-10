@@ -255,9 +255,21 @@ void onNav(uint16_t id, const uint8_t* body, size_t len, void*) {
     event(format("nav %04x ", id) + (len ? hex(body, len) : std::string("-")));
 }
 
+// The golden was recorded on an M340i of 2019: the model and year come from a vehicle file, as on that car.
+char g_vehicleFile[96];
+void writeVehicleFile() {
+    snprintf(g_vehicleFile, sizeof(g_vehicleFile), "/tmp/entry-session-vehicle-%d", int(getpid()));
+    FILE* f = fopen(g_vehicleFile, "w");
+    if (!f || fputs("model=M340i\nyear=2019\n", f) < 0 || fclose(f) != 0) {
+        fprintf(stderr, "FAIL vehicle file\n");
+        exit(1);
+    }
+}
+
 void watch(aa::AASession& session, bool touch) {
     session.setTouchForwarding(touch);
-    session.setSoftwareVersion("1.3.33");  // the version the golden was recorded with; the service announces its own
+    session.setSoftwareVersion("1.3.33");   // the version the golden was recorded with; the service announces its own
+    session.setVehicleFile(g_vehicleFile);  // and the car it was recorded on
     session.setDisconnectCallback(onEnded);
     session.setVideoFrameCallback(onVideo);
     session.setCodecConfigCallback(onCodec);
@@ -1008,6 +1020,7 @@ int main(int argc, char** argv) {
     const char* golden = writing ? argv[2] : (argc == 2 ? argv[1] : "tests/fixtures/session_phone.golden");
     signal(SIGPIPE, SIG_IGN);
     signal(SIGALRM, timedOut);
+    writeVehicleFile();
     alarm(300);
     SSL_library_init();
     SSL_load_error_strings();

@@ -153,11 +153,11 @@ int main() {
     fputs("model=320d xDrive\r\nyear=2021\nmodel=bad;model\nyear=3021\nother=1\n", f);
     fclose(f);
     aa::SdrIdentity id;
-    CHECK(id.carModel == "M340i" && id.carYear == "2019");
+    CHECK(id.carModel == "iDrive" && id.carYear == "2019");
     CHECK(id.loadVehicleFile(vehicle) && id.carModel == "320d xDrive" && id.carYear == "2021");
     unlink(vehicle);
     aa::SdrIdentity none;
-    CHECK(!none.loadVehicleFile(vehicle) && none.carModel == "M340i");
+    CHECK(!none.loadVehicleFile(vehicle) && none.carModel == "iDrive");
     CHECK(aa::validCarModel("X3 M40i") && !aa::validCarModel("") && !aa::validCarModel(std::string(25, 'a')) &&
           !aa::validCarModel("a'b") && aa::validCarYear("1999") && !aa::validCarYear("999") &&
           !aa::validCarYear("3000"));

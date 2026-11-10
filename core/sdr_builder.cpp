@@ -131,7 +131,8 @@ bool tuneVideoConfig(const pb::Field& config, Bytes& out) {
 
 SdrIdentity::SdrIdentity()
     : carMake("BMW"),
-      carModel("M340i"),
+      // No model name is stored on the head unit: "iDrive" until the vehicle file gives the car's own.
+      carModel("iDrive"),
       carYear("2019"),
       // The phone keeps its per-car settings under this id: never change it.
       vehicleId("3b9e7d52-1c4f-4a8e-b6d0-5f2a9c81e4b3"),

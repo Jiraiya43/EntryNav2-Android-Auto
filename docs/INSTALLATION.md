@@ -90,7 +90,8 @@ cd / && md5sum -c /tmp/entry-aad-0.10.0/MD5SUMS
 - Le dernier `md5sum -c` relit les fichiers installés : chacun doit répondre `OK`.
 - Si `mount -o remount,ro /` échoue, le redémarrage qui suit remet le système en lecture seule.
 
-Facultatif, le modèle et l'année que le téléphone affiche pour la voiture :
+Facultatif, le modèle et l'année que le téléphone affiche pour la voiture. Sans ce fichier, il affiche une BMW
+« iDrive » de 2019 : l'unité ne connaît pas le nom du modèle.
 
 ```sh
 mkdir -p /var/local/data/AA && printf 'model=320d\nyear=2020\n' > /var/local/data/AA/vehicle
