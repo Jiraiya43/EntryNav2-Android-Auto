@@ -65,6 +65,10 @@ all: daemon evo-trial hmiapp
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@
 
+# The service announces the project's version to the phone as the head unit's software version.
+platform/main.o: CPPFLAGS += -DENTRY_AAD_VERSION='"$(strip $(shell cat VERSION))"'
+platform/main.o: VERSION
+
 daemon: entry-aad
 entry-aad: $(DAEMON_OBJ) $(PLATFORM_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDSHLIB) $(VIDEO_LIBS) \
