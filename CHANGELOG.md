@@ -8,6 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.11.0-rc.1] - 2026-11-10 · PC
+
+Version candidate, **testée sur PC seulement** : à essayer en voiture avant la 0.11.0. Installée par-dessus la 0.10.0,
+elle demande un redémarrage de l'unité.
+
 ### Corrigé
 
 - Page vide de l'iDrive : ses délais (1, 3, 10 et 15 s) ne dépendent plus de l'heure de la voiture, que le GPS peut
@@ -52,5 +57,6 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.10.0...HEAD
+[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.11.0-rc.1...HEAD
+[0.11.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.1
 [0.10.0]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.10.0
