@@ -5,7 +5,8 @@
 // Captured from the head unit's own route start (instance handle 0xC8); replaying them from a second client draws a
 // route on the cluster without any iDrive route. Each entry is the SOME/IP method + the request body (no 16-byte
 // header). Road names are replaced by neutral strings of the same length, so every frame keeps the captured layout.
-// Generated from the capture: do not edit by hand.
+// Generated from the capture: do not edit by hand. The frame bytes are what BMW's software sends; the notice above
+// covers their arrangement in this file, not the bytes (see LICENSE.md, Credits).
 #ifndef ENTRY_AAD_PLATFORM_KOMBI_GRAPH_TEMPLATE_HPP
 #define ENTRY_AAD_PLATFORM_KOMBI_GRAPH_TEMPLATE_HPP
 

@@ -1,6 +1,7 @@
-// Copyright (c) 2026 Jiraiya43
-// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // ServiceDiscoveryResponse body of Google's Desktop Head Unit (DHU), the template that core/sdr_builder.cpp adapts.
+//
+// Not written by this project and not covered by its licence: the bytes are what Google's DHU sends, taken here from
+// Supra-iDrive6-Android-Auto (https://github.com/Sq00ky/Supra-iDrive6-Android-Auto). See LICENSE.md, Credits.
 #ifndef ENTRY_AAD_CORE_INCLUDE_DHU_SDP_H
 #define ENTRY_AAD_CORE_INCLUDE_DHU_SDP_H
 

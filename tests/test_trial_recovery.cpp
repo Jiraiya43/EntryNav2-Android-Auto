@@ -271,7 +271,7 @@ int main() {
     assert(evo::parseUuid128("00000000-deca-fade-deca-deafdecacaff", init));
     assert(evo::parseUuid128("00000000-deca-fade-deca-deafdecacafe", recv));
     const std::vector<uint8_t> bmw = evo::buildSetUuidPayload(init, recv);
-    std::ifstream fixture("tests/fixtures/spp-bmw-20261102.txt");
+    std::ifstream fixture("tests/fixtures/spp-bmw-uuids.txt");
     std::string observed;
     assert((fixture >> observed) && observed == hex(bmw));
     assert(bmw.size() == 34 && bmw[16] == 0xff && bmw[33] == 0xfe);

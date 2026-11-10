@@ -1,6 +1,8 @@
-// Copyright (c) 2026 Jiraiya43
-// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // The Android Auto head unit identity shown to the phone in TLS: certificate and private key (data only).
+//
+// Not written by this project and not covered by its licence: this is the head unit certificate issued by the Google
+// Automotive Link CA that open Android Auto head units share, taken here from Supra-iDrive6-Android-Auto
+// (https://github.com/Sq00ky/Supra-iDrive6-Android-Auto). See LICENSE.md, Credits.
 #ifndef ENTRY_AAD_CORE_INCLUDE_HU_CERTIFICATE_H
 #define ENTRY_AAD_CORE_INCLUDE_HU_CERTIFICATE_H
 
