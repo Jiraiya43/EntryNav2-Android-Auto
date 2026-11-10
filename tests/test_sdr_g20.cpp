@@ -28,7 +28,9 @@ bool matches(bool carGps, const uint8_t* golden, size_t goldenLen) {
         fclose(f);
     }
     evo::setCarGpsSourceForTest(ring);
-    const std::vector<uint8_t> sdr = aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr);
+    // "1.3.33": the software version the golden description was recorded with; the service announces its own.
+    const std::vector<uint8_t> sdr =
+        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, "1.3.33");
     if (sdr.size() != goldenLen) {
         printf("FAIL capteurs %s : %u octets, %u attendus\n", sensors, static_cast<unsigned>(sdr.size()),
                static_cast<unsigned>(goldenLen));

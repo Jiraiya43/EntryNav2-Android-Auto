@@ -257,6 +257,7 @@ void onNav(uint16_t id, const uint8_t* body, size_t len, void*) {
 
 void watch(aa::AASession& session, bool touch) {
     session.setTouchForwarding(touch);
+    session.setSoftwareVersion("1.3.33");  // the version the golden was recorded with; the service announces its own
     session.setDisconnectCallback(onEnded);
     session.setVideoFrameCallback(onVideo);
     session.setCodecConfigCallback(onCodec);

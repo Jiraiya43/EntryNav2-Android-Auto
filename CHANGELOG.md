@@ -17,6 +17,8 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Modifié
 
+- Le service annonce au téléphone la version du projet (fichier `VERSION`) comme version logicielle de l'unité, au lieu
+  de la valeur fixe `1.3.33` ([#9](https://github.com/Jiraiya43/entry-aad/issues/9)). Testé sur PC.
 - Origine des données venues d'ailleurs (certificat Android Auto, description du DHU de Google, images d'attente,
   relevés de la voiture) notée dans les fichiers et dans la licence. Les programmes sont inchangés.
 

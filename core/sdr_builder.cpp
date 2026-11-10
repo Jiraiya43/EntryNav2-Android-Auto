@@ -138,7 +138,7 @@ SdrIdentity::SdrIdentity()
       huMake("BMW"),
       huModel("EntryNav2"),
       swBuild("entry-aad"),
-      swVersion("1.3.33") {}
+      swVersion("0.0.0") {}
 
 bool validCarModel(const std::string& s) {
     if (s.empty() || s.size() > 24) {
@@ -296,10 +296,14 @@ void setDiscoveryTrim(DiscoveryTrim trim) {
     g_trim = trim;
 }
 
-std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile) {
+std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile,
+                                              const char* softwareVersion) {
     SdrIdentity identity;
     if (vehicleFile) {
         identity.loadVehicleFile(vehicleFile);
+    }
+    if (softwareVersion && *softwareVersion) {
+        identity.swVersion = softwareVersion;
     }
     std::vector<uint8_t> sdr = buildServiceDiscovery(base, baseLen, identity);
     printf("[SDR] ServiceDiscovery identity: %s %s %s (BT channel: none)\n", identity.carMake.c_str(),
