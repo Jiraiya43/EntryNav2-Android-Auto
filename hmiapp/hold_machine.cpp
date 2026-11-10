@@ -265,6 +265,10 @@ void HoldMachine::poll(const ServiceState& service, long now) {
         if (popup_.active() || (driveModeAt_ && now - driveModeAt_ < kDriveModeQuietS)) {
             return;  // an iDrive popup or the driving mode display: Android Auto steps aside, no event over it
         }
+        if (gear_ == kReverseGear) {
+            unfocusedPolls_ = 0;
+            return;  // the camera took the focus before Android Auto stepped aside: no event over it
+        }
         if (++unfocusedPolls_ >= 2 && now - holdTime_ >= 1) {
             unfocusedPolls_ = 0;
             fireHold("state lost focus", now);

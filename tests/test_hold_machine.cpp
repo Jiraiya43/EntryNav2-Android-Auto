@@ -384,6 +384,11 @@ void reverseGear() {
         c.poll();
         CHECK_OUT(c, "");
         CHECK(!c.hold.popupPeek());
+        c.polls(4);  // the camera keeps the focus before Android Auto steps aside: no event 52 over it
+        CHECK_OUT(c, "");
+        c.hold.gearChanged(1);
+        c.poll();  // out of reverse and still without the focus: handled as an iDrive popup, as anywhere else
+        CHECK_OUT(c, "popup 1");
     }
 }
 
