@@ -110,6 +110,8 @@ Sur l'iDrive : *Media*, puis *Android Auto*, puis *Démarrer*. La première fois
 Bluetooth s'il ne l'est pas déjà, et accepter la voiture sur le téléphone : Android Auto rejoint ensuite le Wi-Fi de la
 voiture tout seul. La case *Démarrage automatique* du menu lance Android Auto avec l'iDrive.
 
+Android Auto peut aussi passer par un câble USB, sur demande : voir [USB](USB.md).
+
 ## Mettre à jour
 
 Refaire les étapes 1 à 3 avec la nouvelle archive, après avoir arrêté Android Auto depuis son menu. Les réglages de

@@ -8,6 +8,23 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.11.0-rc.2] - 2026-11-11 · voiture
+
+Version candidate, **essayée en voiture** sur une BMW G20 : Android Auto démarre en sans-fil comme par câble USB.
+Restent à confirmer par câble : la tenue sur un long trajet, le débranchement en cours de route, et d'autres
+téléphones et voitures. Les changements de la 0.11.0-rc.1 sont inclus.
+
+### Ajouté
+
+- Android Auto par câble USB, expérimental et facultatif : avec le fichier `/var/local/data/AA/usb`, le service
+  attend un téléphone Android sur les prises USB de la voiture au lieu de préparer le Bluetooth et le Wi-Fi. Sans ce
+  fichier, rien ne change : Android Auto reste sans fil. Le son reste sur le Bluetooth de la voiture.
+  [Activation et limites](docs/USB.md). Idée, premiers essais en voiture et observations sur le service USB de BMW :
+  [@wowDaiver](https://github.com/wowDaiver) ([#18](https://github.com/Jiraiya43/entry-aad/pull/18)). Essayé en voiture.
+- Nouvelle écriture vers un appareil de la voiture : les requêtes du mode accessoire (AOA 51, 52, 53) et une
+  réinitialisation USB, envoyées seulement à un téléphone Android branché, et seulement en mode USB. Aucune interface
+  USB n'est prise à un pilote ou à un programme BMW.
+
 ## [0.11.0-rc.1] - 2026-11-10 · PC
 
 Version candidate, **testée sur PC seulement** : à essayer en voiture avant la 0.11.0. Installée par-dessus la 0.10.0,
@@ -57,6 +74,7 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.11.0-rc.1...HEAD
+[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.11.0-rc.2...HEAD
+[0.11.0-rc.2]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.2
 [0.11.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.1
 [0.10.0]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.10.0

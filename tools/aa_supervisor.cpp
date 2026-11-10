@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Jiraiya43
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-// Wireless Android Auto supervisor, started by the iDrive app (hmiapp/) with --service: prepares Bluetooth and Wi-Fi,
-// runs entry-aad, gives Bluetooth back on exit. --compat rehearses a start for the compatibility check, --recover
-// finishes a restore left unconfirmed. Never restarts BMW services, never edits firmware.
+// Android Auto supervisor, started by the iDrive app (hmiapp/) with --service: prepares Bluetooth and Wi-Fi, runs
+// entry-aad, gives Bluetooth back on exit. With the USB setting file, Bluetooth and Wi-Fi are left as they are.
+// --compat rehearses a start for the compatibility check, --recover finishes a restore left unconfirmed. Never restarts
+// BMW services, never edits firmware.
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -36,6 +37,7 @@
 #include "evo_wlan.hpp"
 #include "service_contract.hpp"
 #include "spp_baseline.hpp"
+#include "usb_accessory.hpp"
 #include "vmost_client.hpp"
 
 extern char** environ;
@@ -242,7 +244,8 @@ std::string apDiagnosis() {
     }
     return s + ", wlan0 " + ip;
 }
-bool preflight(evo::SppSnapshotReader& reader, Baseline& b) {
+// The screen half of the preflight, all a start over USB needs.
+bool screenPreflight() {
     evo::EvoIlm ilm;
     if (!ilm.validateTarget(surface, layer, 1280, 480)) {
         ELOG("Supervisor", "preflight: video target unavailable: no Bluetooth change");
@@ -256,6 +259,12 @@ bool preflight(evo::SppSnapshotReader& reader, Baseline& b) {
     ELOG("Supervisor",
          "preflight: the compositor draws the first of a list %s; our surface goes %s the layer's BMW surfaces",
          topFirst ? "on top (genivi-flip-renderorder=1)" : "underneath", topFirst ? "first, above" : "last, above");
+    return true;
+}
+bool preflight(evo::SppSnapshotReader& reader, Baseline& b) {
+    if (!screenPreflight()) {
+        return false;
+    }
     reader.close();  // each attempt rescans Alps: with the first scan kept, a retry could never pass
     if (!reader.open()) {
         ELOG("Supervisor", "preflight: %s", reader.error().empty() ? "cannot open Alps" : reader.error().c_str());
@@ -413,16 +422,27 @@ int main(int argc, char** argv) {
         puts(
             "Usage: aa-supervisor --service | --compat | --recover\n"
             "  --service  started by the iDrive app: wireless Android Auto with no time limit, stopped by the app or\n"
-            "             STOP; the BMW hotspot switched on as Apple CarPlay does when it is off\n"
+            "             STOP; the BMW hotspot switched on as Apple CarPlay does when it is off. With the file\n"
+            "             /var/local/data/AA/usb: Android Auto over a USB cable, Bluetooth and Wi-Fi untouched\n"
             "  --compat   what a start would find on this car, changing nothing\n"
             "  --recover  gives Bluetooth back after an unconfirmed stop (journal in the current folder)");
         return argc == 2 ? 0 : 2;
     }
     const bool service = !strcmp(argv[1], "--service"), restore = !strcmp(argv[1], "--recover");
-    g_wlanAuto = service;  // the BMW hotspot is switched on as Apple CarPlay does, only for the iDrive app's service
     if (!service && !restore) {
         return 2;
     }
+    // The USB setting is read once: a service runs wireless or over USB from its start to its stop.
+    std::string usbPort;
+    const int usbSetting = service ? evo::readUsbSetting(evo::contract::kUsb, usbPort) : 0;
+    if (usbSetting < 0) {
+        ELOG("Supervisor", "%s holds something else than nothing or a USB port (1-1): start refused",
+             evo::contract::kUsb);
+        return 2;
+    }
+    const bool usb = usbSetting == 1;
+    // The BMW hotspot is switched on as Apple CarPlay does, only for the iDrive app's wireless service.
+    g_wlanAuto = service && !usb;
     signal(SIGINT, stopSignal);
     signal(SIGTERM, stopSignal);
     signal(SIGHUP, stopSignal);
@@ -479,7 +499,7 @@ int main(int argc, char** argv) {
     }
     // At boot (autostart) the hotspot or Alps may not be ready yet: retry for up to 2 minutes.
     uint32_t t0 = evo::monoMs();
-    while (!preflight(reader, baseline)) {
+    while (!(usb ? screenPreflight() : preflight(reader, baseline))) {
         if (stopRequested || stopFilePresent()) {
             unlink(evo::contract::kServiceStop);
             ELOG("Supervisor", "stop asked during the preflight: nothing was changed");
@@ -494,27 +514,35 @@ int main(int argc, char** argv) {
             usleep(500000);
         }
     }
-    if (stopRequested || !save(baseline)) {
+    if (stopRequested || (!usb && !save(baseline))) {
         ELOG("Supervisor", "Alps state not saved (or saved incompletely), or a previous restore pending");
         return 1;
     }
     // Everything the service needs is on its command line: its mode, and the Alps state saved above, which it checks
-    // again before registering the Android Auto UUID.
-    char expectedPid[32];
-    snprintf(expectedPid, sizeof(expectedPid), "%d", baseline.pid);
+    // again before registering the Android Auto UUID. Over USB Bluetooth is not touched: nothing was saved.
     std::vector<std::string> argList;
     argList.push_back(daemon);
     argList.push_back("--run");
-    argList.push_back("--configure-spp");
     argList.push_back("--input");
     argList.push_back("forward");
     argList.push_back("--service");
-    argList.push_back("--alps-pid");
-    argList.push_back(expectedPid);
-    argList.push_back("--alps-start");
-    argList.push_back(baseline.identity);
-    argList.push_back("--uuid-pair");
-    argList.push_back(hex(baseline.uuid));
+    if (usb) {
+        argList.push_back("--usb");
+        if (!usbPort.empty()) {
+            argList.push_back("--usb-port");
+            argList.push_back(usbPort);
+        }
+    } else {
+        char expectedPid[32];
+        snprintf(expectedPid, sizeof(expectedPid), "%d", baseline.pid);
+        argList.push_back("--configure-spp");
+        argList.push_back("--alps-pid");
+        argList.push_back(expectedPid);
+        argList.push_back("--alps-start");
+        argList.push_back(baseline.identity);
+        argList.push_back("--uuid-pair");
+        argList.push_back(hex(baseline.uuid));
+    }
     std::vector<char*> args;
     for (size_t i = 0; i < argList.size(); ++i) {
         args.push_back(const_cast<char*>(argList[i].c_str()));
@@ -540,8 +568,9 @@ int main(int argc, char** argv) {
     bool ended = rc != 0, forced = false;
     uint32_t stopping = 0;
     ELOG("Supervisor",
-         "wireless Android Auto: service with no time limit (stopped by the iDrive app); iDrive inputs: controller "
-         "and touchscreen forwarded to AA");
+         "%s Android Auto: service with no time limit (stopped by the iDrive app); iDrive inputs: controller and "
+         "touchscreen forwarded to AA",
+         usb ? "USB" : "wireless");
     uint32_t lastBound = evo::monoMs();
     while (!ended) {
         pid_t done = waitpid(child, &status, WNOHANG);
@@ -578,7 +607,7 @@ int main(int argc, char** argv) {
         usleep(100000);
     }
     // The supervisor is separate from the video/session process: it also restores after a crash.
-    bool restored = recover(baseline, reader);
+    bool restored = usb || recover(baseline, reader);  // over USB nothing was changed
     if (!restored) {
         ELOG("Supervisor", "restore: RESTORE NOT CONFIRMED: keep bluetooth-retour.txt, use --recover");
     }
@@ -586,7 +615,10 @@ int main(int argc, char** argv) {
         ELOG("Supervisor", "entry-aad killed: check that our surface is gone from the final listing");
     }
     unlink(evo::contract::kServiceStop);
-    ELOG("Supervisor", "done (Bluetooth restore %s)", restored ? "confirmed" : "NOT CONFIRMED");
+    ELOG("Supervisor", "done (Bluetooth %s)",
+         usb        ? "left untouched"
+         : restored ? "restore confirmed"
+                    : "restore NOT CONFIRMED");
     if (!restored || rc || forced || !WIFEXITED(status)) {
         return 1;
     }
