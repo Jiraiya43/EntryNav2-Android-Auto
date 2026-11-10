@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // Exercise the actual supervisor recovery decisions with simulated Alps/ILM boundaries.
 // The real /proc reader and D-Bus encodings have separate process/integration tests.
-#define main trial_entry_unused
-#include "../tools/evo_trial.cpp"
+#define main supervisor_entry_unused
+#include "../tools/aa_supervisor.cpp"
 #undef main
 #include <assert.h>
 
-#include "../platform/evo_trial_wireless.hpp"
+#include "../platform/spp_advertisement.hpp"
 
 namespace {
 evo::SppSlotSnapshot simulated;
@@ -231,7 +231,7 @@ static void recoveryCases(const std::vector<uint8_t>& original) {
     assert(chdir(cwd) == 0 && rmdir(dir) == 0);
 }
 static void advertisementCases() {
-    evo::TrialAdvertisementSchedule schedule;
+    evo::AdvertisementSchedule schedule;
     assert(!schedule.due(0) && !schedule.due(14999) && schedule.due(15000));
     assert(!schedule.due(15001) && !schedule.due(44999) && schedule.due(45000));
     assert(!schedule.due(89999) && schedule.due(90000) && !schedule.due(180000));
@@ -239,29 +239,29 @@ static void advertisementCases() {
     evo::AlpsSppLink bt;
     simulated = evo::SppSlotSnapshot();
     simulated.state = 1;
-    simulated.uuidPayload = simulated.transportUuidPayload = evo::trialAaPair();
+    simulated.uuidPayload = simulated.transportUuidPayload = evo::androidAutoPair();
     unsigned before = uuidWrites;
-    assert(evo::refreshTrialAdvertisement(bt, reader) && uuidWrites == before + 1);
+    assert(evo::refreshAdvertisement(bt, reader) && uuidWrites == before + 1);
     assert(simulated.uuidPayload == aaPayload() && simulated.transportUuidPayload == aaPayload());
     before = uuidWrites;
     liveLink = true;
-    assert(evo::refreshTrialAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader));
     liveLink = false;
     simulated.connected = true;
-    assert(evo::refreshTrialAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader));
     simulated.connected = false;
     simulated.transportState = 1;
-    assert(evo::refreshTrialAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader));
     simulated.transportState = 0;
     failRead = true;
-    assert(evo::refreshTrialAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader));
     failRead = false;
     simulated.uuidPayload[1] ^= 1;
     simulated.transportUuidPayload = simulated.uuidPayload;
-    assert(!evo::refreshTrialAdvertisement(bt, reader) && uuidWrites == before);
+    assert(!evo::refreshAdvertisement(bt, reader) && uuidWrites == before);
     simulated.uuidPayload = simulated.transportUuidPayload = aaPayload();
     failUuid = true;
-    assert(!evo::refreshTrialAdvertisement(bt, reader));
+    assert(!evo::refreshAdvertisement(bt, reader));
     failUuid = false;
 }
 int main() {
@@ -278,24 +278,24 @@ int main() {
     evo::SppSlotSnapshot slot;
     slot.state = 1;
     slot.uuidPayload = slot.transportUuidPayload = bmw;
-    assert(evo::trialSnapshotMatchesBaseline(slot, observed));
-    assert(!evo::trialSnapshotMatchesBaseline(slot, ""));
-    assert(!evo::trialSnapshotMatchesBaseline(slot, hex(genericPair)));
+    assert(evo::snapshotMatchesBaseline(slot, observed));
+    assert(!evo::snapshotMatchesBaseline(slot, ""));
+    assert(!evo::snapshotMatchesBaseline(slot, hex(genericPair)));
     slot.connected = true;
-    assert(!evo::trialSnapshotMatchesBaseline(slot, observed));
+    assert(!evo::snapshotMatchesBaseline(slot, observed));
     slot.connected = false;
     slot.state = 2;
-    assert(!evo::trialSnapshotMatchesBaseline(slot, observed));
+    assert(!evo::snapshotMatchesBaseline(slot, observed));
     slot.state = 1;
     slot.transportState = 1;
-    assert(!evo::trialSnapshotMatchesBaseline(slot, observed));
+    assert(!evo::snapshotMatchesBaseline(slot, observed));
     slot.transportState = 0;
     slot.transportUuidPayload = genericPair;
-    assert(!evo::trialSnapshotMatchesBaseline(slot, observed));
+    assert(!evo::snapshotMatchesBaseline(slot, observed));
     slot.uuidPayload = genericPair;
-    assert(!evo::trialSnapshotMatchesBaseline(slot, observed));
+    assert(!evo::snapshotMatchesBaseline(slot, observed));
     slot.uuidPayload = slot.transportUuidPayload = aaPayload();
-    assert(!evo::trialSnapshotMatchesBaseline(slot, hex(aaPayload())));
+    assert(!evo::snapshotMatchesBaseline(slot, hex(aaPayload())));
     recoveryCases(genericPair);
     recoveryCases(bmw);
     advertisementCases();

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Jiraiya43
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-// What the iDrive app, the supervisor (evo-trial) and the service (entry-aad) share: file paths and the control port.
+// What the iDrive app, the supervisor (aa-supervisor) and the service (entry-aad) share: file paths and the control
+// port.
 //
 // The installation procedure (docs/INSTALLATION.md, docs/MAINTENANCE.md) names the same paths: change both together.
 #ifndef ENTRY_AAD_PLATFORM_SERVICE_CONTRACT_HPP
@@ -12,7 +13,7 @@ namespace evo {
 namespace contract {
 
 // ---- programs, on the system partition ----------------------------------------------------------------------------
-constexpr char kSupervisor[] = "/opt/aa/evo-trial";
+constexpr char kSupervisor[] = "/opt/aa/aa-supervisor";
 constexpr char kService[] = "/opt/aa/entry-aad";
 
 // ---- settings and logs, on the data partition (kept across restarts) ----------------------------------------------

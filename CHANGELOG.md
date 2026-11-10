@@ -17,6 +17,9 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Modifié
 
+- Le superviseur `evo-trial` s'appelle maintenant `aa-supervisor` ([#7](https://github.com/Jiraiya43/entry-aad/issues/7)) :
+  son programme est `/opt/aa/aa-supervisor`, et l'option `--trial-seconds` du service devient `--limit-seconds`.
+  L'étape 3 de l'installation retire l'ancien programme. Testé sur PC.
 - Le service annonce au téléphone la version du projet (fichier `VERSION`) comme version logicielle de l'unité, au lieu
   de la valeur fixe `1.3.33` ([#9](https://github.com/Jiraiya43/entry-aad/issues/9)). Testé sur PC.
 - Origine des données venues d'ailleurs (certificat Android Auto, description du DHU de Google, images d'attente,

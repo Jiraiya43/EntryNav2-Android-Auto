@@ -61,7 +61,7 @@ L'installation est une courte procédure manuelle par SSH, détaillée pas à pa
    [versions publiées](https://github.com/Jiraiya43/entry-aad/releases) et vérifier son empreinte SHA-256.
 2. Le copier dans le `/tmp` de l'unité avec `scp`.
 3. **Contrôler la voiture** : rien n'est écrit. Le chargeur de l'unité confirme chaque bibliothèque et fonction utilisée,
-   et `evo-trial --compat` répète à blanc le démarrage d'Android Auto.
+   et `aa-supervisor --compat` répète à blanc le démarrage d'Android Auto.
 4. **Installer** : le système ne passe en écriture que le temps de copier deux dossiers (`/opt/aa` et
    `/opt/hmi/data/ro/Plugins/EntryAad`), puis l'unité redémarre.
 5. Sur l'iDrive : *Media*, *Android Auto*, *Démarrer*.
@@ -75,7 +75,7 @@ deux dossiers.
 flowchart LR
     P[Téléphone Android]
     subgraph HU[Unité EntryNav2]
-        A[Appli iDrive<br/>libEntryAad.so] --> T[Superviseur<br/>evo-trial]
+        A[Appli iDrive<br/>libEntryAad.so] --> T[Superviseur<br/>aa-supervisor]
         T --> S[Service<br/>entry-aad]
         S --> V[Image H.264 à l'écran<br/>libxsvideo et LayerManager]
         I[Molette, touches, tactile] --> S

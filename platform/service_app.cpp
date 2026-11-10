@@ -11,8 +11,8 @@
 
 #include "evo_log.hpp"
 #include "evo_spp_snapshot.hpp"
-#include "evo_trial_wireless.hpp"
 #include "service_contract.hpp"
+#include "spp_advertisement.hpp"
 
 namespace evo {
 
@@ -134,7 +134,7 @@ bool ServiceApp::refreshAdvertisementIfIdle(bool service, SppSnapshotReader& rea
     bool idle = !tcpPreparing && !session.isActive() && (service || (!sppLinks && !tcpLinks));
     pthread_mutex_unlock(&mu);
     if (idle) {
-        failed = !refreshTrialAdvertisement(bt, reader);
+        failed = !refreshAdvertisement(bt, reader);
     }
     pthread_mutex_unlock(&connectMu);
     return !failed;
