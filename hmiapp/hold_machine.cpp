@@ -48,7 +48,7 @@ void HoldMachine::say(const char* fmt, ...) {
 }
 
 // ---- the car --------------------------------------------------------------------------------------------------------
-void HoldMachine::callChanged(bool inCall, time_t now) {
+void HoldMachine::callChanged(bool inCall, long now) {
     if (inCall_ && !inCall) {
         callEnd_ = now;
     }
@@ -59,12 +59,12 @@ void HoldMachine::gearChanged(int gear) {
     gear_ = gear;
 }
 
-void HoldMachine::driveModeChanged(time_t now) {
+void HoldMachine::driveModeChanged(long now) {
     driveModeAt_ = now;
 }
 
 // ---- events 52 and 51 -----------------------------------------------------------------------------------------------
-void HoldMachine::fireHold(const char* why, time_t now) {
+void HoldMachine::fireHold(const char* why, long now) {
     if (holdTries_ >= kMaxHoldTries) {
         say("hold: not entering state %u (%s): already tried %d times", kAaState, why, holdTries_);
         return;
@@ -81,7 +81,7 @@ void HoldMachine::fireHold(const char* why, time_t now) {
 // screen with the knob reaching both, or steps aside after three refusals. Both were seen on the car, and the same is
 // reported on NBT Evo after an automatic start. What the driver does by hand works: our menu first (event 51), whose
 // focus asks for the blank state at once (menuFocus).
-void HoldMachine::holdViaMenu(const char* why, time_t now) {
+void HoldMachine::holdViaMenu(const char* why, long now) {
     ++menuRouteTries_;
     aaSeen_ = false;
     holdTime_ = now;
@@ -92,7 +92,7 @@ void HoldMachine::holdViaMenu(const char* why, time_t now) {
 // ---- the app's own requests -----------------------------------------------------------------------------------------
 // Android Auto comes to the front: iDrive goes to the blank state at once, not at the next status poll, so the knob
 // never reaches the screen underneath (entry button and the menu's Open row).
-void HoldMachine::showAndHold(const char* why, time_t now) {
+void HoldMachine::showAndHold(const char* why, long now) {
     io_.send("show");
     prevOverlay_ = false;  // the coming overlay is new
     holding_ = true;
@@ -111,13 +111,13 @@ void HoldMachine::requestShow() {
 // NAV / MEDIA / COM / steering wheel phone opened an Android Auto app (service file, written within the last 2 s):
 // iDrive switched to its own navigation / media / phone screen underneath Android Auto; put it back on our blank
 // state at once, so the knob does not act on that hidden screen.
-bool HoldMachine::appKeyRecent(time_t now) {
-    time_t written = 0;
-    return io_.appKeyWritten(&written) && now - written <= kAppKeyS;
+bool HoldMachine::appKeyRecent() {
+    long age = 0;
+    return io_.appKeyAge(&age) && age <= kAppKeyS;
 }
 
-bool HoldMachine::keepForAppKey(const char* why, time_t now) {
-    if (!appKeyRecent(now) || inCall_ || gear_ == kReverseGear) {
+bool HoldMachine::keepForAppKey(const char* why, long now) {
+    if (!appKeyRecent() || inCall_ || gear_ == kReverseGear) {
         return false;
     }
     const ServiceState d = io_.readService();
@@ -147,7 +147,7 @@ void HoldMachine::aaFocus(bool focused) {
     say("hold: state %u focus -> %d", kAaState, static_cast<int>(focused));
 }
 
-void HoldMachine::aaVisible(bool visible, time_t now) {
+void HoldMachine::aaVisible(bool visible, long now) {
     aaVisible_ = visible;
     if (visible) {
         aaSeen_ = true;
@@ -169,7 +169,7 @@ void HoldMachine::aaVisible(bool visible, time_t now) {
     }
 }
 
-void HoldMachine::menuFocus(unsigned state, bool focused, time_t now, long nowMs) {
+void HoldMachine::menuFocus(unsigned state, bool focused, long now, long nowMs) {
     menuFocused_ = focused;
     if (focused) {
         aaFocused_ = false;
@@ -204,7 +204,7 @@ void HoldMachine::tellService(const ServiceState& service) {
 }
 
 // iDrive popup over our blank state: the service steps aside so the driver sees it (hmiapp/popup_peek.hpp).
-void HoldMachine::updatePopupPeek(bool covered, time_t now) {
+void HoldMachine::updatePopupPeek(bool covered, long now) {
     const PopupPeek::Action a = popup_.step(covered, now, driveModeAt_);
     if (a == PopupPeek::kStart) {
         io_.send("popup 1");
@@ -216,7 +216,7 @@ void HoldMachine::updatePopupPeek(bool covered, time_t now) {
 }
 
 // Status poll (1 s). service.onScreen(): Android Auto is on screen (knob and touch go to the phone).
-void HoldMachine::poll(const ServiceState& service, time_t now) {
+void HoldMachine::poll(const ServiceState& service, long now) {
     const bool overlay = service.onScreen();
     const bool rose = overlay && !prevOverlay_, fell = !overlay && prevOverlay_;
     prevOverlay_ = overlay;

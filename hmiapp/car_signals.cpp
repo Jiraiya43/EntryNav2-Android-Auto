@@ -5,11 +5,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "../platform/service_contract.hpp"
 #include "app_log.hpp"
 #include "cds_parse.hpp"
+#include "mono_clock.hpp"
 #include "service_link.hpp"
 
 namespace evo {
@@ -56,7 +56,7 @@ bool onCallStatus(int line, const bmw::BasicString<unsigned short>& value) {
     bool active = aa::cdsCallActive(text);
     bool was = callActive();
     g_callLine[line] = active;
-    g_hold->callChanged(callActive(), time(nullptr));
+    g_hold->callChanged(callActive(), monoSeconds());
     alog("CDS %s = '%s' -> %s", kCallProps[line], text, active ? "in a call" : "idle");
     if (was != callActive()) {
         sendToService(callActive() ? "call 1" : "call 0");  // phone keys follow iDrive's call
@@ -98,11 +98,6 @@ bool onDayNightChanged(void*, const bmw::BasicString<unsigned short>& value) {
 // ---- driving mode ---------------------------------------------------------------------------------------------------
 int g_lastDriveMode[2] = {-1000, -1000};
 long g_driveModeSubAt = -1;
-long monoSec() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return static_cast<long>(ts.tv_sec);
-}
 bool onDriveMode(int prop, const bmw::BasicString<unsigned short>& value) {
     char text[160];
     narrow(value, text, sizeof(text));
@@ -117,7 +112,7 @@ bool onDriveMode(int prop, const bmw::BasicString<unsigned short>& value) {
     const bool valid = v >= 0 && v != invalid;
     // A change between two valid modes, or a first valid value well after subscribing (some variants send none).
     const bool change = valid && ((was >= 0 && was != invalid) ||
-                                  (was < 0 && g_driveModeSubAt >= 0 && monoSec() - g_driveModeSubAt >= 5));
+                                  (was < 0 && g_driveModeSubAt >= 0 && monoSeconds() - g_driveModeSubAt >= 5));
     if (!change) {
         return true;
     }
@@ -125,7 +120,7 @@ bool onDriveMode(int prop, const bmw::BasicString<unsigned short>& value) {
     snprintf(msg, sizeof(msg), "drivemode %d", v);
     sendToService(msg);
     alog("drive mode change -> service (%s)", msg);
-    g_hold->driveModeChanged(time(nullptr));
+    g_hold->driveModeChanged(monoSeconds());
     return true;
 }
 bool onDriveMode0(void*, const bmw::BasicString<unsigned short>& v) {
@@ -147,7 +142,7 @@ void subscribeCarSignals(bmw::PluginApp* app, HoldMachine& hold) {
     }
     addCdsHandler(app, kDayNightProperty, &onDayNightChanged);
     alog("CDS handler for %s registered", kDayNightProperty);
-    g_driveModeSubAt = monoSec();
+    g_driveModeSubAt = monoSeconds();
     for (int i = 0; i < 2; ++i) {
         addCdsHandler(app, kDriveModeProps[i], i == 0 ? &onDriveMode0 : &onDriveMode1);
         alog("CDS handler for %s registered", kDriveModeProps[i]);

@@ -34,11 +34,11 @@
 //   would come up over the camera).
 //
 // Pure: no BMW call, no file, no clock. Events and the time come in; iDrive events, control messages and log lines go
-// out through HoldIo. Single-threaded (the app thread). tests/test_hold_machine.cpp.
+// out through HoldIo. Every time is in seconds since the head unit started (hmiapp/mono_clock.hpp), never the date:
+// the car sets its date from the GPS, which would stretch or cut the delays below. Single-threaded (the app thread).
+// tests/test_hold_machine.cpp.
 #ifndef ENTRY_AAD_HMIAPP_HOLD_MACHINE_HPP
 #define ENTRY_AAD_HMIAPP_HOLD_MACHINE_HPP
-
-#include <time.h>
 
 #include "popup_peek.hpp"
 #include "service_state.hpp"
@@ -58,7 +58,7 @@ public:
     // Read only when a decision needs them, at that moment: the service's state (reading it may ask its control port),
     // and the app key file the service writes when NAV / MEDIA / COM opened an Android Auto app.
     virtual ServiceState readService() = 0;
-    virtual bool appKeyWritten(time_t* when) = 0;  // false: no app key file
+    virtual bool appKeyAge(long* seconds) = 0;  // how long ago the file was written; false: no app key file
     virtual void removeAppKey() = 0;
 
 protected:
@@ -79,24 +79,24 @@ public:
     explicit HoldMachine(HoldIo& io);
 
     // ---- the car (CDS properties) ----
-    void callChanged(bool inCall, time_t now);  // after each update of either phone line
+    void callChanged(bool inCall, long now);  // after each update of either phone line
     void gearChanged(int gear);
-    void driveModeChanged(time_t now);  // a real change between two valid driving modes
+    void driveModeChanged(long now);  // a real change between two valid driving modes
 
     // ---- the app's own requests ----
-    void showAndHold(const char* why, time_t now);  // Open row, entry button: Android Auto to the front, blank at once
+    void showAndHold(const char* why, long now);  // Open row, entry button: Android Auto to the front, blank at once
     void requestShow();  // Android Auto to the front; the overlay that follows is new and held at the next poll
 
     // ---- iDrive's focus on the app's states ----
-    void aaFocus(bool focused);                                            // the blank state
-    void aaVisible(bool visible, time_t now);                              // the blank state
-    void menuFocus(unsigned state, bool focused, time_t now, long nowMs);  // the menu or Help; nowMs: monotonic
+    void aaFocus(bool focused);                                          // the blank state
+    void aaVisible(bool visible, long now);                              // the blank state
+    void menuFocus(unsigned state, bool focused, long now, long nowMs);  // the menu or Help; nowMs: milliseconds
 
     // ---- the status poll, every second, with the service's state just read ----
     // First: tells a (re)started service, or one whose phone just connected, the call and the gear.
     void tellService(const ServiceState& service);
     // Then, once the menu rows are up to date: the hold itself.
-    void poll(const ServiceState& service, time_t now);
+    void poll(const ServiceState& service, long now);
 
     bool holding() const { return holding_; }
     // The blank state is shown: iDrive gives the focus to one of our states at a time, the last one to take it wins,
@@ -105,11 +105,11 @@ public:
     bool popupPeek() const { return popup_.active(); }
 
 private:
-    void fireHold(const char* why, time_t now);
-    void holdViaMenu(const char* why, time_t now);
-    bool appKeyRecent(time_t now);
-    bool keepForAppKey(const char* why, time_t now);
-    void updatePopupPeek(bool covered, time_t now);
+    void fireHold(const char* why, long now);
+    void holdViaMenu(const char* why, long now);
+    bool appKeyRecent();
+    bool keepForAppKey(const char* why, long now);
+    void updatePopupPeek(bool covered, long now);
     void say(const char* fmt, ...) __attribute__((format(printf, 2, 3)));
 
     HoldIo& io_;
@@ -126,19 +126,19 @@ private:
     bool aaSeen_;         // the blank state was seen since the last event 51 or 52
     bool holdGaveUp_;     // Android Auto stepped aside because iDrive never showed the blank state
     bool prevOverlay_;    // Android Auto was on screen at the previous poll
-    time_t holdTime_;     // last event 51 or 52
-    time_t holdShownAt_;  // when showAndHold asked for the blank state before Android Auto confirmed
+    long holdTime_;       // last event 51 or 52
+    long holdShownAt_;    // when showAndHold asked for the blank state before Android Auto confirmed
     int holdTries_;       // events 52 since the blank state last showed
     int menuRouteTries_;  // events 51 since the blank state last showed
     int unfocusedPolls_;  // polls with the blank state shown but unfocused
-    time_t leftSeen_;     // first poll that saw iDrive away from the blank state (hard key), 0: none
+    long leftSeen_;       // first poll that saw iDrive away from the blank state (hard key), 0: none
     long menuHoldMs_;     // last event 52 fired by our menu's focus
 
     // The car
     bool inCall_;
-    time_t callEnd_;  // when the last call ended, 0: handled
+    long callEnd_;  // when the last call ended, 0: handled
     int gear_;
-    time_t driveModeAt_;  // last driving mode change, 0: none
+    long driveModeAt_;  // last driving mode change, 0: none
 
     // The service, as told about the car
     bool serviceReachable_;

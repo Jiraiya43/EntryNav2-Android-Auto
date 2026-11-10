@@ -41,7 +41,7 @@ int g_failures = 0;
 
 class Recorder : public HoldIo {
 public:
-    Recorder() : appKey(false), appKeyAt(0), reads(0) {}
+    Recorder() : appKey(false), appKeyAt(0), now(nullptr), reads(0) {}
     void triggerEvent(unsigned event) override {
         char text[16];
         snprintf(text, sizeof(text), "event %u", event);
@@ -53,11 +53,11 @@ public:
         ++reads;
         return service;
     }
-    bool appKeyWritten(time_t* when) override {
+    bool appKeyAge(long* seconds) override {
         if (!appKey) {
             return false;
         }
-        *when = appKeyAt;
+        *seconds = *now - appKeyAt;
         return true;
     }
     void removeAppKey() override {
@@ -69,7 +69,8 @@ public:
     std::vector<std::string> logs;
     ServiceState service;
     bool appKey;
-    time_t appKeyAt;
+    long appKeyAt;    // when the service wrote the file, on the car's clock below
+    const long* now;  // that clock
     int reads;
 };
 
@@ -77,10 +78,10 @@ public:
 struct Car {
     Recorder io;
     HoldMachine hold;
-    time_t now;  // wall clock, seconds
-    long ms;     // monotonic clock, milliseconds
+    long now;  // seconds since the head unit started
+    long ms;   // the same clock, milliseconds
 
-    Car() : hold(io), now(1000), ms(50000) {}
+    Car() : hold(io), now(1000), ms(50000) { io.now = &now; }
 
     // The status poll, a second after the previous one, with the service as it is now.
     void poll() {
@@ -633,7 +634,31 @@ void serviceRestart() {
 
 }  // namespace
 
+// The machine counts in seconds since the head unit started, never with the date (which the GPS sets while driving):
+// right after a start, when that clock is still close to 0, every delay holds.
+void shortlyAfterStart() {
+    Car c;
+    c.now = 1;
+    c.ms = 1000;
+    heldOnBlank(c);
+    c.blankLeft();  // a hard key
+    c.poll();
+    CHECK_OUT(c, "");
+    c.poll();
+    CHECK_OUT(c, "hide");
+    {  // an app key file written a second ago, as the app reports its age
+        Car d;
+        d.now = 1;
+        heldOnBlank(d);
+        d.io.appKey = true;
+        d.io.appKeyAt = d.now - 1;
+        d.blankLeft();
+        CHECK_OUT(d, "app key removed, event 52");
+    }
+}
+
 int main() {
+    shortlyAfterStart();
     manualOpen();
     openButNeverCame();
     automaticStartOverIdriveScreen();

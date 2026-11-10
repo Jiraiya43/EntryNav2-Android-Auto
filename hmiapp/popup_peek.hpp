@@ -7,8 +7,6 @@
 #ifndef ENTRY_AAD_HMIAPP_POPUP_PEEK_HPP
 #define ENTRY_AAD_HMIAPP_POPUP_PEEK_HPP
 
-#include <time.h>
-
 class PopupPeek {
 public:
     enum Action { kNone = 0, kStart = 1, kEnd = -1 };
@@ -16,9 +14,10 @@ public:
 
     PopupPeek() : peek_(false), decided_(false) {}
 
-    // Once per status poll. covered = iDrive holds the focus over our visible state while Android Auto is on screen.
-    // One decision per covered span: a popup still open when the time limit ends does not take the picture again.
-    Action step(bool covered, time_t now, time_t lastDriveMode) {
+    // Once per status poll; times in seconds since the head unit started. covered = iDrive holds the focus over our
+    // visible state while Android Auto is on screen. One decision per covered span: a popup still open when the time
+    // limit ends does not take the picture again.
+    Action step(bool covered, long now, long lastDriveMode) {
         if (!covered) {
             decided_ = false;
             if (!peek_) {
