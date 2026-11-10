@@ -11,8 +11,9 @@ CREDITS = "## Credits"
 HEADER = "SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0"
 SOURCE_DIRS = ("core", "platform", "hmiapp", "tools", "tests")
 SUFFIXES = {".c", ".cpp", ".h", ".hpp", ".py", ".sh"}
-# Files that keep the notice of where they come from.
-THIRD_PARTY = {"core/include/dhu_sdp.h"}
+# Data this project did not write: these files say where they come from instead of carrying the project's notice.
+THIRD_PARTY = {"core/include/dhu_sdp.h", "core/include/hu_certificate.h"}
+ORIGIN = "Not written by this project"
 
 
 def source_files():
@@ -42,6 +43,9 @@ def main():
     ]
     if missing:
         raise SystemExit("FAIL: no licence header in " + ", ".join(missing))
+    unsigned = [name for name in sorted(THIRD_PARTY) if ORIGIN not in (ROOT / name).read_text(encoding="utf-8")[:600]]
+    if unsigned:
+        raise SystemExit("FAIL: no origin stated in " + ", ".join(unsigned))
     print("PASS: LICENSE.md in order with its credits, every source file has its licence header")
 
 

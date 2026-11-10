@@ -16,7 +16,8 @@ Merci de votre intérêt ! Le plus utile, par ordre :
 - **Le mot de passe de la voiture.** Rangé dans `.secrets/hu-password.txt` (ignoré par git), `tools/verify_repo.py` le
   cherche dans chaque commit envoyé pour vérifier qu'il n'a fuité nulle part.
 - **Les fichiers BMW** : la copie du système de la voiture, ses bibliothèques, journaux et captures. Les tests qui en ont
-  besoin les lisent dans `~/entrynav2/rootfs`, hors du dépôt.
+  besoin les lisent dans `~/entrynav2/rootfs`, hors du dépôt. Seule exception : les quelques relevés courts de
+  `tests/fixtures/`, dont l'origine est notée dans [tests/fixtures/README.md](tests/fixtures/README.md).
 - **Les données personnelles** : numéro de série de la voiture (VIN), adresses Bluetooth et Wi-Fi, positions GPS.
 - **Les programmes compilés.**
 
