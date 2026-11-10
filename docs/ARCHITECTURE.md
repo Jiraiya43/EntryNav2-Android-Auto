@@ -84,6 +84,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `app_guards` | Interrupteur, garde-fou contre les plantages, démarrage automatique |
 | `app_log`, `log_profile.hpp` | Journal de l'appli, profil maintenance |
 | `popup_peek.hpp`, `cds_parse.hpp` | Fenêtres de l'iDrive par-dessus Android Auto, lecture des données de l'iDrive |
+| `mono_clock.hpp` | Temps écoulé depuis le démarrage de l'unité, pour les délais |
 | `EntryAad.xml`, `EntryAad.manifest`, `res/`, `make_db.py` | Écrans, textes et images de l'appli |
 
 ## `tools/` : supervision et outils

@@ -36,6 +36,7 @@
 #include "bmw_framework.hpp"
 #include "car_signals.hpp"
 #include "hold_machine.hpp"
+#include "mono_clock.hpp"
 #include "rhmi_ids.hpp"
 #include "service_link.hpp"
 #include "service_state.hpp"
@@ -63,12 +64,13 @@ public:
     void send(const char* message) override { sendToService(message); }
     void log(const char* line) override { alog("%s", line); }
     ServiceState readService() override { return readServiceState(); }
-    bool appKeyWritten(time_t* when) override {
+    // The one delay read from a date, the file's: 2 s, between the service writing it and this app seeing it.
+    bool appKeyAge(long* seconds) override {
         struct stat st;
         if (stat(contract::kAppKeyFile, &st) != 0) {
             return false;
         }
-        *when = st.st_mtime;
+        *seconds = static_cast<long>(time(nullptr) - st.st_mtime);
         return true;
     }
     void removeAppKey() override { unlink(contract::kAppKeyFile); }
@@ -76,24 +78,18 @@ public:
 AppHoldIo g_holdIo;
 HoldMachine g_hold(g_holdIo);
 
-long monoMsNow() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return static_cast<long>(ts.tv_sec) * 1000 + ts.tv_nsec / 1000000;
-}
-
 // iDrive's focus on the blank state, our menu or its Help page, handed to the hold machine.
 bool onAaFocus(void*, const bmw::Parcel& p) {
     g_hold.aaFocus(parcelBool(p));
     return true;
 }
 bool onAaVisible(void*, const bmw::Parcel& p) {
-    g_hold.aaVisible(parcelBool(p), time(nullptr));
+    g_hold.aaVisible(parcelBool(p), monoSeconds());
     return true;
 }
 bool menuFocus(unsigned state, const bmw::Parcel& p) {
     const bool focused = parcelBool(p);
-    g_hold.menuFocus(state, focused, time(nullptr), monoMsNow());
+    g_hold.menuFocus(state, focused, monoSeconds(), monoMs());
     return true;
 }
 bool onMenuFocus(void*, const bmw::Parcel& p) {
@@ -183,7 +179,7 @@ bool onStartRow(void*, const bmw::Parcel&) {
     // Connected: the row reads "Open Android Auto". Same path as the direct entry button (entry-direct), validated on
     // the car.
     if (readyToShow(readServiceState())) {
-        g_hold.showAndHold("Open row", time(nullptr));
+        g_hold.showAndHold("Open row", monoSeconds());
         return true;
     }
     startServiceOrShow();
@@ -207,7 +203,7 @@ bool onEntry(void* self, const bmw::Parcel&) {
     ServiceState d = readServiceState();
     alog("entry: Android Auto selected (service %s, pid %d)", d.state, d.pid);
     if (access(contract::kEntryDirect, F_OK) == 0 && readyToShow(d)) {
-        g_hold.showAndHold("entry button", time(nullptr));
+        g_hold.showAndHold("entry button", monoSeconds());
         return true;
     }
     app->triggerEvent(kEvOpenMenu);
@@ -275,7 +271,7 @@ void statusRun(void*) {
         alog("start row text -> %u (%s)", row, d.state);
         g_shownRow = row;
     }
-    g_hold.poll(d, time(nullptr));
+    g_hold.poll(d, monoSeconds());
     postRunnable(app, g_statusRunnable, kStatusPollMs);
 }
 
