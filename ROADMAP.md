@@ -4,7 +4,7 @@ Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit p
 
 ## 0.10 : première version publique
 
-- [x] Contrôle de compatibilité sans rien modifier (`evo-trial --compat`)
+- [x] Contrôle de compatibilité sans rien modifier (`aa-supervisor --compat`)
 - [x] Procédure d'installation manuelle, répétée avec la BusyBox de la voiture
 - [ ] Procédure suivie de bout en bout sur la voiture de référence
 - [x] Essai de la 0.10.0 en profil maintenance sur la voiture de référence (10 novembre 2026)

@@ -10,7 +10,7 @@ namespace evo {
 
 enum InputMode { INPUT_OFF = 0, INPUT_OBSERVE = 1, INPUT_FORWARD = 2 };
 
-// --input forward | observe | off of entry-aad (set by evo-trial); null or empty = off; anything else: false.
+// --input forward | observe | off of entry-aad (set by aa-supervisor); null or empty = off; anything else: false.
 inline bool parseInputMode(const char* text, InputMode& mode) {
     if (!text || !*text || !strcmp(text, "off")) {
         mode = INPUT_OFF;

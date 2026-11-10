@@ -24,7 +24,7 @@ PLUGIN_FILES = (
     "EntryAad_ALL_Texts.zip",
     "EntryAad_ALL_Images.zip",
 )
-PROGRAMS = ("entry-aad", "evo-trial")
+PROGRAMS = ("entry-aad", "aa-supervisor")
 EXECUTABLES = {f"opt/aa/{name}" for name in PROGRAMS} | {f"{PLUGIN}/libEntryAad.so"}
 
 

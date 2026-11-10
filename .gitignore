@@ -46,7 +46,7 @@ __pycache__/
 /tools/*
 !/tools/evo_capture.cpp
 !/tools/evo_check.cpp
-!/tools/evo_trial.cpp
+!/tools/aa_supervisor.cpp
 !/tools/format_sources.py
 !/tools/package_release.py
 !/tools/verify_binary.py

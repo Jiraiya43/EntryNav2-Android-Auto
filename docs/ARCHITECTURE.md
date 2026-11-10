@@ -7,7 +7,7 @@ Trois programmes tournent sur l'unité, une seule machine ARMv7 sous Linux (noya
 | Programme | Emplacement | Rôle |
 |---|---|---|
 | `libEntryAad.so` | `/opt/hmi/data/ro/Plugins/EntryAad` | Appli chargée par `HmiMain3D` : ligne du menu Media, menu, focus, garde-fou |
-| `evo-trial` | `/opt/aa` | Superviseur : prépare le Bluetooth et le Wi-Fi, lance le service, rend le Bluetooth à la fin. `--compat` répète le démarrage à blanc pour le contrôle de compatibilité |
+| `aa-supervisor` | `/opt/aa` | Superviseur : prépare le Bluetooth et le Wi-Fi, lance le service, rend le Bluetooth à la fin. `--compat` répète le démarrage à blanc pour le contrôle de compatibilité |
 | `entry-aad` | `/opt/aa` | Service Android Auto |
 
 Le dossier `/var/local` interdit l'exécution : les programmes doivent aller sur le système, en lecture seule le reste du
@@ -91,7 +91,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 
 | Fichier | Rôle |
 |---|---|
-| `evo_trial.cpp` | Le superviseur `evo-trial` ; `--compat` répète le démarrage à blanc pour le contrôle de compatibilité |
+| `aa_supervisor.cpp` | Le superviseur `aa-supervisor` ; `--compat` répète le démarrage à blanc pour le contrôle de compatibilité |
 | `package_release.py` | L'archive d'une version, à copier dans la voiture ([installation](INSTALLATION.md)) |
 | `verify_*.py`, `format_sources.py` | Contrôles du dépôt, des programmes ARM et du style |
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Jiraiya43
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-// The app's side of the service: starting the supervisor /opt/aa/evo-trial from inside HmiMain3D, its control
+// The app's side of the service: starting the supervisor /opt/aa/aa-supervisor from inside HmiMain3D, its control
 // messages (UDP on 127.0.0.1), the state the service writes, and the stop sequence.
 //
 // The supervisor borrows the car's Bluetooth, runs the service entry-aad and gives the Bluetooth back when it ends.

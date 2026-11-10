@@ -49,7 +49,7 @@ struct VmostMsgOut {
 // Read-only request (Get, OpType 1). data/len: its parameters (none for a plain property).
 void buildVmostGet(VmostMsgOut& m, uint8_t fblock, uint8_t inst, uint16_t fkt, const uint8_t* data, uint16_t len = 0);
 
-// The library and every function this program calls, which the compatibility check looks for (evo-trial --compat).
+// The library and every function this program calls, which the compatibility check looks for (aa-supervisor --compat).
 const char kVmostLibrary[] = "libvmostclient.so.1";
 const char* const kVmostFunctions[] = {
     "vmostConnect",           "vmostFblockShadowRegister", "vmostFblockShadowDeregister",

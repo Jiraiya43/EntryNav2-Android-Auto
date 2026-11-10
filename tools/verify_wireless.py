@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 from verify_binary import check_arm_elf, check_help  # noqa: E402
 
 # Each released program, with a word its --help must print.
-RELEASE_PROGRAMS = (("entry-aad", "--run"), ("evo-trial", "--service"))
+RELEASE_PROGRAMS = (("entry-aad", "--run"), ("aa-supervisor", "--service"))
 
 
 def main():

@@ -33,9 +33,9 @@
 #include "evo_ilm.hpp"
 #include "evo_log.hpp"
 #include "evo_spp_snapshot.hpp"
-#include "evo_trial_state.hpp"
 #include "evo_wlan.hpp"
 #include "service_contract.hpp"
+#include "spp_baseline.hpp"
 #include "vmost_client.hpp"
 
 extern char** environ;
@@ -74,8 +74,10 @@ std::vector<uint8_t> aaPayload() {
     return evo::buildSetUuidPayload(u, u);
 }
 std::string hex(const std::vector<uint8_t>& bytes) {
-    return evo::trialUuidPairHex(bytes);
+    return evo::uuidPairHex(bytes);
 }
+// The saved state starts with its format name, kept as first written: a state saved by one version must still be
+// restored by the next.
 bool load(Baseline& b) {
     struct stat st;
     if (lstat(journal, &st) || !S_ISREG(st.st_mode) || st.st_uid != getuid() || st.st_size > 512) {
@@ -98,7 +100,7 @@ bool load(Baseline& b) {
         }
         b.uuid.push_back(static_cast<uint8_t>(value));
     }
-    return evo::trialBaselineSupported(b.uuid);
+    return evo::baselineSupported(b.uuid);
 }
 bool save(const Baseline& b) {
     int fd = open(journal, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
@@ -270,7 +272,7 @@ bool preflight(evo::SppSnapshotReader& reader, Baseline& b) {
         ELOG("Supervisor", "preflight: instance 0 busy or changing: start refused; instance 1 left alone");
         return false;
     }
-    if (!evo::trialBaselineSupported(slot.uuidPayload)) {
+    if (!evo::baselineSupported(slot.uuidPayload)) {
         ELOG("Supervisor", "preflight: unknown original UUID pair: start refused before any change; keep this log");
         return false;
     }
@@ -364,7 +366,7 @@ int compatReport() {
         compatLine("block", "alps", reader.error());
     } else {
         compatLine(slot.idle() ? "ok" : "warn", "alps");
-        compatLine(evo::trialBaselineSupported(slot.uuidPayload) ? "ok" : "block", "uuid", hex(slot.uuidPayload));
+        compatLine(evo::baselineSupported(slot.uuidPayload) ? "ok" : "block", "uuid", hex(slot.uuidPayload));
         evo::AlpsSppLink bt;
         bt.setMonitorOnly(true);
         std::vector<uint8_t> cfg;
@@ -409,7 +411,7 @@ int main(int argc, char** argv) {
     }
     if (argc != 2 || (!strcmp(argv[1], "--help"))) {
         puts(
-            "Usage: evo-trial --service | --compat | --recover\n"
+            "Usage: aa-supervisor --service | --compat | --recover\n"
             "  --service  started by the iDrive app: wireless Android Auto with no time limit, stopped by the app or\n"
             "             STOP; the BMW hotspot switched on as Apple CarPlay does when it is off\n"
             "  --compat   what a start would find on this car, changing nothing\n"

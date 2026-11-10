@@ -6,7 +6,7 @@
 # project on /work and a copy of the car's system on /sysroot (read-only). From the repository root:
 #   bash toolchain/tc.sh make <target>
 #
-#   all            what the car runs: entry-aad, evo-trial and hmiapp/libEntryAad.so (ARM)
+#   all            what the car runs: entry-aad, aa-supervisor and hmiapp/libEntryAad.so (ARM)
 #   dev-tools      evo-check and evo-capture, read-only diagnostics run by hand on the car (ARM, not installed)
 #   test-arm-all   every ARM program tests/run_qemu.py runs (ARM)
 #   test-host      the tests that run on the PC itself (host compiler, libdbus-1-dev, dbus, protoc, python3-protobuf)
@@ -42,12 +42,12 @@ DAEMON_SRC = platform/alps_spp.cpp platform/alps_spp_codec.cpp platform/evo_ap.c
              $(KOMBI_SRC) platform/evo_bmw_guidance.cpp platform/evo_pill.cpp \
              platform/peek_timing.cpp platform/wireless_loop.cpp platform/service_app.cpp platform/main.cpp
 DAEMON_OBJ = $(CORE_OBJ) $(DAEMON_SRC:.cpp=.o)
-TRIAL_OBJ = tools/evo_trial.o platform/evo_spp_snapshot.o platform/alps_spp.o platform/alps_spp_codec.o \
+SUPERVISOR_OBJ = tools/aa_supervisor.o platform/evo_spp_snapshot.o platform/alps_spp.o platform/alps_spp_codec.o \
             platform/evo_ilm.o platform/evo_process.o platform/evo_ap.o platform/evo_ap_config.o platform/evo_wlan.o \
             platform/vmost_client.o
 CHECK_OBJ = tools/evo_check.o platform/alps_spp.o platform/alps_spp_codec.o platform/evo_process.o
 CAPTURE_OBJ = tools/evo_capture.o
-ARM_OBJ = $(sort $(DAEMON_OBJ) $(PLATFORM_OBJ) $(TRIAL_OBJ) $(CHECK_OBJ) $(CAPTURE_OBJ))
+ARM_OBJ = $(sort $(DAEMON_OBJ) $(PLATFORM_OBJ) $(SUPERVISOR_OBJ) $(CHECK_OBJ) $(CAPTURE_OBJ))
 # The service's modules tests/test_wireless_lifecycle.cpp links around its fake Alps link and handshake.
 LIFECYCLE_OBJ = $(PLATFORM_OBJ) platform/evo_touch.o platform/evo_knob.o platform/vmost_client.o platform/evo_control.o \
                 platform/evo_mic.o platform/evo_pill.o $(KOMBI_OBJ) platform/evo_bmw_guidance.o platform/peek_timing.o
@@ -58,9 +58,9 @@ VIDEO_LIBS = -l:libxsvideo.so.4 -l:libdrm_omap.so.1 -l:libdrm.so.2 -lpthread -lr
         test-host test-parsers test-spp-host test-kombi-host test-gps-host test-capture-host test-touch-live \
         tests/evo-check-host test-arm-all test-pb-arm-build test-sdr-arm-build test-kombi-arm-build \
         test-session-silence-arm-build test-presentation-arm-build test-wireless-lifecycle-arm-build \
-        test-gps-arm-build test-trial-arm-build test-hmiapp-arm-build test-spawn-arm-build test-lm-cli-arm-build \
+        test-gps-arm-build test-supervisor-arm-build test-hmiapp-arm-build test-spawn-arm-build test-lm-cli-arm-build \
         test-phone-arm-build
-all: daemon evo-trial hmiapp
+all: daemon aa-supervisor hmiapp
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@
@@ -74,7 +74,7 @@ entry-aad: $(DAEMON_OBJ) $(PLATFORM_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDSHLIB) $(VIDEO_LIBS) \
 	    -l:libssl.so.1.0.0 -l:libcrypto.so.1.0.0 -l:libdbus-1.so.3 -ldl
 
-evo-trial: $(TRIAL_OBJ)
+aa-supervisor: $(SUPERVISOR_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDSHLIB) -l:libdbus-1.so.3 -lpthread -lrt -ldl
 
 # iDrive PluginApp (installed in /opt/hmi/data/ro/Plugins/EntryAad, loaded by HmiMain3D at boot). Its objects are
@@ -139,8 +139,8 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	if [ -f "$(SPP_FIXTURE_LIB)" ]; then ENTRY_AAD_FIXTURE_LIB="$(SPP_FIXTURE_LIB)" ./tests/test-evo-elf; else ./tests/test-evo-elf; fi
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_spp_snapshot.cpp platform/evo_spp_snapshot.cpp -o tests/test-spp-snapshot
 	if [ -f "$(SPP_FIXTURE_LIB)" ]; then ENTRY_AAD_FIXTURE_LIB="$(SPP_FIXTURE_LIB)" ./tests/test-spp-snapshot; else echo "SKIP test-spp-snapshot: no copy of the car system"; fi
-	$(HOST_CXX) $(HOST_FLAGS) tests/test_trial_recovery.cpp platform/alps_spp_codec.cpp -o tests/test-trial-recovery
-	./tests/test-trial-recovery
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_supervisor.cpp platform/alps_spp_codec.cpp -o tests/test-supervisor
+	./tests/test-supervisor
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_evo_ilm.cpp platform/evo_ilm.cpp platform/evo_process.cpp -o tests/test-evo-ilm
 	ENTRY_AAD_DIAGNOSTIC=./tests/evo-check-host ./tests/test-evo-ilm
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_video_presentation.cpp platform/evo_video.cpp -o tests/test-video-presentation
@@ -228,7 +228,7 @@ test-touch-live:
 # ---- ARM tests, run on the PC under QEMU with the car's libraries (tests/run_qemu.py) --------------------------------
 # test-spawn-attr-arm checks how the app starts the service from HmiMain3D with the HU's own glibc 2.15.
 test-arm-all: dev-tools test-pb-arm-build test-sdr-arm-build test-kombi-arm-build test-session-silence-arm-build \
-              test-presentation-arm-build test-wireless-lifecycle-arm-build test-gps-arm-build test-trial-arm-build \
+              test-presentation-arm-build test-wireless-lifecycle-arm-build test-gps-arm-build test-supervisor-arm-build \
               test-hmiapp-arm-build test-spawn-arm-build test-lm-cli-arm-build test-phone-arm-build
 
 test-pb-arm-build:
@@ -248,10 +248,10 @@ test-lm-cli-arm-build:
 test-gps-arm-build:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_evo_gps.cpp -o tests/test-evo-gps-arm $(LDSHLIB) -lrt
 
-test-trial-arm-build:
+test-supervisor-arm-build:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_spp_snapshot.cpp platform/evo_spp_snapshot.cpp -o tests/test-spp-snapshot-arm $(LDSHLIB)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_evo_elf.cpp -o tests/test-evo-elf-arm $(LDSHLIB)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_trial_recovery.cpp platform/alps_spp_codec.cpp -o tests/test-trial-recovery-arm $(LDSHLIB) -lrt
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_supervisor.cpp platform/alps_spp_codec.cpp -o tests/test-supervisor-arm $(LDSHLIB) -lrt
 
 test-kombi-arm-build: $(KOMBI_OBJ)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_kombi_phone.cpp platform/kombi_phone.o -o tests/test-kombi-phone-arm $(LDSHLIB)
@@ -291,7 +291,7 @@ test-wireless-lifecycle-arm-build: $(CORE_OBJ) $(LIFECYCLE_OBJ)
 	    -Wl,--gc-sections -o tests/test-wireless-lifecycle-arm $(LDSHLIB) $(VIDEO_LIBS) -l:libssl.so.1.0.0 -l:libcrypto.so.1.0.0 -l:libdbus-1.so.3 -ldl
 
 clean:
-	rm -f $(ARM_OBJ) $(ARM_OBJ:.o=.d) $(HMI_OBJ) $(HMI_OBJ:.o=.d) entry-aad evo-trial evo-check evo-capture \
+	rm -f $(ARM_OBJ) $(ARM_OBJ:.o=.d) $(HMI_OBJ) $(HMI_OBJ:.o=.d) entry-aad aa-supervisor evo-check evo-capture \
 	    hmiapp/libEntryAad.so hmiapp/EntryAad_ALL_Texts.zip hmiapp/EntryAad_ALL_Images.zip \
 	    tests/test-* tests/evo-check-host tests/*.so
 
