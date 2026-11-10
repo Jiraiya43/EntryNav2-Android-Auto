@@ -161,8 +161,18 @@ int main() {
     CHECK(aa::validCarModel("X3 M40i") && !aa::validCarModel("") && !aa::validCarModel(std::string(25, 'a')) &&
           !aa::validCarModel("a'b") && aa::validCarYear("1999") && !aa::validCarYear("999") &&
           !aa::validCarYear("3000"));
+    // The software version announced: the program's own when it gives one, "0.0.0" otherwise; nothing else moves.
+    const std::vector<uint8_t> unversioned =
+        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, nullptr);
+    const std::vector<uint8_t> versioned =
+        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, "12.34.56-rc.7");
+    const std::string plain(unversioned.begin(), unversioned.end()), named(versioned.begin(), versioned.end());
+    CHECK(plain.find("0.0.0") != std::string::npos && plain.find("12.34.56-rc.7") == std::string::npos);
+    CHECK(named.find("12.34.56-rc.7") != std::string::npos && named.find("0.0.0") == std::string::npos);
+    // Twice: at the top level and in the head unit info, 8 characters longer each time.
+    CHECK(named.find("12.34.56-rc.7") != named.rfind("12.34.56-rc.7") && versioned.size() >= unversioned.size() + 16);
     puts(
         "PASS capteurs AA : modele DHU reduit a NIGHT_MODE + DRIVING_STATUS (le telephone garde son GPS), canal 9 "
-        "toujours retire par le coeur, autres canaux identiques, fichier voiture (modele, annee)");
+        "toujours retire par le coeur, autres canaux identiques, fichier voiture (modele, annee), version annoncee");
     return 0;
 }

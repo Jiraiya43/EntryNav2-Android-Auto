@@ -53,6 +53,7 @@ AASession::AASession()
       running_(false),
       thread_(0),
       vehicleFile_(nullptr),
+      softwareVersion_(nullptr),
       videoReady_(false),
       mediaMessages_(0),
       microphoneChunks_(0) {

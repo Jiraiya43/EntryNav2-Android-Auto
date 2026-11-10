@@ -179,6 +179,7 @@ int main(int argc, char** argv) {
     evo::ServiceApp app(kAaPort, video, &quit);
     app.session.setTouchForwarding(input == evo::INPUT_FORWARD);
     app.session.setVehicleFile(evo::contract::kVehicle);  // the car's model and year, written at installation
+    app.session.setSoftwareVersion(ENTRY_AAD_VERSION);    // the file VERSION, given by the Makefile
     // Declared after app: destroyed (and joined) before the session their callbacks post to.
     evo::EvoTouch touch;
     evo::EvoKnob knob;

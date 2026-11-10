@@ -54,6 +54,9 @@ public:
     // The file holding the car's model and year (SdrIdentity::loadVehicleFile), read at each service discovery; kept
     // as given, so it must outlive the session. None by default: the reference car.
     void setVehicleFile(const char* path) { vehicleFile_ = path; }
+    // The program's version, announced to the phone as the head unit's software version; kept as given. None by
+    // default: "0.0.0".
+    void setSoftwareVersion(const char* version) { softwareVersion_ = version; }
 
     // Car input for the phone, from any thread: queued, then sent by the session thread.
     void postTouchEvent(const TouchEventOut& ev);
@@ -137,6 +140,7 @@ private:
     Callback<MicRequestCallback> microphone_;
     Callback<NavStatusCallback> navigation_;
     const char* vehicleFile_;
+    const char* softwareVersion_;
 
     CarInbox inbox_;
     // Session thread only.

@@ -168,8 +168,8 @@ void AASession::onTlsHandshake(const Message& message) {
 // The description of this car: Google's Desktop Head Unit template, adapted by core/sdr_builder.cpp.
 void AASession::onDiscovery() {
     printf("[AASession] >>> Received ServiceDiscoveryRequest from phone! Sending ServiceDiscoveryResponse...\n");
-    const Message response =
-        message::discoveryResponse(buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, vehicleFile_));
+    const Message response = message::discoveryResponse(
+        buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, vehicleFile_, softwareVersion_));
     if (sendSealed(channel::kControl, response)) {
         printf("[AASession] >>> Sent ServiceDiscoveryResponse (%u bytes)\n", static_cast<unsigned>(response.size()));
     }
