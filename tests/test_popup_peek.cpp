@@ -25,7 +25,7 @@ int main() {
     {  // a long popup does not take the picture again once its time is over; a new span does
         PopupPeek p;
         assert(p.step(true, 300, 0) == PopupPeek::kStart);
-        for (time_t t = 301; t < 370; ++t) {
+        for (long t = 301; t < 370; ++t) {
             assert(p.step(true, t, 0) == PopupPeek::kNone);
         }
         assert(p.step(false, 370, 0) == PopupPeek::kEnd);
