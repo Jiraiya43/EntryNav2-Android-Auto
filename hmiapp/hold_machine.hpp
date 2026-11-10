@@ -28,7 +28,8 @@
 // - Open row, but Android Auto never came up (session dropped): after 3 s on the blank state, event 51 (menu back).
 // - iDrive back on the blank state by itself while Android Auto is minimized (BACK walks its history): "show", like
 //   CarPlay.
-// - Reverse gear: the camera wins. No popup peek, no "show", no hard key step aside, no app key hold.
+// - Reverse gear: the camera wins. No popup peek, no "show", no hard key step aside, no app key hold, no event 52
+//   for a lost focus.
 // - Phone call: iDrive's call screen is not fought; when the call ends, event 52 within 10 s.
 // - Service (re)started, or phone connected: it is told the call and the gear again (started in reverse, Android Auto
 //   would come up over the camera).
