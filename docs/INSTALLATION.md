@@ -18,15 +18,18 @@ voiture.
   dont l'empreinte SHA-256 correspond au fichier `.sha256` publié à côté, ou fabriquée par `tools/package_release.py`
   ([compiler](../README.fr.md#compiler)).
 
-Dans les commandes ci-dessous, `0.10.0` est à remplacer par la version installée, et `169.254.1.0` par l'adresse de
+Dans les commandes ci-dessous, `0.12.0-rc.1` est à remplacer par la version installée, et `169.254.1.0` par l'adresse de
 l'unité si elle diffère : c'est celle de la voiture de référence sur le câble ENET.
+
+Cette page décrit la version en cours. Chaque archive contient sa propre `INSTALLATION.md` : pour une version plus
+ancienne, suivre celle de l'archive (dans la 0.10.0, le superviseur s'appelle `evo-trial` et non `aa-supervisor`).
 
 ## 1. Copier l'archive dans la voiture
 
 Depuis le PC, dans le dossier de l'archive :
 
 ```sh
-scp entry-aad-0.10.0-armhf.tar root@169.254.1.0:/tmp/
+scp entry-aad-0.12.0-rc.1-armhf.tar root@169.254.1.0:/tmp/
 ssh root@169.254.1.0
 ```
 
@@ -38,7 +41,7 @@ encore écrit sur la mémoire flash.
 Rien n'est modifié pendant cette étape.
 
 ```sh
-cd /tmp && rm -rf entry-aad-0.10.0 && tar -xf entry-aad-0.10.0-armhf.tar && cd entry-aad-0.10.0
+cd /tmp && rm -rf entry-aad-0.12.0-rc.1 && tar -xf entry-aad-0.12.0-rc.1-armhf.tar && cd entry-aad-0.12.0-rc.1
 md5sum -c MD5SUMS
 head -n 1 /etc/version
 df -k /
@@ -81,7 +84,7 @@ chmod 755 /opt/aa/entry-aad /opt/aa/aa-supervisor /opt/hmi/data/ro/Plugins/Entry
 touch /opt/aa/.installed-by-entryaad /opt/hmi/data/ro/Plugins/EntryAad/.installed-by-entryaad
 sync
 mount -o remount,ro /
-cd / && md5sum -c /tmp/entry-aad-0.10.0/MD5SUMS
+cd / && md5sum -c /tmp/entry-aad-0.12.0-rc.1/MD5SUMS
 ```
 
 - `rm -f` avant la copie : l'iDrive garde l'ancienne appli en mémoire jusqu'à son redémarrage, et un fichier effacé puis
@@ -100,7 +103,7 @@ mkdir -p /var/local/data/AA && printf 'model=320d\nyear=2020\n' > /var/local/dat
 Puis redémarrer l'unité :
 
 ```sh
-rm -rf /tmp/entry-aad-0.10.0 /tmp/entry-aad-0.10.0-armhf.tar
+rm -rf /tmp/entry-aad-0.12.0-rc.1 /tmp/entry-aad-0.12.0-rc.1-armhf.tar
 reboot
 ```
 

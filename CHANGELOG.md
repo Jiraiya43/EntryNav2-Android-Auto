@@ -8,11 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
-## [0.11.0-rc.2] - 2026-11-11 · voiture
+## [0.12.0-rc.1] - 2026-11-11 · voiture
 
 Version candidate, **essayée en voiture** sur une BMW G20 : Android Auto démarre en sans-fil comme par câble USB.
 Restent à confirmer par câble : la tenue sur un long trajet, le débranchement en cours de route, et d'autres
-téléphones et voitures. Les changements de la 0.11.0-rc.1 sont inclus.
+téléphones et voitures. Les changements de la 0.11.0-rc.1 sont inclus ; la 0.11.0 ne sortira pas à part.
 
 ### Ajouté
 
@@ -74,7 +74,7 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.11.0-rc.2...HEAD
-[0.11.0-rc.2]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.2
+[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.12.0-rc.1...HEAD
+[0.12.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.1
 [0.11.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.1
 [0.10.0]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.10.0
