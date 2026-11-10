@@ -8,6 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Modifié
+
+- Origine des données venues d'ailleurs (certificat Android Auto, description du DHU de Google, images d'attente,
+  relevés de la voiture) notée dans les fichiers et dans la licence. Les programmes sont inchangés.
+
 ## [0.10.0] - 2026-11-10 · voiture
 
 Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `202111011321`.

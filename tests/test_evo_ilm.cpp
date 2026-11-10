@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
     setenv("EVO_TEST_ORDER", "0x101, 0x102", 1);
     evo::EvoIlm ilm(self, plainConf);  // standard GENIVI order: last = top
     CHECK(ilm.renderOrderTopFirst(topFirst) && !topFirst);
-    setenv("EVO_TEST_SCENE_DIR", "tests/fixtures/ilm-20261101", 1);
+    setenv("EVO_TEST_SCENE_DIR", "tests/fixtures/ilm-scene", 1);
     CHECK(ilm.validateTarget(0x7eaa0001, 0x80000000, 1280, 480));
     CHECK(!ilm.validateTarget(0x30002, 0x80000000, 1280, 480));  // occupied on another layer
     CHECK(!ilm.validateTarget(0x7eaa0001, 0x3000, 1280, 480));   // absent from screen order

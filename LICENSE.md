@@ -79,3 +79,16 @@ The **licensor** is the individual or entity offering these terms, and the **sof
 entry-aad started as a port of [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto) by
 Sq00ky, then was reworked and extended for the BMW EntryNav2 head unit. Thanks to Sq00ky for that work and for agreeing
 to its distribution under the terms above.
+
+### Material from others
+
+A few files hold data this project did not write. The copyright notice above does not claim them:
+
+- `core/include/hu_certificate.h`: the Android Auto head unit certificate and key, issued by the Google Automotive Link
+  CA, as open Android Auto head units share it.
+- `core/include/dhu_sdp.h`: the service description sent by Google's Desktop Head Unit.
+- `hmiapp/res/spinner/`: the waiting animation of Supra-iDrive6-Android-Auto.
+- `tests/fixtures/gps_e7/LocationData.proto`: an unmodified file of [aasdk](https://github.com/opencardev/aasdk), under
+  the GNU General Public License v3.0. It is read by one PC test and is not part of the programs.
+- `platform/kombi_graph_template.hpp` and the car readings of `tests/fixtures/`: bytes and outputs recorded on a BMW
+  head unit, kept for interoperability and tests. See `tests/fixtures/README.md`.
