@@ -20,6 +20,9 @@ QEMU avec les bibliothèques de la voiture).
   téléphone d'Android Auto ou un autre (aucune adresse n'est écrite), et chaque coupure donne la raison du
   Bluetooth de la voiture (`reason=`). Le Bluetooth et le Wi-Fi de l'unité partagent la même puce : ces lignes
   montrent ce que fait le Bluetooth pendant qu'Android Auto passe par le Wi-Fi.
+- Service : le lien Bluetooth d'Android Auto qui revient pendant une session est maintenant écouté. Sur cette
+  unité le téléphone le rouvre toutes les 12 secondes environ ; le service n'y écrit toujours rien le premier, pour
+  ne pas relancer la session en cours, mais il répond à un ping et note dans le journal ce que le téléphone envoie.
 
 ### Corrigé
 

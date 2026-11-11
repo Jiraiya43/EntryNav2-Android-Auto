@@ -16,7 +16,7 @@
 #include "service_app.hpp"
 #include "wireless_setup.hpp"
 
-static std::atomic<int> starts(0), waits(0);
+static std::atomic<int> starts(0), waits(0), listens(0);
 static std::atomic<bool> fixtureLink(true), borrowed(false);
 static evo::ServiceApp* instance = 0;
 static volatile sig_atomic_t quitFlag = 0;
@@ -46,7 +46,7 @@ void AlpsSppLink::closeLink() {
 }  // namespace evo
 namespace aa {
 WirelessSetup::WirelessSetup(int fd, const ApInfo& ap, uint16_t port, int peekMs)
-    : fd_(fd), ap_(ap), port_(port), peekMs_(peekMs), foreign_(false), spoke_(true) {}
+    : fd_(fd), ap_(ap), port_(port), peekMs_(peekMs), foreign_(false), spoke_(true), heard_(0) {}
 bool WirelessSetup::handshake(int) {
     assert(fd_ == 42 && peekMs_ == 300 && port_ == 50000);
     pthread_mutex_lock(&instance->mu);
@@ -58,6 +58,11 @@ bool WirelessSetup::handshake(int) {
 }
 bool WirelessSetup::serve(int) {
     return false;
+}
+bool WirelessSetup::listen(int) {
+    ++listens;
+    usleep(10000);
+    return true;
 }
 }  // namespace aa
 static void preparing(bool value) {
@@ -162,7 +167,7 @@ int main() {
     pthread_t thread;
     assert(pthread_create(&thread, 0, evo::ServiceApp::wireless, &app) == 0);
     usleep(250000);
-    assert(starts == 0 && waits == 0);
+    assert(starts == 0 && listens > 0);  // the link is listened to, no handshake goes into it
     preparing(false);
     awaitStarts(1);
     int peers[2];
@@ -170,8 +175,9 @@ int main() {
     assert(app.session.start(peers[0]) && app.session.isActive());
     preparing(false);
     fixtureLink = true;  // phone reopens SPP while TCP projection is active
+    const int listened = listens;
     usleep(350000);
-    assert(starts == 1 && app.session.isActive());
+    assert(starts == 1 && app.session.isActive() && listens > listened);
     app.session.stop();
     close(peers[1]);
     awaitStarts(2);  // rearming is allowed only after the real session ended

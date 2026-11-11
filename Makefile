@@ -193,6 +193,8 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	./tests/test-session-phone tests/fixtures/session_phone.golden
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_wireless_phone.cpp core/wireless_setup.cpp -o tests/test-wireless-phone
 	./tests/test-wireless-phone tests/fixtures/wireless_phone.golden
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_wireless_listen.cpp core/wireless_setup.cpp -o tests/test-wireless-listen
+	./tests/test-wireless-listen
 
 test-parsers:
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_parsers.cpp platform/alps_spp_codec.cpp platform/evo_ap_config.cpp -o tests/test-parsers

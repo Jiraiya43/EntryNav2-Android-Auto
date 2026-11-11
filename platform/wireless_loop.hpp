@@ -28,8 +28,8 @@ protected:
 
 // Runs until a stop is requested or Bluetooth stops. Each link that comes up gets aa::WirelessSetup with the access
 // point and TCP port the phone is told, after a short listen (a MyBMW link speaks first: nothing is written into it);
-// once the phone accepts, the link is served until it closes. A link that comes up while a projection is busy is held,
-// without a new WifiStartRequest, until that projection ends.
+// once the phone accepts, the link is served until it closes. A link that comes up while a projection is busy is
+// listened to (a ping is answered, nothing else is sent) until it closes or that projection ends.
 void runWirelessLoop(AlpsSppLink& bt, const aa::ApInfo& ap, uint16_t port, WirelessHost& host);
 
 }  // namespace evo
