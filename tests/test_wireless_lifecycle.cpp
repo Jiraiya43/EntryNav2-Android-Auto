@@ -128,6 +128,28 @@ int main() {
         app.pendingFocus = 0;
         onScreen(app, false);
     }
+    {  // "await": the next session starts aside and says so, until "show"; "hide" ends the wait too
+        evo::ControlCommand await, show, hide;
+        await.verb = "await";
+        show.verb = "show";
+        hide.verb = "hide";
+        await.hasArg = show.hasArg = hide.hasArg = false;
+        await.arg = show.arg = hide.arg = 0;
+        assert(!app.awaitShow && !app.asking);
+        evo::ServiceApp::command(await, &app);
+        assert(app.awaitShow && !app.asking && app.focus);  // nothing changes for a session already there
+        app.focus = false;  // as startProjection leaves it for a phone that connects now
+        app.asking = true;
+        evo::ServiceApp::command(show, &app);
+        assert(app.focus && !app.asking && app.pendingFocus == 1 && app.awaitShow);
+        app.focus = false;
+        app.asking = true;
+        evo::ServiceApp::command(hide, &app);
+        assert(!app.focus && !app.asking && app.pendingFocus == 2);
+        app.focus = true;
+        app.pendingFocus = 0;
+        app.awaitShow = false;  // the rest of this test: a service that shows by itself
+    }
     {  // quit from the iDrive app reaches the main loop's flag
         evo::ControlCommand quit;
         quit.verb = "quit";

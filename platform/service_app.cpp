@@ -27,6 +27,8 @@ ServiceApp::ServiceApp(uint16_t p, bool v, volatile sig_atomic_t* quit)
       ready(false),
       tcpPreparing(false),
       reverse(false),
+      awaitShow(false),
+      asking(false),
       pendingFocus(0),
       sppLinks(0),
       tcpLinks(0),
@@ -98,6 +100,7 @@ ServiceApp::Turn ServiceApp::turn(bool service) {
     t.failed = wirelessDone;
     t.active = session.isActive();
     t.onScreen = videoEnabled && t.active && focus && !reverse;  // what the iDrive app is told
+    t.asks = t.active && asking && !focus;
     const uint32_t nowMs = monoMs();
     const PeekTiming::Picture picture = peek.turn(nowMs, t.onScreen);
     t.shown = picture.shown;
@@ -245,16 +248,26 @@ void ServiceApp::appKey(const char* name, void* user) {
          name);
 }
 
-// Commands from the iDrive app (service mode): show, hide, drivemode, popup, gear, call, daynight, quit.
+// Commands from the iDrive app (service mode): show, hide, await, drivemode, popup, gear, call, daynight, quit.
 void ServiceApp::command(const ControlCommand& c, void* user) {
     ServiceApp* a = static_cast<ServiceApp*>(user);
     pthread_mutex_lock(&a->mu);
     if (c.verb == "show") {
         a->focus = true;
+        a->asking = false;
         a->pendingFocus = 1;
     } else if (c.verb == "hide") {
         a->focus = false;
+        a->asking = false;
         a->pendingFocus = 2;
+    } else if (c.verb == "await") {
+        // iDrive performs no screen request of an app while one of its own windows is on top, and the knob acts on
+        // whatever iDrive shows under Android Auto. So the app first brings iDrive to its blank page, then says
+        // "show": until then a phone that connects is served, its picture kept aside.
+        if (!a->awaitShow) {
+            ELOG("ServiceApp", "a phone that connects now waits aside for the iDrive app's \"show\"");
+        }
+        a->awaitShow = true;
     } else if (c.verb == "drivemode") {
         // Sent by the iDrive app only for a real change between two valid modes.
         if (a->peek.driveMode(monoMs())) {
@@ -330,6 +343,7 @@ void ServiceApp::ended(void* user) {
     a->kombi.onSessionEnded();
     pthread_mutex_lock(&a->mu);
     a->focus = false;
+    a->asking = false;
     pthread_mutex_unlock(&a->mu);
     a->server.notifySessionEnded();
     ELOG("ServiceApp", "session ended");
@@ -382,8 +396,13 @@ void ServiceApp::startProjection(int fd, bool overUsb) {
         pthread_mutex_unlock(&a->connectMu);
         return;
     }
-    a->focus = true;
+    a->focus = !a->awaitShow;
+    a->asking = a->awaitShow;
+    const bool aside = a->asking;
     pthread_mutex_unlock(&a->mu);
+    if (aside) {
+        ELOG("ServiceApp", "Android Auto starts aside: the iDrive app shows it once iDrive is on its page");
+    }
     if (!overUsb) {
         a->wifiLink.connected(fd);  // before the session owns fd
     }

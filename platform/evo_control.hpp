@@ -4,11 +4,13 @@
 
 // Protocol: a Unix datagram socket with an abstract name (evo::contract::kControlName, control_address.hpp: no file,
 // no port another program could be given by chance), one text command per datagram:
-//   ping (answered "pong"), show, hide, quit, gear <n>, daynight <n>, call <0|1>, popup <0|1>, drivemode [<n>],
-//   pdc <n> (accepted, not used by the service).
+//   ping (answered "pong"), show, hide, await, quit, gear <n>, daynight <n>, call <0|1>, popup <0|1>,
+//   drivemode [<n>], pdc <n> (accepted, not used by the service).
+// await: from then on a phone that connects is served with its picture aside, until "show" (the app brings iDrive to
+// its blank page first) or "hide" (the app gave up).
 // State file (evo::contract::kStateFile), read every second by the app: "<connecting|connected> <pid> <overlay>",
 // replaced atomically and deleted on stop. overlay 1 = the Android Auto picture is on screen (inputs go to Android
-// Auto).
+// Auto); 2 = a phone is connected and Android Auto waits aside for that "show".
 #ifndef ENTRY_AAD_PLATFORM_EVO_CONTROL_HPP
 #define ENTRY_AAD_PLATFORM_EVO_CONTROL_HPP
 

@@ -21,6 +21,10 @@ const unsigned kHandlerVisible = 11;
 const unsigned kEvGoHome = 50;    // -> NativeStateID 1 (iDrive main menu)
 const unsigned kEvOpenMenu = 51;  // -> state 10 (the app's menu)
 const unsigned kEvHoldAa = 52;    // -> state 13 (the blank state)
+// popupEvent -> state 14, an empty popup of the app, opened (true) or closed (false). iDrive performs an app's
+// focus event when the topmost popup is an app's (CFocusEvent::isCurrentlyAllowed), and a popup event is not
+// subject to that test (CPopupEvent::perform): 3 popups at a time for a local app, given back when they close.
+const unsigned kEvOwnPopup = 53;
 
 // ---- raActions -----------------------------------------------------------------------------------------------------
 const unsigned kActEntry = 2;  // entry button "Android Auto" (iDrive Media menu)

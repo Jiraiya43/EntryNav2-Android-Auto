@@ -45,6 +45,8 @@ int main() {
     evo::ControlCommand c;
     CHECK(evo::parseControlCommand("gear 2", 6, c) && c.verb == "gear" && c.hasArg && c.arg == 2);
     CHECK(evo::parseControlCommand("show\n", 5, c) && c.verb == "show" && !c.hasArg);
+    CHECK(evo::parseControlCommand("await", 5, c) && c.verb == "await" && !c.hasArg);  // a phone waits for "show"
+    CHECK(!evo::parseControlCommand("await 1", 7, c));
     CHECK(evo::parseControlCommand("drivemode 0 3 1", 15, c) == false);                 // 3 args: refused
     CHECK(evo::parseControlCommand("call 1", 6, c) && c.verb == "call" && c.arg == 1);  // phone keys during a call
     CHECK(evo::parseControlCommand("call", 4, c) == false);

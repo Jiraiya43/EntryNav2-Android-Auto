@@ -19,6 +19,15 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Corrigé
 
+- Android Auto qui s'affichait tout seul à l'ouverture de la voiture, puis repartait au bout de 4 secondes : il
+  fallait le rouvrir à la main. L'iDrive n'exécute aucune demande d'écran d'une appli tant qu'une de ses propres
+  fenêtres est au-dessus, et voiture ouverte mais pas démarrée, cela peut durer jusqu'à l'appui d'une touche.
+  Depuis la 0.9.4 l'appli retirait alors Android Auto. Maintenant le service le garde en retrait à la connexion,
+  le temps que l'appli place l'iDrive sur sa page. Si l'iDrive refuse, l'appli ouvre sa propre fenêtre, vide, ce
+  que l'iDrive permet à une appli pour passer devant, demande sa page dessous, la referme, et Android Auto
+  s'affiche : 2 secondes en tout. Si même cela est refusé, Android Auto s'affiche quand même et y reste, et
+  l'appli redemande sa page chaque seconde ; d'ici là la molette agit aussi sur l'écran de l'iDrive caché
+  dessous. Change l'appli de l'iDrive : redémarrage de l'unité après l'installation.
 - Android Auto qui refusait de démarrer pendant tout un trajet, avec la ligne `UDP 127.0.0.1:52790 already taken`
   dans le journal du service. L'appli de l'iDrive et le service se parlaient par un port réseau local, pris dans la
   plage que l'unité distribue au hasard à ses propres programmes : à certains allumages, un autre programme recevait

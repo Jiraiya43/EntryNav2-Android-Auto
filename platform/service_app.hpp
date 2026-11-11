@@ -43,6 +43,7 @@ public:
         bool failed;          // the wireless or USB loop has ended: the service stops
         bool active;          // an Android Auto session runs
         bool onScreen;        // what the iDrive app is told (peeks included)
+        bool asks;            // connected, and aside until the iDrive app says "show" (it is told that too)
         bool shown;           // the picture is on screen, not stepped aside
         bool pictureUp;       // the compositor shows our surface
         bool pictureStarted;  // the first picture has arrived
@@ -115,6 +116,8 @@ public:
     pthread_mutex_t mu, connectMu, videoMu;
     bool stopping, wirelessDone, focus, ready, tcpPreparing;
     bool reverse;      // service: reverse gear from the iDrive app hides the picture (camera)
+    bool awaitShow;    // service: the iDrive app asked ("await") that a phone that connects waits aside for its "show"
+    bool asking;       // service: such a session, not shown yet
     int pendingFocus;  // service: 1 tell the phone FOCUSED, 2 NATIVE (sent from the main loop)
     PeekTiming peek;   // under mu
     EvoPill pill;

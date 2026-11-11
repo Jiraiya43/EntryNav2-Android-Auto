@@ -65,6 +65,7 @@
       <focusEvent id="50" targetModel="40"/>
       <focusEvent id="51" target="10"/>
       <focusEvent id="52" target="13"/>
+      <popupEvent id="53" target="14" priority="10"/>
     </events>
     <hmiStates>
       <hmiState id="10" text="Android Auto" textModel="3">
@@ -116,6 +117,11 @@
           </image>
         </components>
       </hmiState>
+      <popupHmiState id="14" text=" " textModel="37">
+        <components>
+          <label id="97" model="37"/>
+        </components>
+      </popupHmiState>
     </hmiStates>
   </pluginApp>
 </pluginApps>

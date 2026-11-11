@@ -36,7 +36,7 @@ bool parseControlCommand(const char* data, size_t len, ControlCommand& out) {
     if (n < 1 || n > 2) {
         return false;
     }
-    static const char* const known[] = {"ping", "show",     "hide",      "quit", "gear",
+    static const char* const known[] = {"ping", "show",     "hide",      "quit", "gear", "await",
                                         "pdc",  "daynight", "drivemode", "call", "popup"};
     bool ok = false;
     for (unsigned i = 0; i < sizeof(known) / sizeof(known[0]); ++i) {

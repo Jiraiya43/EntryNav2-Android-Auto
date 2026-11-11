@@ -47,6 +47,7 @@ public:
         snprintf(text, sizeof(text), "event %u", event);
         out.push_back(text);
     }
+    void ownPopup(bool open) override { out.push_back(open ? "own popup 1" : "own popup 0"); }
     void send(const char* message) override { out.push_back(message); }
     void log(const char* line) override { logs.push_back(line); }
     ServiceState readService() override {
@@ -138,7 +139,7 @@ void connected(Car& c) {
     c.hold.gearChanged(1);
     c.service("connected", 42, 0);
     c.poll();
-    CHECK_OUT(c, "call 0, gear 1");
+    CHECK_OUT(c, "await, call 0, gear 1");
 }
 
 // Android Auto on screen over the blank state, which has the focus: opened from the menu's Open row.
@@ -204,7 +205,7 @@ void automaticStartOverIdriveScreen() {
 }
 
 void automaticStartRefused() {
-    {  // the menu never opens: three menu tries a second apart, event 52 once, then Android Auto steps aside
+    {  // the menu never opens: three menu tries a second apart, event 52 once, then Android Auto stays unheld
         Car c;
         connected(c);
         c.overlay(1);
@@ -218,16 +219,17 @@ void automaticStartRefused() {
         CHECK_OUT(c, "event 52");
         CHECK(c.logged("our menu did not open: state directly"));
         c.poll();
-        CHECK_OUT(c, "hide");  // never over an iDrive screen that would get the knob too
-        CHECK(!c.hold.holding());
-        CHECK(c.logged("even through our menu: Android Auto steps aside"));
-        c.overlay(0);
-        c.poll();
-        CHECK_OUT(c, "");  // stepped aside: no event over iDrive's screen
+        CHECK_OUT(c, "");  // Android Auto stays on screen: iDrive may refuse until a key is pressed
+        CHECK(c.hold.holding());
+        CHECK(c.logged("even through our menu: Android Auto stays, without the hold"));
         c.polls(3);
+        CHECK_OUT(c, "event 51, event 51, event 51");  // our menu, every second
+        c.menu(true);                                  // iDrive performs our events again
+        CHECK_OUT(c, "event 52");
+        c.blankShown();
+        c.polls(20);
         CHECK_OUT(c, "");
-        c.hold.showAndHold("entry button", c.now);  // the Android Auto entry brings it back
-        CHECK_OUT(c, "show, event 52");
+        CHECK(c.logged("Android Auto is held"));
     }
     {  // the menu never opens, event 52 alone works; once the blank state has the focus, the tries start over
         Car c;
@@ -269,6 +271,150 @@ void automaticStartRefused() {
         c.hold.menuFocus(kHelpState, true, c.now, c.ms);  // a stray push opened Help
         CHECK_OUT(c, "event 52");
     }
+}
+
+// iDrive performs no focus event of an app while one of its own popups is on top (seen on the car, opened but not
+// started: refused until a key was pressed). The service keeps Android Auto aside when a phone connects ("await")
+// while our menu is asked for; after 3 refusals Android Auto shows without the hold, and the asking goes on.
+void waitsAsideForIdrive() {
+    {  // nothing in the way: our menu opens at the first request, Android Auto comes up on the blank state
+        Car c;
+        connected(c);
+        c.overlay(2);  // a phone has connected: Android Auto aside, waiting for our "show"
+        c.poll();
+        CHECK_OUT(c, "event 51");
+        CHECK(c.logged("Android Auto waits aside: event 51 -> our menu"));
+        c.menu(true);
+        CHECK_OUT(c, "show, event 52");
+        CHECK(c.logged("our menu is open after 0 s and 1 request(s)"));
+        c.blankShown();
+        c.overlay(1);
+        c.polls(20);
+        CHECK_OUT(c, "");
+        CHECK(c.hold.holding() && c.hold.blankShown());
+    }
+    {  // iDrive refuses our menu: the blank state is asked for under our own popup, and iDrive performs it
+        Car c;
+        connected(c);
+        c.overlay(2);
+        c.polls(3);
+        CHECK_OUT(c, "event 51, own popup 1, event 52, own popup 0, show");
+        CHECK(c.logged("asked under our popup, popup closed: Android Auto comes up after 2 s"));
+        c.blankVisible(true);  // shown, the focus still with what refused our menu
+        c.overlay(1);
+        c.polls(30);
+        CHECK_OUT(c, "");  // held; no popup peek, no event while it has not had the focus
+        CHECK(c.hold.holding() && c.hold.blankShown() && !c.hold.popupPeek());
+        c.blankFocus(true);
+        c.blankFocus(false);  // from now on a lost focus is an iDrive popup again
+        c.polls(2);
+        CHECK_OUT(c, "popup 1");
+    }
+    {  // iDrive refuses even that: on screen without the hold, our menu every second; a key frees iDrive later
+        Car c;
+        connected(c);
+        c.overlay(2);
+        c.polls(3);
+        CHECK_OUT(c, "event 51, own popup 1, event 52, own popup 0, show");
+        CHECK(c.hold.holding());
+        c.overlay(1);
+        c.poll();
+        CHECK_OUT(c, "");  // the poll that sees it on screen
+        c.polls(60);
+        CHECK(c.take().size() == 60 * 8 + 59 * 2);  // "event 51" sixty times, nothing else
+        c.menu(true);
+        CHECK_OUT(c, "event 52");
+        CHECK(c.logged("iDrive opened our menu after 62 request(s): taking the hold"));
+        c.blankShown();
+        c.polls(20);
+        CHECK_OUT(c, "");
+        CHECK(c.hold.holding() && c.hold.blankShown());
+    }
+    {  // shown without the hold, then MENU: the service steps aside, nothing more is asked
+        Car c;
+        connected(c);
+        c.overlay(2);
+        c.polls(3);
+        c.overlay(1);
+        c.polls(3);
+        c.take();
+        c.overlay(0);
+        c.polls(10);
+        CHECK_OUT(c, "");
+        CHECK(!c.hold.holding());
+    }
+    {  // the driver waits in our menu for the phone: Android Auto comes up at once, no event 51
+        Car c;
+        connected(c);
+        c.menu(true);
+        c.take();
+        c.overlay(2);
+        c.poll();
+        CHECK_OUT(c, "show, event 52");
+        CHECK(c.logged("one of our pages has the focus"));
+    }
+    {  // a call, then the reverse gear: iDrive's call screen and the camera are left alone, then it goes on
+        Car c;
+        connected(c);
+        c.call(true);
+        c.overlay(2);
+        c.polls(10);
+        CHECK_OUT(c, "");
+        c.call(false);
+        c.hold.gearChanged(evo::app::kReverseGear);
+        c.polls(10);
+        CHECK_OUT(c, "");
+        c.hold.gearChanged(1);
+        c.poll();
+        CHECK_OUT(c, "event 51");
+        c.menu(true);
+        CHECK_OUT(c, "show, event 52");
+    }
+    {  // the phone leaves while Android Auto waits: nothing more is asked
+        Car c;
+        connected(c);
+        c.overlay(2);
+        c.polls(2);
+        c.take();
+        c.service("connecting", 42, 0);
+        c.polls(10);
+        CHECK_OUT(c, "own popup 0");    // the popup opened for it is closed
+        c.service("connected", 42, 2);  // and comes back
+        c.poll();
+        CHECK_OUT(c, "call 0, gear 1, event 51");
+    }
+    {  // the "show" got lost: the service still waits, it is sent again
+        Car c;
+        connected(c);
+        c.overlay(2);
+        c.poll();
+        c.menu(true);
+        CHECK_OUT(c, "event 51, show, event 52");
+        c.blankShown();
+        c.poll();  // still 2: not shown
+        CHECK_OUT(c, "show, event 52");
+        c.overlay(1);
+        c.polls(5);
+        CHECK_OUT(c, "");
+    }
+}
+
+// A service that does not know "await" (an older one) shows Android Auto by itself: after iDrive's refusals it stays
+// on screen, and our menu is asked for every second the same way.
+void olderServiceRefused() {
+    Car c;
+    connected(c);
+    c.overlay(1);
+    c.polls(5);
+    CHECK_OUT(c, "event 51, event 51, event 51, event 52");
+    c.polls(3);
+    CHECK_OUT(c, "event 51, event 51, event 51");
+    c.menu(true);
+    CHECK_OUT(c, "event 52");
+    c.blankShown();
+    c.polls(20);
+    CHECK_OUT(c, "");
+    CHECK(c.hold.holding());
 }
 
 void comesUpOverOurMenu() {
@@ -600,7 +746,7 @@ void serviceRestart() {
         CHECK_OUT(c, "");
         c.service("running", 42, 0);
         c.poll();
-        CHECK_OUT(c, "call 0, gear 2");
+        CHECK_OUT(c, "await, call 0, gear 2");  // "await": a phone that connects waits for our "show"
         c.poll();
         CHECK_OUT(c, "");
         c.service("connected", 42, 0);
@@ -614,13 +760,13 @@ void serviceRestart() {
         CHECK_OUT(c, "");
         c.service("running", 43, 0);
         c.poll();
-        CHECK_OUT(c, "call 1, gear 2");
+        CHECK_OUT(c, "await, call 1, gear 2");
     }
     {  // no gear received yet: only the call
         Car c;
         c.service("running", 42, 0);
         c.poll();
-        CHECK_OUT(c, "call 0");
+        CHECK_OUT(c, "await, call 0");
     }
     {  // restarted while Android Auto was held: iDrive main menu, then the new overlay is held again
         Car c;
@@ -631,7 +777,7 @@ void serviceRestart() {
         c.blankLeft();  // iDrive on its main menu
         c.service("connected", 43, 1);
         c.poll();
-        CHECK_OUT(c, "call 0, gear 1, event 51");
+        CHECK_OUT(c, "await, call 0, gear 1, event 51");
         c.menu(true);
         CHECK_OUT(c, "event 52");
     }
@@ -668,6 +814,8 @@ int main() {
     openButNeverCame();
     automaticStartOverIdriveScreen();
     automaticStartRefused();
+    waitsAsideForIdrive();
+    olderServiceRefused();
     comesUpOverOurMenu();
     backToOurMenu();
     popupOverBlank();
@@ -685,7 +833,8 @@ int main() {
         return 1;
     }
     puts(
-        "PASS hold machine: manual open, automatic start through the menu, refusals, BACK, popups, driving mode, "
+        "PASS hold machine: manual open, automatic start through the menu, refusals, waiting aside, BACK, popups, "
+        "driving mode, "
         "reverse, calls, app keys, hard keys, stepping aside, service restart");
     return 0;
 }

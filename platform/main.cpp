@@ -357,7 +357,8 @@ int main(int argc, char** argv) {
         }
         app.wifiLink.turn(evo::monoMs(), turn.active);
         if (service) {
-            control.writeState(turn.active ? "connected" : "connecting", turn.onScreen ? 1 : 0);
+            // 1: on screen; 2: connected and aside, waiting for the iDrive app's "show" (hmiapp/service_state.hpp).
+            control.writeState(turn.active ? "connected" : "connecting", turn.onScreen ? 1 : (turn.asks ? 2 : 0));
         }
         if (failed) {
             break;

@@ -9,8 +9,21 @@
 // - Open row, entry button: "show" and event 52 at once, not at the next status poll.
 // - Android Auto comes up by itself (start automatically, phone reconnected): over our menu, event 52; during a call,
 //   event 52 over iDrive's call screen; over one of iDrive's own screens, where event 52 can be refused, our menu first
-//   (event 51), whose focus asks for event 52 at once. Up to 3 menu tries a second apart, then event 52 once, then
-//   Android Auto steps aside ("hide") rather than stay over a screen the knob also reaches.
+//   (event 51), whose focus asks for event 52 at once. Up to 3 menu tries a second apart, then event 52 once.
+// - A phone connects: the service keeps Android Auto aside and says so (it was told "await" when it started). Our
+//   menu is asked for (event 51) once a second; its focus sends "show" and event 52, so iDrive is on our pages
+//   before Android Auto shows.
+// - iDrive refuses: it performs no focus event of an app while one of its own popups is the topmost one
+//   (CFocusEvent::isCurrentlyAllowed in HmiMain3D: the event answers 215 and does nothing else, it is not even
+//   counted). Seen on the car, opened but not started: refused for as long as no key was pressed (64 s, until
+//   MENU). Nothing tells an app when that ends, and the answer itself is dropped before it reaches the app. So
+//   after one refusal the app opens its own empty popup (popupEvent 53, what RHMI gives an app to come to the
+//   front: iDrive lets an app's focus event through when the topmost popup is an app's), asks for the blank
+//   state under it a second later, closes it and sends "show". Should iDrive refuse even that, Android Auto
+//   is on screen without the hold: the touchscreen is the phone's, the knob also reaches the iDrive screen
+//   underneath, and our menu is asked for once a second until it opens (event 52 then).
+// - A service that did not wait (an older one) shows Android Auto by itself: the same events, then the same
+//   asking without the hold.
 // - BACK or tilt to our menu: event 52 at once (at most every 300 ms), and at each poll while the menu keeps the focus;
 //   at most 8 events 52 until the blank state shows again.
 // - Focus given back to the blank state: the hold worked, its tries start over (a focus lost and given back without
@@ -54,6 +67,7 @@ const int kGearUnknown = -1000;  // no driving.gear value received yet
 class HoldIo {
 public:
     virtual void triggerEvent(unsigned event) = 0;  // a focusEvent of EntryAad.xml: 50, 51 or 52
+    virtual void ownPopup(bool open) = 0;           // the app's empty popup (popupEvent 53)
     virtual void send(const char* message) = 0;     // a control message to the service ("show", "hide", ...)
     virtual void log(const char* line) = 0;         // one line of the app's log
     // Read only when a decision needs them, at that moment: the service's state (reading it may ask its control port),
@@ -111,6 +125,9 @@ private:
     bool appKeyRecent();
     bool keepForAppKey(const char* why, long now);
     void updatePopupPeek(bool covered, long now);
+    void beginWait(long now);
+    void askWithoutHold(long now);
+    void bringIdrive(const ServiceState& service, long now);
     void say(const char* fmt, ...) __attribute__((format(printf, 2, 3)));
 
     HoldIo& io_;
@@ -134,6 +151,15 @@ private:
     int unfocusedPolls_;  // polls with the blank state shown but unfocused
     long leftSeen_;       // first poll that saw iDrive away from the blank state (hard key), 0: none
     long menuHoldMs_;     // last event 52 fired by our menu's focus
+
+    // Android Auto aside until iDrive opens our menu
+    bool waiting_;
+    bool unheld_;      // Android Auto is shown although iDrive refused our pages: they are still asked for
+    bool popupOpen_;   // our own popup is open, for the blank state to be asked for under it
+    bool underPopup_;  // the blank state was asked for under it: no popup peek until it gets the focus
+    long waitSince_;   // when the wait began (a call or the reverse gear start it again)
+    long askedAt_;     // last event 51 fired for it, 0: none yet
+    int asks_;         // events 51 fired for it
 
     // The car
     bool inCall_;
