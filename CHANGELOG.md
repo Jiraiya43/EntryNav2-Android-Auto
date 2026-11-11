@@ -10,6 +10,10 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Ajouté
 
+- Menu de l'iDrive : la case **Câble USB au lieu du sans-fil** choisit le mode, sans PC ni SSH. Elle pose ou retire
+  le fichier `usb` ; si Android Auto tourne, il s'arrête puis redémarre dans le nouveau mode. Le mode n'est jamais
+  déduit de ce qui est branché : un téléphone mis en charge par un passager ne change rien. Une ligne d'aide
+  rappelle que le son reste en Bluetooth. [Détails](docs/USB.md). Testé sur PC.
 - Journaux : la qualité du Wi-Fi avec le téléphone, une ligne `[WifiLink]` à la connexion puis toutes les 10 secondes
   (fréquence, signal, débits, trames réémises et perdues, temps d'aller-retour). Lecture seule, journaux activés
   seulement, rien en mode USB. [Lire ces lignes](docs/MAINTENANCE.md#qualité-du-wi-fi). Testé sur PC.

@@ -7,26 +7,28 @@ faire d'Android Auto sans fil, ou quand le Wi-Fi de la voiture rame. L'état des
 Avec le câble, l'image, les commandes, le micro, le GPS et le guidage passent par l'USB. **Le son reste sur le
 Bluetooth de la voiture**, comme en sans fil : le téléphone doit donc rester appairé à la voiture.
 
-## Activer
+## Choisir le câble ou le sans-fil
 
-Par SSH sur l'unité ([installation](INSTALLATION.md#1-copier-larchive-dans-la-voiture)), Android Auto arrêté depuis son
-menu :
+Dans le menu Android Auto de l'iDrive, cocher **Câble USB au lieu du sans-fil**, puis brancher le téléphone sur une
+prise USB de la voiture avec un câble de données. La première fois, le téléphone demande d'autoriser Android Auto.
+Décocher la case ramène au sans-fil.
+
+- Si Android Auto tourne quand la case change, il s'arrête puis redémarre tout seul dans le nouveau mode, en une
+  dizaine de secondes.
+- **Rien n'est deviné :** brancher ou débrancher un câble ne change jamais de mode. Un téléphone mis en charge par un
+  passager ne prend donc pas la place du vôtre tant que la case n'est pas cochée.
+- En mode USB, le service ne touche ni au Bluetooth ni au Wi-Fi de la voiture.
+
+La case pose ou retire le fichier `/var/local/data/AA/usb`. Par SSH sur l'unité
+([installation](INSTALLATION.md#1-copier-larchive-dans-la-voiture)), Android Auto arrêté depuis son menu, c'est la même
+chose que :
 
 ```sh
-touch /var/local/data/AA/usb
+touch /var/local/data/AA/usb   # câble USB
+rm /var/local/data/AA/usb      # sans-fil
 ```
 
-Puis *Démarrer* dans le menu Android Auto de l'iDrive, et brancher le téléphone sur une prise USB de la voiture avec un
-câble de données. La première fois, le téléphone demande d'autoriser Android Auto.
-
-Pour revenir au sans-fil : arrêter Android Auto, puis
-
-```sh
-rm /var/local/data/AA/usb
-```
-
-Le choix est lu à chaque *Démarrer* et vaut jusqu'à l'*Arrêter* : brancher ou débrancher le câble ne fait pas passer
-d'un mode à l'autre. En mode USB, le service ne touche ni au Bluetooth ni au Wi-Fi de la voiture.
+Le fichier est lu à chaque démarrage d'Android Auto et vaut jusqu'à son arrêt.
 
 ## Ce que fait le service
 
@@ -57,7 +59,8 @@ cat /sys/bus/usb/devices/3-1/product                    # le nom du téléphone
 echo 3-1 > /var/local/data/AA/usb
 ```
 
-Un fichier qui contient autre chose qu'un nom de prise empêche le démarrage : le service ne devine pas.
+Un fichier qui contient autre chose qu'un nom de prise empêche le démarrage : le service ne devine pas. Décocher la
+case du menu retire le fichier, nom de prise compris : il est à réécrire ensuite.
 
 ## En cas de souci
 

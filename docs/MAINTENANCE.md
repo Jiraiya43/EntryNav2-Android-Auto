@@ -11,7 +11,7 @@ Le service ne lit aucun réglage dans son environnement : ses valeurs sont fixes
 | Fichier | Effet |
 |---|---|
 | `vehicle` | Modèle et année annoncés au téléphone : `model=…` et `year=…`, une ligne chacun. Sans ce fichier : « iDrive », 2019 |
-| `usb` | Présent : Android Auto par câble USB au lieu du sans-fil. Vide, ou le nom de la seule prise à surveiller : voir [USB](USB.md) |
+| `usb` | Présent : Android Auto par câble USB au lieu du sans-fil (case *Câble USB au lieu du sans-fil* du menu). Vide, ou le nom de la seule prise à surveiller : voir [USB](USB.md) |
 | `autostart` | Présent : Android Auto démarre avec l'iDrive (case *Démarrage automatique* du menu) |
 | `entry-direct` | Présent : la ligne *Android Auto* de l'iDrive ouvre directement Android Auto, au lieu de son menu |
 | `kombi-off` | Présent : rien n'est envoyé au compteur ni à la tête haute |

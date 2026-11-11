@@ -20,8 +20,8 @@ English · [Français](README.fr.md)
 ## Features
 
 - **Wireless Android Auto.** The phone pairs over Bluetooth, then joins the car's own Wi-Fi (the one CarPlay uses).
-- **A USB cable works too** (experimental, off by default), for phones without wireless Android Auto:
-  [setup and limits](docs/USB.md) (in French).
+- **A USB cable works too** (experimental, off by default), for phones without wireless Android Auto: a checkbox in
+  the menu picks the cable or wireless, nothing is guessed. [Setup and limits](docs/USB.md) (in French).
 - **Started from iDrive.** An *Android Auto* entry in the Media menu, with its own menu: start, stop, start
   automatically, help.
 - **Original controls.** iDrive controller, hard keys, touch screen, steering wheel buttons, voice button for the
