@@ -17,6 +17,14 @@ QEMU avec les bibliothèques de la voiture).
   [Détails](docs/COMPATIBILITE.md#autres-tailles-décran) ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)).
   Testé sur PC.
 
+### Corrigé
+
+- Molette muette sur une voiture à l'ancien contrôleur (BMW i3) : le service savait décoder ses messages (C10, C20)
+  mais ne les demandait jamais, donc la voiture ne les lui donnait pas. Il les demande maintenant quand la molette
+  ne répond pas dans le protocole de la G20 au bout de 2 secondes. Une voiture qui répond, comme la G20, ne reçoit
+  rien de plus, et un seul protocole est gardé par voiture. Signalé par kedzior12
+  ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)). Testé sur PC.
+
 ## [0.12.0-rc.2] - 2026-11-11 · PC
 
 Version candidate, **testée sur PC seulement** : à essayer en voiture. Elle change l'appli de l'iDrive : installée

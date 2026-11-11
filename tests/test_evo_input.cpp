@@ -486,8 +486,80 @@ int main() {
         assert(d.feed(0xE5, 0x01, 0xC20, 0xC, menu, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_HOME && ev[0].down);
         assert(d.feed(0xE5, 0x03, 0xC10, 0xC, detent, 7, ev, 8) == 0);  // not on the CCS35up instance
     }
+    {  // Which protocol is read: the older one only on a car whose controller is silent on CCS35up.
+        using aa::CcsProtocol;
+        CcsProtocol never;
+        CHECK(!never.olderDue(60000) && never.kind() == CcsProtocol::kUnknown);  // nothing was read yet
+        CcsProtocol g20;  // answers its reads at once: never asked for the older functions
+        g20.ccs35upAsked(1000);
+        CHECK(g20.accept(0x03, 0xC46) && g20.kind() == CcsProtocol::kCcs35up);
+        CHECK(!g20.olderDue(1000 + CcsProtocol::kSilenceMs) && !g20.olderDue(600000));
+        CHECK(!g20.accept(0x01, 0xC10) && !g20.accept(0x01, 0xC20) && g20.accept(0x03, 0xC4F));
+        CHECK(g20.accept(0x01, 0xC30));  // a function of neither protocol is not judged
+        CcsProtocol i3;                  // silent on CCS35up: asked once, then kept on the older protocol
+        i3.ccs35upAsked(0xFFFFFF00u);    // the clock wraps while waiting
+        CHECK(i3.accept(0x01, 0xC30) && i3.kind() == CcsProtocol::kUnknown);
+        CHECK(!i3.olderDue(0xFFFFFF00u + CcsProtocol::kSilenceMs - 1));
+        CHECK(i3.olderDue(0xFFFFFF00u + CcsProtocol::kSilenceMs) && !i3.olderDue(5000));
+        CHECK(i3.accept(0x01, 0xC10) && i3.kind() == CcsProtocol::kOlder && !i3.accept(0x03, 0xC46));
+        CHECK(CcsProtocol::of(0x03, 0xC10) == CcsProtocol::kUnknown &&
+              CcsProtocol::of(0x01, 0xC46) == CcsProtocol::kUnknown);
+
+        // Through EvoKnob: the older controller's knob and BACK reach Android Auto, a later CCS35up message does not.
+        struct Got {
+            static void ev(const aa::CcsEvent& e, void* u) {
+                Got* g = static_cast<Got*>(u);
+                if (g->n < 8) {
+                    g->e[g->n++] = e;
+                }
+            }
+            aa::CcsEvent e[8];
+            int n;
+        } got;
+        memset(&got, 0, sizeof(got));
+        evo::EvoKnob old;
+        old.attachForTest(evo::INPUT_FORWARD, &Got::ev, &got);
+        old.setOwned(true);
+        evo::VmostMsgView ov;
+        ov.addr = 0x0100;
+        ov.fblock = 0xE5;
+        ov.inst = 0x01;
+        ov.op = 0xC;
+        const uint8_t other[4] = {0x01, 0x1D, 0x06, 0x00};  // the i3's only E5 message before the fix
+        ov.fkt = 0xC30;
+        ov.len = 4;
+        ov.data = other;
+        old.onMessage(ov);
+        CHECK(got.n == 0 && old.protocol() == CcsProtocol::kUnknown);
+        const uint8_t base[7] = {0x01, 0x1D, 0x21, 0x00, 0x10, 0x1E, 0x00};
+        const uint8_t detent[7] = {0x01, 0x1D, 0x22, 0x00, 0x11, 0x1E, 0x00};
+        ov.fkt = 0xC10;
+        ov.len = 7;
+        ov.data = base;
+        old.onMessage(ov);
+        ov.data = detent;
+        old.onMessage(ov);
+        CHECK(old.protocol() == CcsProtocol::kOlder && got.n == 1 && got.e[0].kind == 2 && got.e[0].delta == 1);
+        const uint8_t back[7] = {0x01, 0x1D, 0x23, 0x01, 0x00, 0x00, 0x02};
+        ov.fkt = 0xC20;
+        ov.data = back;
+        old.onMessage(ov);
+        CHECK(got.n == 2 && got.e[1].keycode == aa::AAK_BACK && got.e[1].down == 1);
+        const uint8_t turned[8] = {0x0C, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF};
+        const uint8_t turnedOn[8] = {0x0D, 0x80, 0x01, 0x00, 0x00, 0x00, 0x00, 0xFF};
+        ov.inst = 0x03;
+        ov.fkt = 0xC46;
+        ov.len = 8;
+        ov.data = turned;
+        old.onMessage(ov);
+        ov.data = turnedOn;
+        old.onMessage(ov);
+        CHECK(got.n == 2);  // the other protocol is left out: one action, one event
+    }
     puts(
-        "PASS ancienne molette BMW (C10/C20) ; entrees : IPv4/UDP de la copie, machine tactile (appui, glisse, "
+        "PASS ancienne molette BMW (C10/C20), lue seulement si la CCS35up reste muette, un seul protocole par voiture "
+        "; "
+        "entrees : IPv4/UDP de la copie, machine tactile (appui, glisse, "
         "relache, doublon, trame fragmentee, relache forcee, rien avant l'image), message vMOST -> decodeur molette ; "
         "touches comme CarPlay (effleurement ignore, NAV/MEDIA/COM et bouton telephone du volant -> applis AA, COM a "
         "l iDrive pendant un appel) ; boutons de volume console/volant decodes ; niveau du volume (20.00.C08)");

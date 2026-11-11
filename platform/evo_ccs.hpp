@@ -250,6 +250,64 @@ private:
     bool ccsPush_;
 };
 
+// Which of the two protocols the car's controller speaks. vmostd hands a client a function's status only once the
+// client has read that function (evo_knob.hpp), so each protocol must be asked for. CCS35up is read first; the older
+// functions are read only on a car whose controller stays silent on CCS35up for kSilenceMs (the G20 answers within
+// 20 ms and is asked nothing more). The first protocol heard is kept and the other one's status messages are left
+// out, so a car that would speak both never counts one action twice.
+class CcsProtocol {
+public:
+    enum Kind { kUnknown, kCcs35up, kOlder };
+    enum { kSilenceMs = 2000 };
+
+    CcsProtocol() : kind_(kUnknown), asked_(false), olderAsked_(false), askedMs_(0) {}
+
+    Kind kind() const { return kind_; }
+    static const char* name(Kind kind) {
+        return kind == kCcs35up ? "CCS35up (E5.03)" : kind == kOlder ? "older CCS (E5.01, C10/C20)" : "unknown";
+    }
+    // The protocol a status message of FBlock 0xE5 belongs to; kUnknown for any other function.
+    static Kind of(uint8_t inst, uint16_t fkt) {
+        if (inst == CcsDecoder::kInstance && (fkt == 0xC46 || fkt == 0xC47 || fkt == 0xC4F)) {
+            return kCcs35up;
+        }
+        if (inst == CcsDecoder::kCcsInstance && (fkt == 0xC10 || fkt == 0xC20)) {
+            return kOlder;
+        }
+        return kUnknown;
+    }
+
+    // The CCS35up functions have just been read (monotonic milliseconds, compared with wrap-around).
+    void ccs35upAsked(uint32_t nowMs) {
+        asked_ = true;
+        askedMs_ = nowMs;
+    }
+    // True once: CCS35up has stayed silent since its reads, the older functions are to be read now.
+    bool olderDue(uint32_t nowMs) {
+        if (!asked_ || olderAsked_ || kind_ != kUnknown || nowMs - askedMs_ < static_cast<uint32_t>(kSilenceMs)) {
+            return false;
+        }
+        olderAsked_ = true;
+        return true;
+    }
+    // A status message (op 0xC) of FBlock 0xE5: false when it belongs to the protocol that was not kept.
+    bool accept(uint8_t inst, uint16_t fkt) {
+        const Kind kind = of(inst, fkt);
+        if (kind == kUnknown) {
+            return true;
+        }
+        if (kind_ == kUnknown) {
+            kind_ = kind;
+        }
+        return kind == kind_;
+    }
+
+private:
+    Kind kind_;
+    bool asked_, olderAsked_;
+    uint32_t askedMs_;
+};
+
 }  // namespace aa
 
 #endif  // ENTRY_AAD_PLATFORM_EVO_CCS_HPP
