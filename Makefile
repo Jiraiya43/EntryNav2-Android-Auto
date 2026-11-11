@@ -44,7 +44,7 @@ DAEMON_SRC = platform/alps_spp.cpp platform/alps_spp_codec.cpp platform/evo_ap.c
              platform/vmost_client.cpp platform/evo_control.cpp platform/evo_sdr_sensors.cpp platform/evo_mic.cpp \
              $(KOMBI_SRC) platform/evo_bmw_guidance.cpp platform/evo_pill.cpp \
              platform/peek_timing.cpp platform/wireless_loop.cpp platform/service_app.cpp platform/main.cpp \
-             $(USB_SRC)
+             platform/wifi_link.cpp $(USB_SRC)
 DAEMON_OBJ = $(CORE_OBJ) $(DAEMON_SRC:.cpp=.o)
 SUPERVISOR_OBJ = tools/aa_supervisor.o platform/evo_spp_snapshot.o platform/alps_spp.o platform/alps_spp_codec.o \
             platform/evo_ilm.o platform/evo_process.o platform/evo_ap.o platform/evo_ap_config.o platform/evo_wlan.o \
@@ -55,7 +55,7 @@ ARM_OBJ = $(sort $(DAEMON_OBJ) $(PLATFORM_OBJ) $(SUPERVISOR_OBJ) $(CHECK_OBJ) $(
 # The service's modules tests/test_wireless_lifecycle.cpp links around its fake Alps link and handshake.
 LIFECYCLE_OBJ = $(PLATFORM_OBJ) platform/evo_touch.o platform/evo_knob.o platform/vmost_client.o platform/evo_control.o \
                 platform/evo_mic.o platform/evo_pill.o $(KOMBI_OBJ) platform/evo_bmw_guidance.o platform/peek_timing.o \
-                $(USB_OBJ)
+                platform/wifi_link.o $(USB_OBJ)
 
 VIDEO_LIBS = -l:libxsvideo.so.4 -l:libdrm_omap.so.1 -l:libdrm.so.2 -lpthread -lrt
 
@@ -64,7 +64,7 @@ VIDEO_LIBS = -l:libxsvideo.so.4 -l:libdrm_omap.so.1 -l:libdrm.so.2 -lpthread -lr
         tests/evo-check-host test-arm-all test-pb-arm-build test-sdr-arm-build test-kombi-arm-build \
         test-session-silence-arm-build test-presentation-arm-build test-wireless-lifecycle-arm-build \
         test-gps-arm-build test-supervisor-arm-build test-hmiapp-arm-build test-spawn-arm-build test-lm-cli-arm-build \
-        test-phone-arm-build test-usb-host test-usb-arm-build
+        test-phone-arm-build test-usb-host test-usb-arm-build test-wifi-arm-build
 all: daemon aa-supervisor hmiapp
 
 %.o: %.cpp
@@ -184,6 +184,8 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	./tests/test-aa-messages
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_tcp_server.cpp core/tcp_server.cpp -o tests/test-tcp-server
 	./tests/test-tcp-server
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_wifi_link.cpp platform/wifi_link.cpp -o tests/test-wifi-link
+	./tests/test-wifi-link
 	$(HOST_CXX) $(HOST_FLAGS) $(HOST_SSL_FLAGS) -Icore/include tests/test_session_phone.cpp $(SESSION_SRC) -lssl -lcrypto \
 	    -o tests/test-session-phone
 	./tests/test-session-phone tests/fixtures/session_phone.golden
@@ -247,7 +249,7 @@ test-touch-live:
 test-arm-all: dev-tools test-pb-arm-build test-sdr-arm-build test-kombi-arm-build test-session-silence-arm-build \
               test-presentation-arm-build test-wireless-lifecycle-arm-build test-gps-arm-build test-supervisor-arm-build \
               test-hmiapp-arm-build test-spawn-arm-build test-lm-cli-arm-build test-phone-arm-build \
-              test-usb-arm-build
+              test-usb-arm-build test-wifi-arm-build
 
 test-pb-arm-build:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_pb.cpp -o tests/test-pb-arm $(LDSHLIB) -lrt
@@ -279,6 +281,10 @@ test-usb-arm-build: $(USB_OBJ) core/aa_frame.o
 	    -o tests/test-usb-bridge-arm $(LDSHLIB) -lpthread -lrt
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_usb_loop.cpp platform/usb_loop.o platform/usb_bridge.o \
 	    platform/usb_accessory.o platform/usb_devfs.o core/aa_frame.o -o tests/test-usb-loop-arm $(LDSHLIB) -lpthread -lrt
+
+test-wifi-arm-build: platform/wifi_link.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_wifi_link.cpp platform/wifi_link.o -o tests/test-wifi-link-arm \
+	    $(LDSHLIB) -lpthread -lrt
 
 test-kombi-arm-build: $(KOMBI_OBJ)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_kombi_phone.cpp platform/kombi_phone.o -o tests/test-kombi-phone-arm $(LDSHLIB)

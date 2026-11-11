@@ -384,6 +384,9 @@ void ServiceApp::startProjection(int fd, bool overUsb) {
     }
     a->focus = true;
     pthread_mutex_unlock(&a->mu);
+    if (!overUsb) {
+        a->wifiLink.connected(fd);  // before the session owns fd
+    }
     if (!a->session.start(fd)) {
         a->server.notifySessionEnded();  // start owns/cleans fd even on failure
     } else {

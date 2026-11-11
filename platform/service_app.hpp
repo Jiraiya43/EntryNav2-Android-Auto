@@ -28,6 +28,7 @@
 #include "peek_timing.hpp"
 #include "tcp_server.hpp"
 #include "usb_loop.hpp"
+#include "wifi_link.hpp"
 #include "wireless_loop.hpp"
 #include "wireless_setup.hpp"
 
@@ -117,6 +118,7 @@ public:
     int pendingFocus;  // service: 1 tell the phone FOCUSED, 2 NATIVE (sent from the main loop)
     PeekTiming peek;   // under mu
     EvoPill pill;
+    WifiLinkLog wifiLink;  // the Wi-Fi link's quality, logged while a wireless session runs
     unsigned sppLinks, tcpLinks, usbLinks;
     std::atomic<unsigned> videoFrames;  // counted on the session thread without mu
     bool wppReply, wppAccepted;

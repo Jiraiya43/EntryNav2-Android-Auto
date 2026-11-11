@@ -62,6 +62,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `evo_gps` | Lecture passive du GPS de la voiture |
 | `evo_mic` | Micro de la voiture pour l'Assistant |
 | `evo_wlan`, `evo_ap` | Wi-Fi de la voiture, allumé comme le fait CarPlay |
+| `wifi_link` | Qualité de la liaison Wi-Fi avec le téléphone, lue dans le noyau pour les journaux (testé sur PC) |
 | `alps_spp`, `evo_spp_snapshot` | Pile Bluetooth de la voiture : commandes, et lecture de son état en mémoire |
 | `evo_elf.hpp` | Symboles exportés par une bibliothèque de la voiture, lus dans son fichier |
 | `evo_control` | Commandes de l'appli vers le service |
@@ -108,6 +109,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `tests/test_wireless_phone.cpp` | Échange Bluetooth du Wi-Fi, octet par octet, comparé à un relevé figé |
 | `tests/test_kombi_golden.cpp` | Chaque trame envoyée au compteur, octet par octet, comparée à un relevé figé |
 | `tests/test_peek_timing.cpp`, `tests/test_wireless_lifecycle.cpp` | Effacement de l'image, cycle de vie Bluetooth puis Wi-Fi du service |
+| `tests/test_wifi_link.cpp` | Qualité du Wi-Fi : messages du noyau, ligne de journal, connexion rendue en fin de session |
 | `tests/test_hold_machine.cpp` | Page vide de l'iDrive : ouverture, démarrage automatique, fenêtres, modes, appels, touches |
 | `tests/test_aa_frame.cpp`, `tests/test_aa_messages.cpp`, `tests/test_tcp_server.cpp` | Trames hostiles, messages construits, écoute TCP |
 | `make verify_binary verify_wireless` | Programmes ARM : bibliothèques résolues sur la voiture, empreintes des programmes validés |

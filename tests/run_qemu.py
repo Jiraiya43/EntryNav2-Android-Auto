@@ -38,6 +38,7 @@ CASES = [
     ("usb-accessory", "tests/test-usb-accessory-arm", [], None),
     ("usb-bridge", "tests/test-usb-bridge-arm", [], None),
     ("usb-loop", "tests/test-usb-loop-arm", [], None),
+    ("wifi-link", "tests/test-wifi-link-arm", [], None),
     ("session-silence", "tests/test-session-silence-arm", [], None),
     ("gps-native", "tests/test-evo-gps-arm", [], None),
     ("video-presentation", "tests/test-video-presentation-arm", [], None),

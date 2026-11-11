@@ -240,6 +240,9 @@ int main(int argc, char** argv) {
             return 1;
         }
         app.server.setHotspotAddress(app.ap.ip);  // listening address and the subnet a phone must come from
+        if (access(evo::contract::kMaintenance, F_OK) == 0) {
+            app.wifiLink.enable("wlan0");  // logs are kept: the Wi-Fi link's quality goes into them
+        }
         ELOG("Main", "access point read from %s; TCP %s:%u; media over the BMW Bluetooth source", source.c_str(),
              app.ap.ip.c_str(), static_cast<unsigned>(kAaPort));
     }
@@ -336,6 +339,7 @@ int main(int argc, char** argv) {
         if (turn.focusMsg && turn.active) {
             app.session.postVideoFocus(turn.focusMsg == 1);
         }
+        app.wifiLink.turn(evo::monoMs(), turn.active);
         if (service) {
             control.writeState(turn.active ? "connected" : "connecting", turn.onScreen ? 1 : 0);
         }
