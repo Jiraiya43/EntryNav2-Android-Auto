@@ -8,6 +8,13 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Modifié
+
+- Installation : le numéro de version ne s'écrit plus que deux fois (commande `scp` et ligne `V=`), au lieu d'être
+  répété dans chaque commande ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)).
+- Feuille de route : le câble USB n'est plus « hors périmètre », ses essais restants y sont listés, et le premier
+  rapport de compatibilité d'une autre voiture y est noté ([#17](https://github.com/Jiraiya43/entry-aad/issues/17)).
+
 ## [0.12.0-rc.1] - 2026-11-11 · voiture
 
 Version candidate, **essayée en voiture** sur une BMW G20 : Android Auto démarre en sans-fil comme par câble USB.
