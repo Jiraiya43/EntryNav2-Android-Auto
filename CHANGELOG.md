@@ -8,6 +8,14 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.12.0-rc.6] - 2026-11-12 · voiture
+
+Version candidate, **essayée en voiture** sur une BMW G20, en sans-fil : l'iDrive accepte la nouvelle appli, et
+Android Auto vient tout seul à l'écran et y reste. Ce démarrage-là, l'iDrive a accepté la première demande : le
+passage par la fenêtre de l'appli quand il refuse n'a tourné que dans les tests sur PC, comme l'adaptation à
+l'écran et l'ancienne molette, confirmées par ailleurs sur une BMW i3. Elle change l'appli de l'iDrive : installée
+par-dessus une version précédente, elle demande un redémarrage de l'unité.
+
 ### Ajouté
 
 - Écrans d'une autre taille que 1280x480 : le service lit la taille de l'écran sur la voiture et demande au
@@ -141,7 +149,8 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.12.0-rc.2...HEAD
+[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.12.0-rc.6...HEAD
+[0.12.0-rc.6]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.6
 [0.12.0-rc.2]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.2
 [0.12.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.1
 [0.11.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.1
