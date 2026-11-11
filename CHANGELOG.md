@@ -23,6 +23,10 @@ QEMU avec les bibliothèques de la voiture).
 - Service : le lien Bluetooth d'Android Auto qui revient pendant une session est maintenant écouté. Sur cette
   unité le téléphone le rouvre toutes les 12 secondes environ ; le service n'y écrit toujours rien le premier, pour
   ne pas relancer la session en cours, mais il répond à un ping et note dans le journal ce que le téléphone envoie.
+- Journaux : toutes les 10 secondes d'une session, sans fil ou par câble, le plus long silence du téléphone
+  (`[Session] in 10 s: the phone's longest silence ... ms`). Un téléphone qui projette envoie quelque chose chaque
+  seconde : plusieurs secondes de silence sont une liaison qui a calé, ce que les lignes `[WifiLink]` et
+  Bluetooth voisines aident à expliquer.
 
 ### Corrigé
 

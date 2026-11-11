@@ -247,6 +247,7 @@ int main(int argc, char** argv) {
     touch.setCanvas(display.canvasWidth, display.canvasHeight);
     evo::EvoKnob knob;
     evo::EvoControl control;
+    const bool logsKept = access(evo::contract::kMaintenance, F_OK) == 0;
     if (usb) {
         ELOG("Main", "USB cable: no Bluetooth change, no Wi-Fi, no TCP server; media over the BMW Bluetooth source");
     } else {
@@ -256,8 +257,8 @@ int main(int argc, char** argv) {
             return 1;
         }
         app.server.setHotspotAddress(app.ap.ip);  // listening address and the subnet a phone must come from
-        if (access(evo::contract::kMaintenance, F_OK) == 0) {
-            app.wifiLink.enable("wlan0");  // logs are kept: the Wi-Fi link's quality goes into them
+        if (logsKept) {
+            app.wifiLink.enable("wlan0");  // the Wi-Fi link's quality goes into them
         }
         ELOG("Main", "access point read from %s; TCP %s:%u; media over the BMW Bluetooth source", source.c_str(),
              app.ap.ip.c_str(), static_cast<unsigned>(kAaPort));
@@ -339,6 +340,8 @@ int main(int argc, char** argv) {
     }
     bool failed = false;
     const uint32_t startedMs = evo::monoMs();
+    bool paceRunning = false;  // logs kept: the phone's longest silence, every 10 s of a session
+    uint32_t paceMs = 0;
     evo::AdvertisementSchedule advertisement(service ? 60000 : 0);
     while (!quit) {
         if (limitSeconds && evo::monoMs() - startedMs >= limitSeconds * 1000) {
@@ -356,6 +359,22 @@ int main(int argc, char** argv) {
             app.session.postVideoFocus(turn.focusMsg == 1);
         }
         app.wifiLink.turn(evo::monoMs(), turn.active);
+        if (logsKept) {
+            // Wireless or USB: how long the phone went without sending anything. It pings and reports its media
+            // every second while it projects, so several seconds here are a link that stalled, whatever the cause.
+            const uint32_t nowMs = evo::monoMs();
+            if (!turn.active) {
+                paceRunning = false;
+            } else if (!paceRunning) {
+                paceRunning = true;
+                paceMs = nowMs;
+                app.session.takeLongestSilenceMs();  // the start of the session is not a silence
+            } else if (nowMs - paceMs >= 10000) {
+                ELOG("Session", "in %u s: the phone's longest silence %u ms", (nowMs - paceMs + 500) / 1000,
+                     app.session.takeLongestSilenceMs());
+                paceMs = nowMs;
+            }
+        }
         if (service) {
             // 1: on screen; 2: connected and aside, waiting for the iDrive app's "show" (hmiapp/service_state.hpp).
             control.writeState(turn.active ? "connected" : "connecting", turn.onScreen ? 1 : (turn.asks ? 2 : 0));

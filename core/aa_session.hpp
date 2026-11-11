@@ -8,6 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <atomic>
+
 #include "aa_frame.hpp"
 #include "aa_input.hpp"
 #include "aa_messages.hpp"
@@ -43,6 +45,9 @@ public:
     // Ends the session and joins its thread. The ended callback does not run.
     void stop();
     bool isActive() const { return running(); }
+    // The longest time the phone sent nothing since the previous call, in milliseconds, and starts over. Any thread.
+    // A phone that projects sends pings and status every second: seconds here are a link that stalled.
+    uint32_t takeLongestSilenceMs() { return longestSilenceMs_.exchange(0); }
 
     // Set before start().
     void setDisconnectCallback(SessionEndedCallback cb, void* user_data = nullptr);
@@ -147,7 +152,9 @@ private:
     DisplayPlan display_;
 
     CarInbox inbox_;
+    std::atomic<uint32_t> longestSilenceMs_;
     // Session thread only.
+    uint64_t lastReceivedMs_;  // when the phone last sent anything, 0 before its first byte
     TlsClient tls_;
     MessageAssembler assembler_;
     bool videoReady_;             // the phone set the video channel up: a focus can go
