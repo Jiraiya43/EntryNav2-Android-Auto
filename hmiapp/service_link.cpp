@@ -3,10 +3,8 @@
 // Starting, reading, telling and stopping the service from the iDrive app (service_link.hpp).
 #include "service_link.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <netinet/in.h>
 #include <pthread.h>
 #include <signal.h>
 #include <spawn.h>
@@ -14,13 +12,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "../platform/control_address.hpp"
 #include "../platform/service_contract.hpp"
 #include "app_log.hpp"
 #include "log_profile.hpp"
@@ -63,38 +61,10 @@ void* reaper(void* p) {
     return nullptr;
 }
 
-void loopbackControlPort(struct sockaddr_in* a) {
-    memset(a, 0, sizeof(*a));
-    a->sin_family = AF_INET;
-    a->sin_port = htons(contract::kControlPort);
-    a->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-}
-
+// True when a service answers on the control channel. With none, the answer comes at once, not after a 200 ms
+// silence on every status poll of the app's thread.
 bool controlPortBusy() {
-    int fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-    if (fd < 0) {
-        return false;
-    }
-    struct sockaddr_in a;
-    loopbackControlPort(&a);
-    bool busy = false;
-    // Connected: with no service on the port the kernel answers "refused" at once, instead of a 200 ms silence on every
-    // status poll of the app's thread.
-    if (connect(fd, reinterpret_cast<struct sockaddr*>(&a), sizeof(a)) == 0 && send(fd, "ping", 4, 0) == 4) {
-        fd_set rf;
-        FD_ZERO(&rf);
-        FD_SET(fd, &rf);
-        struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 200000;
-        if (select(fd + 1, &rf, nullptr, nullptr, &tv) > 0) {
-            char buf[8];
-            ssize_t n = recv(fd, buf, sizeof(buf), 0);
-            busy = (n >= 4 && memcmp(buf, "pong", 4) == 0);
-        }
-    }
-    close(fd);
-    return busy;
+    return controlAnswers(contract::kControlName, 200);
 }
 
 }  // namespace
@@ -190,14 +160,7 @@ void launchService() {
 
 // ---- control messages and state -------------------------------------------------------------------------------------
 void sendToService(const char* message) {
-    int fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-    if (fd < 0) {
-        return;
-    }
-    struct sockaddr_in a;
-    loopbackControlPort(&a);
-    sendto(fd, message, strlen(message), 0, reinterpret_cast<struct sockaddr*>(&a), sizeof(a));
-    close(fd);
+    sendControl(contract::kControlName, message);
 }
 
 ServiceState readServiceState() {

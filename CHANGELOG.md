@@ -8,6 +8,16 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Android Auto qui refusait de démarrer pendant tout un trajet, avec la ligne `UDP 127.0.0.1:52790 already taken`
+  dans le journal du service. L'appli de l'iDrive et le service se parlaient par un port réseau local, pris dans la
+  plage que l'unité distribue au hasard à ses propres programmes : à certains allumages, un autre programme recevait
+  ce port, et le service croyait à tort qu'un autre service tournait déjà. Ils se parlent maintenant par un socket
+  Unix au nom abstrait, sans port : rien qu'un autre programme puisse recevoir par hasard. Défaut présent depuis la
+  0.10.0, vu une fois sur la voiture de référence. Change l'appli de l'iDrive : redémarrage de l'unité après
+  l'installation. Essayé en voiture.
+
 ## [0.12.0-rc.2] - 2026-11-11 · PC
 
 Version candidate, **testée sur PC seulement** : à essayer en voiture. Elle change l'appli de l'iDrive : installée

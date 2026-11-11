@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
     }
     // The state file is read by the iDrive app (hmiapp/).
     if (service &&
-        !control.start(evo::contract::kControlPort, evo::contract::kStateFile, evo::ServiceApp::command, &app)) {
+        !control.start(evo::contract::kControlName, evo::contract::kStateFile, evo::ServiceApp::command, &app)) {
         return 1;
     }
     if (usb) {

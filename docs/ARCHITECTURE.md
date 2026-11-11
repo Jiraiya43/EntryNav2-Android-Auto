@@ -53,7 +53,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `wireless_loop` | Boucle d'attente du téléphone en Bluetooth, puis de sa connexion Wi-Fi |
 | `usb_loop`, `usb_accessory` | Mode USB : repère un téléphone Android sur les prises, le passe en mode accessoire |
 | `usb_bridge`, `usb_devfs` | Mode USB : pont entre le téléphone (usbfs du noyau) et la session, par un socket local |
-| `service_contract.hpp` | Chemins et port partagés par l'appli iDrive, le superviseur et le service |
+| `service_contract.hpp` | Chemins et nom du canal de commande partagés par l'appli iDrive, le superviseur et le service |
 | `evo_video`, `evo_ilm`, `omap_dmabuf` | Décodage et affichage de la vidéo, gestion de sa couche |
 | `evo_pill`, `volume_pill.hpp` | Pastille du volume au-dessus d'Android Auto : client Wayland, dessin |
 | `evo_knob`, `evo_touch`, `input_mode.hpp` | Entrées : molette, touches, tactile |
@@ -65,7 +65,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `wifi_link` | Qualité de la liaison Wi-Fi avec le téléphone, lue dans le noyau pour les journaux (testé sur PC) |
 | `alps_spp`, `evo_spp_snapshot` | Pile Bluetooth de la voiture : commandes, et lecture de son état en mémoire |
 | `evo_elf.hpp` | Symboles exportés par une bibliothèque de la voiture, lus dans son fichier |
-| `evo_control` | Commandes de l'appli vers le service |
+| `evo_control`, `control_address.hpp` | Commandes de l'appli vers le service, par un socket Unix au nom abstrait (ni fichier ni port réseau) |
 | `kombi_nav` | Service de guidage vers le compteur et la tête haute : fils, réglage `kombi-off`, annulation d'urgence |
 | `kombi_phone` | Lecture des messages de navigation d'Android Auto |
 | `kombi_guide` | Machine de guidage : manœuvre, distance, voies, rue, approche |
@@ -83,7 +83,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `bmw_framework` | Déclarations de l'interface BMW des applis, accroches de la table virtuelle |
 | `hold_machine` | Quand demander la page vide de l'iDrive sous Android Auto (classe pure, testée sur PC) |
 | `pending_restart.hpp` | Redémarrage d'Android Auto quand la case du câble USB change en marche (testé sur PC) |
-| `service_link` | Lancement du superviseur, commandes UDP au service, arrêt |
+| `service_link` | Lancement du superviseur, commandes au service, arrêt |
 | `car_signals` | Marche arrière, appels, jour et nuit, mode de conduite, lus dans l'iDrive |
 | `app_guards` | Interrupteur, garde-fou contre les plantages, démarrage automatique |
 | `app_log`, `log_profile.hpp` | Journal de l'appli, profil maintenance |

@@ -42,8 +42,8 @@ constexpr char kAppKeyFile[] = "/tmp/entry-aad-appkey";           // NAV/MEDIA/C
 constexpr char kDayNightFile[] = "/tmp/entry-aad-daynight";       // day or night, written by the app
 constexpr char kWirelessLock[] = "/tmp/entry-aad-wireless.lock";  // one wireless start at a time
 
-// ---- control messages from the app to the service: UDP on 127.0.0.1 only ------------------------------------------
-constexpr uint16_t kControlPort = 52790;
+// ---- control messages from the app to the service: a Unix datagram socket, abstract name (control_address.hpp) ----
+constexpr char kControlName[] = "entry-aad-control";
 
 }  // namespace contract
 }  // namespace evo
