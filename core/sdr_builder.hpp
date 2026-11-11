@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "display_plan.hpp"
+
 namespace aa {
 
 // What the phone is told about the car and the head unit.
@@ -30,11 +32,12 @@ bool validCarYear(const std::string& s);
 // The steps of buildCarServiceDiscovery, in its order; each prints what it changed.
 // The identity strings replaced, at the top level and in the head unit info (field 17); everything else untouched.
 std::vector<uint8_t> buildServiceDiscovery(const uint8_t* base, size_t baseLen, const SdrIdentity& id);
-// Main display (channel 6): density 140 (seen on the car: the rail icons no longer overlap) and a bottom inset of
-// 240, so that the phone keeps its UI in the top 480 rows of its 1280x720 canvas, which the panel shows 1:1.
-bool tuneMainDisplay(std::vector<uint8_t>& sdr);
-// The touchscreen (channel 7) as 1280 x 720, the phone's canvas: touch coordinates go through unscaled.
-bool declareTouchscreen(std::vector<uint8_t>& sdr);
+// Main display (channel 6): the plan's canvas, density 140 (seen on the car: the rail icons no longer overlap) and
+// the insets that keep the phone's UI in the part of the canvas the panel shows 1:1. On the reference car: the
+// 1280x720 canvas and a bottom inset of 240, its top 480 rows shown.
+bool tuneMainDisplay(std::vector<uint8_t>& sdr, const DisplayPlan& display = DisplayPlan());
+// The touchscreen (channel 7) with the size of the phone's canvas: touch coordinates go through unscaled.
+bool declareTouchscreen(std::vector<uint8_t>& sdr, const DisplayPlan& display = DisplayPlan());
 // No media sink (channel 9): media plays over the car's Bluetooth. The phone refuses the session without an audio
 // sink or without the microphone, so 8 (speech and guidance) and 14 stay. Returns the descriptors removed.
 int removeMediaChannel(std::vector<uint8_t>& sdr);
@@ -49,9 +52,10 @@ void setDiscoveryTrim(DiscoveryTrim trim);
 
 // What the phone is told about this car: the template adapted by every step above. vehicleFile: the model
 // and year (SdrIdentity::loadVehicleFile), given by the platform; null keeps the default ones. softwareVersion: the
-// version of the program, announced as the head unit's software version; null keeps "0.0.0".
+// version of the program, announced as the head unit's software version; null keeps "0.0.0". display: the panel
+// and the canvas chosen for it; the reference car's when not given.
 std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile,
-                                              const char* softwareVersion);
+                                              const char* softwareVersion, const DisplayPlan& display = DisplayPlan());
 
 }  // namespace aa
 

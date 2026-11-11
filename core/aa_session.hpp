@@ -14,6 +14,7 @@
 #include "aa_tls.hpp"
 #include "car_inbox.hpp"
 #include "car_location.hpp"
+#include "display_plan.hpp"
 
 namespace aa {
 
@@ -57,6 +58,8 @@ public:
     // The program's version, announced to the phone as the head unit's software version; kept as given. None by
     // default: "0.0.0".
     void setSoftwareVersion(const char* version) { softwareVersion_ = version; }
+    // The panel and the canvas asked of the phone for it (display_plan.hpp). The reference car's by default.
+    void setDisplay(const DisplayPlan& display) { display_ = display; }
 
     // Car input for the phone, from any thread: queued, then sent by the session thread.
     void postTouchEvent(const TouchEventOut& ev);
@@ -141,6 +144,7 @@ private:
     Callback<NavStatusCallback> navigation_;
     const char* vehicleFile_;
     const char* softwareVersion_;
+    DisplayPlan display_;
 
     CarInbox inbox_;
     // Session thread only.

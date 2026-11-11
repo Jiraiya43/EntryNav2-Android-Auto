@@ -222,13 +222,29 @@ int main(int argc, char** argv) {
     }
     const bool guarded = !usb && (limitSeconds || service);  // Alps baseline/child snapshot checks
     setenv("XDG_RUNTIME_DIR", "/run/system/0", 0);           // read by the Wayland library (picture, volume pill)
+    // The panel's size, read from the compositor: the phone's canvas and the part of it that is shown follow it.
+    aa::DisplayPlan display;
+    if (video) {
+        evo::EvoIlm ilm;
+        uint32_t panelWidth = 0, panelHeight = 0;
+        if (!ilm.screenSize(panelWidth, panelHeight) || !aa::planDisplay(panelWidth, panelHeight, display)) {
+            ELOG("Main", "screen size unreadable or larger than 1920x1080 (%ux%u): no picture possible", panelWidth,
+                 panelHeight);
+            return 1;
+        }
+        ELOG("Main", "screen %ux%u: the phone is asked for %ux%u%s", display.width, display.height, display.canvasWidth,
+             display.canvasHeight, display.reference() ? "" : " (a size not tried on the reference car)");
+    }
     evo::ServiceApp app(kAaPort, video, &quit);
+    app.videoConfig.setDisplay(display.canvasWidth, display.canvasHeight, display.width, display.height);
+    app.session.setDisplay(display);
     app.usbPort = usbPort ? usbPort : "";
     app.session.setTouchForwarding(input == evo::INPUT_FORWARD);
     app.session.setVehicleFile(evo::contract::kVehicle);  // the car's model and year, written at installation
     app.session.setSoftwareVersion(ENTRY_AAD_VERSION);    // the file VERSION, given by the Makefile
     // Declared after app: destroyed (and joined) before the session their callbacks post to.
     evo::EvoTouch touch;
+    touch.setCanvas(display.canvasWidth, display.canvasHeight);
     evo::EvoKnob knob;
     evo::EvoControl control;
     if (usb) {

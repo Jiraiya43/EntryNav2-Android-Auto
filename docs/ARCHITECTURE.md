@@ -41,6 +41,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `sdr_builder` | Description de la voiture envoyée au téléphone ; la plateforme lui donne le fichier `vehicle` et y retire les capteurs absents |
 | `car_location.hpp` | Position de la voiture vers le capteur Android Auto |
 | `crash_handler` | Trace d'un plantage, puis le nettoyage enregistré par la plateforme |
+| `display_plan.hpp` | Image demandée au téléphone selon la taille de l'écran, et zone montrée |
 | `include/` | Modèle de description de la voiture, certificat de l'unité |
 
 ## `platform/` : l'EntryNav2

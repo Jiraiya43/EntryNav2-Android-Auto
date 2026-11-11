@@ -46,7 +46,8 @@ counts as proof: [CHANGELOG.md](CHANGELOG.md) says for each version whether it w
 
 ## Requirements
 
-- A BMW with an **EntryNav2** head unit (called *EntryEVO* inside its system), a **1280×480** screen and the
+- A BMW with an **EntryNav2** head unit (called *EntryEVO* inside its system), a **1280×480** screen (other sizes
+  are [being tried](docs/COMPATIBILITE.md#autres-tailles-décran)) and the
   **CarPlay Wi-Fi**. NBT Evo, ID7 and MGU units run other systems: this project cannot run on them.
 - A PC with an SSH client (Windows 10/11, Linux or macOS) and an **ENET cable** (OBD to Ethernet).
 - The head unit's **root password**. It is not provided with this project.

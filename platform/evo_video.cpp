@@ -56,6 +56,17 @@ EvoVideo::~EvoVideo() {
     pthread_mutex_destroy(&mu_);
 }
 
+void EvoVideoConfig::setDisplay(uint32_t canvasWidth, uint32_t canvasHeight, uint32_t panelWidth,
+                                uint32_t panelHeight) {
+    width = canvasWidth;
+    height = canvasHeight;
+    displayWidth = panelWidth;
+    displayHeight = panelHeight;
+    if (canvasWidth > 1280 || canvasHeight > 720) {
+        bufSize = 2u << 20;
+    }
+}
+
 bool EvoVideo::init(const EvoVideoConfig& cfg) {
     if (started_) {
         return false;

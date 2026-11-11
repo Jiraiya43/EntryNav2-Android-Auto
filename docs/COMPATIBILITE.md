@@ -2,7 +2,8 @@
 
 ## Voitures concernées
 
-Une BMW avec une **unité EntryNav2** (appelée EntryEVO dans son système), un **écran 1280x480** et le **Wi-Fi de CarPlay**.
+Une BMW avec une **unité EntryNav2** (appelée EntryEVO dans son système) et le **Wi-Fi de CarPlay**. L'écran essayé
+en voiture est le **1280x480** ; les autres tailles sont à l'essai (voir [plus bas](#autres-tailles-décran)).
 
 Les NBT Evo, ID7 et MGU tournent sur d'autres systèmes : ce programme ne peut pas s'y exécuter. L'installation demande
 aussi une connexion SSH à l'unité, avec son mot de passe root.
@@ -30,7 +31,8 @@ programmes restent dans `/tmp`, en mémoire.
 | `aa-supervisor --compat` : `abi` | Interface de l'iDrive pour ses applis, de la même taille | Bloquant |
 | `vmost` | Fonctions de la molette et des touches, chargées à l'exécution | Bloquant |
 | `mic` | Fonctions du micro | Douteux |
-| `video`, `order` | **Démarrage à blanc :** emplacement de l'image, superposition des couches | Bloquant |
+| `video`, `order` | **Démarrage à blanc :** taille de l'écran, emplacement de l'image, superposition des couches | Bloquant |
+| `screen` | Écran d'une autre taille que 1280x480 : accepté, mais jamais essayé en voiture | Douteux |
 | `alps`, `uuid`, `spp` | **Démarrage à blanc :** bibliothèque Bluetooth de même structure, profil reconnu, état lisible | Bloquant ; Bluetooth occupé : douteux |
 | `running` | Android Auto tourne déjà : l'écran et le Bluetooth ne sont pas contrôlés | Information |
 | `hotspot`, `gps` | Wi-Fi de la voiture disponible, GPS de la voiture reconnu | Information |
@@ -53,6 +55,22 @@ Deux mécanismes font ce travail :
 
 « Possible, et réversible » sera le cas le plus fréquent sur une autre voiture : toutes les fonctions appelées existent et
 le démarrage à blanc passe, mais le contrôle ne peut pas prouver qu'Android Auto marchera jusqu'au bout.
+
+## Autres tailles d'écran
+
+Le service lit la taille de l'écran sur la voiture et règle l'image d'Android Auto dessus, sans réglage à faire.
+Android Auto ne sait dessiner que trois tailles : le service demande la plus petite qui contient l'écran, dit au
+téléphone de garder son affichage dans la zone visible, et ne montre que cette zone.
+
+| Écran | Image demandée au téléphone | Zone montrée | État |
+|---|---|---|---|
+| 1280x480 | 1280x720 | les 480 lignes du haut | essayé en voiture (référence) : rien ne change |
+| 800x480 | 800x480 | tout | testé sur PC, à l'essai sur un i3 ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)) |
+| jusqu'à 1920x1080 | 1920x1080 | la zone de l'écran, en haut à gauche | testé sur PC, jamais essayé |
+
+La ligne `@ok|video|` du contrôle donne la taille lue. Un écran plus grand que 1920x1080 est refusé. Sur une autre
+taille que 1280x480, le menu de l'appli iDrive et la pastille du volume n'ont jamais été vus : le rapport d'un
+essai est le bienvenu.
 
 ## Une autre version de la bibliothèque Bluetooth
 

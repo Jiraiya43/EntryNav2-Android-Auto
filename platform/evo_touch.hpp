@@ -50,6 +50,11 @@ public:
     void reset();
     // False until the Android Auto picture has started (true by default).
     void setPictureStarted(bool started) { pictureStarted_ = started; }
+    // The last pixel of the phone's canvas: no coordinate is sent past it.
+    void setLimits(int maxX, int maxY) {
+        maxX_ = maxX;
+        maxY_ = maxY;
+    }
 
 private:
     void fillActive(aa::TouchEventOut& e, int which) const;
@@ -73,6 +78,10 @@ public:
     using Callback = void (*)(const aa::TouchEventOut&, void*);
     EvoTouch();
     ~EvoTouch();
+    // Before start(): the size of the phone's canvas, 1280x720 by default.
+    void setCanvas(uint32_t width, uint32_t height) {
+        tracker_.setLimits(static_cast<int>(width) - 1, static_cast<int>(height) - 1);
+    }
     bool start(InputMode mode, Callback cb, void* user);
     // Forward mode only: true while the Android Auto picture is on screen and the session is up.
     void setOwned(bool owned);
