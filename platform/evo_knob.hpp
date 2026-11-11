@@ -6,13 +6,18 @@
 // (01); one pair can be shadowed by dozens of clients. We register as a shadow too (a copy of the controller's Status
 // messages): nothing is ever sent to the controller and iDrive keeps receiving everything.
 // libvmostclient.so.1 is loaded at run time (platform/vmost_client.hpp) and kept until the process exits.
-// Decoding: platform/evo_ccs.hpp (instance 03, functions C46/C47/C4F).
+// Decoding: platform/evo_ccs.hpp (instance 03, functions C46/C47/C4F; older controllers: instance 01, C10/C20).
 //
 // A shadow registration alone receives no message: vmostd.conf sets EnableFunctionBasedFiltering=true, and vmostd
 // only forwards a status message (OpType > 8) to a client once bit (FBlock + low byte of the function) & 0xFF of that
 // client's filter is set. vmostd sets that bit, before routing, when the client sends a request (OpType <= 8) on that
 // function. So we send a plain read (Get, OpType 1) of C46/C47/C4F to E5.03: no Notification.Set/Clear, no
 // controller setting changed; iDrive receives the status reply too.
+//
+// A car with the older controller (a BMW i3: its only E5 message was E5.01 function C30, let through by the filter
+// bit the steering wheel phone button's read had set) never answers those reads, and its C10/C20 status messages
+// stayed filtered out. When CCS35up stays silent, the same plain read is sent for C10 and C20 on E5.01
+// (aa::CcsProtocol, evo_ccs.hpp); a car that answers on CCS35up is sent nothing more.
 #ifndef ENTRY_AAD_PLATFORM_EVO_KNOB_HPP
 #define ENTRY_AAD_PLATFORM_EVO_KNOB_HPP
 
@@ -112,11 +117,14 @@ public:
             releaseHeldKeys("picture gone");
         }
     }
+    aa::CcsProtocol::Kind protocol() const { return protocol_.kind(); }
 
 private:
     static void* threadMain(void* self);
     void run();
     bool load();
+    // Reads C10 and C20 on E5.01 once, which opens vmostd's filter for the older controller protocol.
+    void readOlderProtocol();
     InputMode mode_;
     Callback cb_;
     void* user_;
@@ -145,6 +153,8 @@ private:
     uint8_t pushPrev_[8];
     unsigned volumeSteps_;
     aa::CcsDecoder decoder_;
+    aa::CcsProtocol protocol_;  // knob thread only
+    bool otherProtocolLogged_;
     void forwardKey(uint32_t keycode, const char* what);
     // Keys whose press reached Android Auto: their release always follows, even once the picture is gone (camera,
     // popup, driving mode, menu), or the phone would keep them down. Knob thread only.

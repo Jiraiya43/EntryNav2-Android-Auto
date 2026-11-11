@@ -25,7 +25,9 @@ Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit p
 - [ ] Trajet de 20 à 30 minutes par câble, musique en Bluetooth
 - [ ] Câble débranché puis rebranché en cours de route
 - [ ] *Arrêter* puis *Démarrer* sans débrancher, puis retour au sans-fil
-- [ ] Câble essayé sur une autre voiture
+- [x] Câble essayé sur une autre voiture : X3 G01 ([#17](https://github.com/Jiraiya43/entry-aad/issues/17)),
+  i3 ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)), G21
+  ([#26](https://github.com/Jiraiya43/entry-aad/issues/26))
 
 ## 1.0 : une autre voiture
 
@@ -33,7 +35,8 @@ Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit p
   ([#17](https://github.com/Jiraiya43/entry-aad/issues/17))
 - [ ] Première installation sur une autre voiture, puis désinstallation vérifiée
 - [ ] Tableau des logiciels essayés rempli ([compatibilité](docs/COMPATIBILITE.md))
-- [ ] Ancienne molette (contrôleurs C10/C20) essayée sur une vraie voiture
+- [x] Ancienne molette (contrôleurs C10/C20) essayée sur une vraie voiture : i3
+  ([#19](https://github.com/Jiraiya43/entry-aad/issues/19), 11 novembre 2026)
 
 ## Limites connues
 
