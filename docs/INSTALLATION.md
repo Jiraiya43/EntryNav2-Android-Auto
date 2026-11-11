@@ -30,7 +30,7 @@ ancienne, suivre celle de l'archive (dans la 0.10.0, le superviseur s'appelle `e
 Depuis le PC, dans le dossier de l'archive :
 
 ```sh
-scp entry-aad-0.12.0-rc.1-armhf.tar root@169.254.1.0:/tmp/
+scp entry-aad-0.12.0-rc.2-armhf.tar root@169.254.1.0:/tmp/
 ssh root@169.254.1.0
 ```
 
@@ -42,7 +42,7 @@ encore écrit sur la mémoire flash.
 Rien n'est modifié pendant cette étape.
 
 ```sh
-V=0.12.0-rc.1
+V=0.12.0-rc.2
 cd /tmp && rm -rf entry-aad-$V && tar -xf entry-aad-$V-armhf.tar && cd entry-aad-$V
 md5sum -c MD5SUMS
 head -n 1 /etc/version

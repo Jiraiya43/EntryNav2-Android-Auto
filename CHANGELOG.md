@@ -8,6 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.12.0-rc.2] - 2026-11-11 · PC
+
+Version candidate, **testée sur PC seulement** : à essayer en voiture. Elle change l'appli de l'iDrive : installée
+par-dessus la 0.12.0-rc.1, elle demande un redémarrage de l'unité.
+
 ### Ajouté
 
 - Menu de l'iDrive : la case **Câble USB au lieu du sans-fil** choisit le mode, sans PC ni SSH. Elle pose ou retire
@@ -91,7 +96,8 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.12.0-rc.1...HEAD
+[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.12.0-rc.2...HEAD
+[0.12.0-rc.2]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.2
 [0.12.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.1
 [0.11.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.1
 [0.10.0]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.10.0
