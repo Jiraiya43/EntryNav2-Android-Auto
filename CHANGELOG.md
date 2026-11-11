@@ -16,6 +16,10 @@ QEMU avec les bibliothèques de la voiture).
   (`@warn|screen|`). Sur un écran 1280x480, ce qui est envoyé au téléphone est identique, octet pour octet.
   [Détails](docs/COMPATIBILITE.md#autres-tailles-décran) ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)).
   Essayé en voiture sur une i3 à écran 800x480, par câble ; les autres tailles sont testées sur PC.
+- Journaux : chaque connexion Bluetooth que la voiture ouvre, accepte ou perd dit maintenant si l'appareil est le
+  téléphone d'Android Auto ou un autre (aucune adresse n'est écrite), et chaque coupure donne la raison du
+  Bluetooth de la voiture (`reason=`). Le Bluetooth et le Wi-Fi de l'unité partagent la même puce : ces lignes
+  montrent ce que fait le Bluetooth pendant qu'Android Auto passe par le Wi-Fi.
 
 ### Corrigé
 

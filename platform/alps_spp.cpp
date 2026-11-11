@@ -101,6 +101,8 @@ struct AlpsSppLink::Impl {
     uint32_t txSince;
     std::vector<uint8_t> rx, cfgData;
     size_t rxOffset;
+    uint8_t phone[6];  // the device whose Android Auto link last opened, to tell it from the others in the log
+    bool phoneKnown;
 
     Impl()
         : conn(nullptr),
@@ -126,7 +128,9 @@ struct AlpsSppLink::Impl {
           cfgInst(0),
           cfgId(0),
           txSince(0),
-          rxOffset(0) {
+          rxOffset(0),
+          phoneKnown(false) {
+        memset(phone, 0, sizeof(phone));
         pair[0] = pair[1] = -1;
         pthread_mutex_init(&mu, nullptr);
         pthread_mutex_init(&requestMu, nullptr);
@@ -291,16 +295,33 @@ struct AlpsSppLink::Impl {
                 return;
             }
             dbus_message_iter_next(&it);
+            uint8_t reason = 0;
             if (!connecting) {
-                dbus_message_iter_next(&it);  // reason
+                dbus_message_iter_get_basic(&it, &reason);
+                dbus_message_iter_next(&it);
             }
             dbus_message_iter_get_basic(&it, &function);
             dbus_message_iter_next(&it);
             dbus_message_iter_get_basic(&it, &instance);
             // The BMW Bluetooth service (btmbt) reads function == 1 as SPP in these signals.
-            ELOG("SPP", "%s instance=%u function=%llu status=%u", member, instance, (unsigned long long)function,
-                 status);
-            if (monitor || instance != inst || function != 1 || (status & 0x7f) != 0) {
+            const bool ours = !monitor && instance == inst && function == 1 && (status & 0x7f) == 0;
+            if (ours && connecting) {
+                memcpy(phone, addr, sizeof(phone));
+                phoneKnown = true;
+            }
+            // Every Bluetooth connection the car makes, accepts or loses, with any device: the radio is shared with
+            // the Wi-Fi. No address is written: only whether the device is the Android Auto phone. A disconnection
+            // comes with the reason the car's Bluetooth service gives (btmbt: 2 is the other side closing).
+            const char* who =
+                !phoneKnown ? "" : (memcmp(phone, addr, sizeof(phone)) ? ", another device" : ", the phone");
+            if (connecting) {
+                ELOG("SPP", "%s instance=%u function=%llu status=%u%s", member, instance, (unsigned long long)function,
+                     status, who);
+            } else {
+                ELOG("SPP", "%s instance=%u function=%llu status=%u reason=%u%s", member, instance,
+                     (unsigned long long)function, status, reason, who);
+            }
+            if (!ours) {
                 return;
             }
             if (connecting) {
