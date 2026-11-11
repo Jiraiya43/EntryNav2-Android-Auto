@@ -21,16 +21,18 @@ const uint32_t kMediaSinkField = 3;      // in a service
 const uint32_t kInputSourceField = 4;    // in a service
 const uint32_t kAudioTypeField = 2;      // in a media sink
 const uint32_t kVideoConfigField = 4;    // in a media sink
-const uint32_t kDensityField = 5;        // in a video config, with kRealDensityField
+const uint32_t kResolutionField = 1;     // in a video config: the canvas, 1 800x480, 2 1280x720, 3 1920x1080
+const uint32_t kWidthMarginField = 3;    // in a video config, with kHeightMarginField
+const uint32_t kHeightMarginField = 4;
+const uint32_t kDensityField = 5;  // in a video config, with kRealDensityField
 const uint32_t kRealDensityField = 9;
 const uint32_t kUiConfigField = 11;    // in a video config: the insets as its field 1, then theme and the like
 const uint32_t kInsetsField = 1;       // top, bottom, left, right
 const uint32_t kTouchscreenField = 2;  // in an input source
-const uint32_t kHeightField = 2;       // in a touchscreen
+const uint32_t kWidthField = 1;        // in a touchscreen, with kHeightField
+const uint32_t kHeightField = 2;
 
 const uint32_t kDensity = 140;
-const uint32_t kBottomInset = 240;
-const uint32_t kTouchHeight = 720;
 const uint64_t kGuidanceAudio = 1;
 const uint8_t kSystemAudio = 2;
 
@@ -94,11 +96,24 @@ bool rewriteChannel(Bytes& sdr, uint8_t channel, Edit edit, bool& changed) {
     return ok;
 }
 
-// The video config of the main display: both densities set, and the UI config written last, its insets replaced.
-bool tuneVideoConfig(const pb::Field& config, Bytes& out) {
+// The video config of the main display: the canvas, both densities set, and the UI config written last, its insets
+// replaced. The template's two margins are what the reference car has always sent on its 1280x720 canvas and stay
+// on that canvas; on another one they are zero, the insets alone placing the UI.
+bool tuneVideoConfig(const pb::Field& config, Bytes& out, const DisplayPlan& display) {
     Bytes ui;
     Bytes body;
+    bool templateCanvas = true;
     const bool ok = pb::rewriteMessage(config.data, config.size, body, [&](const pb::Field& field, Bytes& to) -> bool {
+        if (field.type == pb::kVarint && field.number == kResolutionField) {
+            templateCanvas = field.value == display.resolution;
+            pb::appendUint(to, field.number, display.resolution);
+            return true;
+        }
+        if (field.type == pb::kVarint && !templateCanvas &&
+            (field.number == kWidthMarginField || field.number == kHeightMarginField)) {
+            pb::appendUint(to, field.number, 0);
+            return true;
+        }
         if (field.type == pb::kVarint && (field.number == kDensityField || field.number == kRealDensityField)) {
             pb::appendUint(to, field.number, kDensity);
             return true;
@@ -114,9 +129,9 @@ bool tuneVideoConfig(const pb::Field& config, Bytes& out) {
     }
     Bytes insets;
     pb::appendUint(insets, 1, 0);
-    pb::appendUint(insets, 2, kBottomInset);
+    pb::appendUint(insets, 2, display.bottomInset());
     pb::appendUint(insets, 3, 0);
-    pb::appendUint(insets, 4, 0);
+    pb::appendUint(insets, 4, display.rightInset());
     Bytes rebuilt;
     pb::appendMessage(rebuilt, kInsetsField, insets);
     // The template's other UI settings stay, after the insets.
@@ -198,43 +213,48 @@ std::vector<uint8_t> buildServiceDiscovery(const uint8_t* base, size_t baseLen, 
     return ok ? out : Bytes(base, base + baseLen);
 }
 
-bool tuneMainDisplay(std::vector<uint8_t>& sdr) {
+bool tuneMainDisplay(std::vector<uint8_t>& sdr, const DisplayPlan& display) {
     bool changed = false;
     const bool ok = rewriteChannel(
         sdr, channel::kVideo,
-        [](const pb::Field& field, Bytes& to) -> bool {
+        [&](const pb::Field& field, Bytes& to) -> bool {
             return pb::isMessage(field, kMediaSinkField) &&
-                   rewriteInner(field, to, [](const pb::Field& sink, Bytes& into) -> bool {
-                       return pb::isMessage(sink, kVideoConfigField) && tuneVideoConfig(sink, into);
+                   rewriteInner(field, to, [&](const pb::Field& sink, Bytes& into) -> bool {
+                       return pb::isMessage(sink, kVideoConfigField) && tuneVideoConfig(sink, into, display);
                    });
         },
         changed);
     if (ok && changed) {
-        printf("[SDR] main VideoConfig: dpi=%u insets=(0,%u,0,0)\n", kDensity, kBottomInset);
+        printf("[SDR] main VideoConfig: canvas %ux%u for a %ux%u panel, dpi=%u insets=(0,%u,0,%u)\n",
+               display.canvasWidth, display.canvasHeight, display.width, display.height, kDensity,
+               display.bottomInset(), display.rightInset());
     }
     return ok && changed;
 }
 
-bool declareTouchscreen(std::vector<uint8_t>& sdr) {
+bool declareTouchscreen(std::vector<uint8_t>& sdr, const DisplayPlan& display) {
     bool changed = false;
     const bool ok = rewriteChannel(
         sdr, channel::kInput,
-        [](const pb::Field& field, Bytes& to) -> bool {
+        [&](const pb::Field& field, Bytes& to) -> bool {
             return pb::isMessage(field, kInputSourceField) &&
-                   rewriteInner(field, to, [](const pb::Field& source, Bytes& into) -> bool {
+                   rewriteInner(field, to, [&](const pb::Field& source, Bytes& into) -> bool {
                        return pb::isMessage(source, kTouchscreenField) &&
-                              rewriteInner(source, into, [](const pb::Field& size, Bytes& sized) -> bool {
-                                  if (size.type != pb::kVarint || size.number != kHeightField) {
+                              rewriteInner(source, into, [&](const pb::Field& size, Bytes& sized) -> bool {
+                                  if (size.type != pb::kVarint ||
+                                      (size.number != kWidthField && size.number != kHeightField)) {
                                       return false;
                                   }
-                                  pb::appendUint(sized, kHeightField, kTouchHeight);
+                                  pb::appendUint(
+                                      sized, size.number,
+                                      size.number == kWidthField ? display.canvasWidth : display.canvasHeight);
                                   return true;
                               });
                    });
         },
         changed);
     if (ok && changed) {
-        printf("[SDR] touchscreen declared 1280x%u\n", kTouchHeight);
+        printf("[SDR] touchscreen declared %ux%u\n", display.canvasWidth, display.canvasHeight);
     }
     return ok && changed;
 }
@@ -298,7 +318,7 @@ void setDiscoveryTrim(DiscoveryTrim trim) {
 }
 
 std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile,
-                                              const char* softwareVersion) {
+                                              const char* softwareVersion, const DisplayPlan& display) {
     SdrIdentity identity;
     if (vehicleFile) {
         identity.loadVehicleFile(vehicleFile);
@@ -309,8 +329,8 @@ std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLe
     std::vector<uint8_t> sdr = buildServiceDiscovery(base, baseLen, identity);
     printf("[SDR] ServiceDiscovery identity: %s %s %s (BT channel: none)\n", identity.carMake.c_str(),
            identity.carModel.c_str(), identity.carYear.c_str());
-    tuneMainDisplay(sdr);
-    declareTouchscreen(sdr);
+    tuneMainDisplay(sdr, display);
+    declareTouchscreen(sdr, display);
     removeMediaChannel(sdr);
     if (g_trim) {
         g_trim(sdr);

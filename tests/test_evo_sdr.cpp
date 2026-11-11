@@ -107,6 +107,61 @@ static std::map<uint64_t, std::vector<uint8_t>> channels(const std::vector<uint8
     return m;
 }
 
+// The first field `num` of a message: its bytes, or its value.
+static bool sub(const std::vector<uint8_t>& b, int num, std::vector<uint8_t>& out) {
+    const std::vector<F> all = fields(b);
+    for (size_t i = 0; i < all.size(); ++i) {
+        if (all[i].num == num && all[i].wt == 2) {
+            out = all[i].body;
+            return true;
+        }
+    }
+    return false;
+}
+static uint64_t value(const std::vector<uint8_t>& b, int num) {
+    const std::vector<F> all = fields(b);
+    for (size_t i = 0; i < all.size(); ++i) {
+        if (all[i].num == num && all[i].wt == 0) {
+            return all[i].v;
+        }
+    }
+    return ~0ull;
+}
+// The service of one channel in a description.
+static bool service(const std::vector<uint8_t>& sdr, uint64_t channel, std::vector<uint8_t>& out) {
+    const std::vector<F> top = fields(sdr);
+    for (size_t i = 0; i < top.size(); ++i) {
+        if (top[i].num == 1 && top[i].wt == 2 && value(top[i].body, 1) == channel) {
+            out = top[i].body;
+            return true;
+        }
+    }
+    return false;
+}
+// What a description tells the phone about the picture: canvas number, the two margins, the insets, the
+// touchscreen's size.
+struct Shown {
+    uint64_t resolution, marginW, marginH, top, bottom, left, right, touchW, touchH, density;
+};
+static bool shown(const std::vector<uint8_t>& sdr, Shown& s) {
+    std::vector<uint8_t> video, sink, config, ui, insets, input, source, touch;
+    if (!service(sdr, 6, video) || !sub(video, 3, sink) || !sub(sink, 4, config) || !sub(config, 11, ui) ||
+        !sub(ui, 1, insets) || !service(sdr, 7, input) || !sub(input, 4, source) || !sub(source, 2, touch)) {
+        return false;
+    }
+    s.resolution = value(config, 1);
+    s.marginW = value(config, 3);
+    s.marginH = value(config, 4);
+    s.density = value(config, 5);
+    s.top = value(insets, 1);
+    s.bottom = value(insets, 2);
+    s.left = value(insets, 3);
+    s.right = value(insets, 4);
+    s.touchW = value(touch, 1);
+    s.touchH = value(touch, 2);
+    return true;
+}
+
 int main() {
     char gpsFile[96];
     snprintf(gpsFile, sizeof(gpsFile), "/tmp/entry-sdr-gps-test-%d", int(getpid()));
@@ -171,6 +226,48 @@ int main() {
     CHECK(named.find("12.34.56-rc.7") != std::string::npos && named.find("0.0.0") == std::string::npos);
     // Twice: at the top level and in the head unit info, 8 characters longer each time.
     CHECK(named.find("12.34.56-rc.7") != named.rfind("12.34.56-rc.7") && versioned.size() >= unversioned.size() + 16);
+    // The picture asked of the phone follows the panel (core/display_plan.hpp).
+    aa::DisplayPlan plan;
+    CHECK(plan.reference() && plan.canvasWidth == 1280 && plan.canvasHeight == 720 && plan.resolution == 2);
+    aa::DisplayPlan same;
+    CHECK(aa::planDisplay(1280, 480, same) && same.reference() && same.canvasHeight == 720 && same.resolution == 2 &&
+          same.bottomInset() == 240 && same.rightInset() == 0);
+    aa::DisplayPlan small, exact, wide, tall, full;
+    CHECK(aa::planDisplay(800, 480, small) && small.resolution == 1 && small.canvasWidth == 800 &&
+          small.bottomInset() == 0 && small.rightInset() == 0 && !small.reference());
+    CHECK(aa::planDisplay(1280, 720, exact) && exact.resolution == 2 && exact.bottomInset() == 0);
+    CHECK(aa::planDisplay(1440, 540, wide) && wide.resolution == 3 && wide.canvasWidth == 1920 &&
+          wide.bottomInset() == 540 && wide.rightInset() == 480);
+    CHECK(aa::planDisplay(800, 600, tall) && tall.resolution == 2 && tall.rightInset() == 480 &&
+          tall.bottomInset() == 120);  // one pixel too tall for the small canvas
+    CHECK(aa::planDisplay(1920, 1080, full) && full.resolution == 3 && full.bottomInset() == 0);
+    aa::DisplayPlan refused;
+    CHECK(!aa::planDisplay(1921, 720, refused) && !aa::planDisplay(1280, 1081, refused) &&
+          !aa::planDisplay(0, 480, refused) && !aa::planDisplay(800, 0, refused) &&
+          refused.reference());  // a refused panel leaves the plan as it was
+    // The reference car: the very bytes sent before the panel was read, whether the plan is given or not.
+    CHECK(aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, nullptr, same) == unversioned);
+    Shown s;
+    CHECK(shown(unversioned, s) && s.resolution == 2 && s.marginW == 1280 && s.marginH == 480 && s.density == 140 &&
+          s.top == 0 && s.bottom == 240 && s.left == 0 && s.right == 0 && s.touchW == 1280 && s.touchH == 720);
+    // An 800x480 panel: the small canvas shown whole, no margin, no inset, a touchscreen of its size.
+    const std::vector<uint8_t> forSmall =
+        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, nullptr, small);
+    CHECK(shown(forSmall, s) && s.resolution == 1 && s.marginW == 0 && s.marginH == 0 && s.density == 140 &&
+          s.top == 0 && s.bottom == 0 && s.left == 0 && s.right == 0 && s.touchW == 800 && s.touchH == 480);
+    // A 1440x540 panel: the large canvas, its UI kept in the top-left 1440x540.
+    const std::vector<uint8_t> forWide =
+        aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, nullptr, wide);
+    CHECK(shown(forWide, s) && s.resolution == 3 && s.marginW == 0 && s.marginH == 0 && s.bottom == 540 &&
+          s.right == 480 && s.top == 0 && s.left == 0 && s.touchW == 1920 && s.touchH == 1080);
+    // Nothing but the picture and the touchscreen differs: every other channel is the reference car's.
+    std::vector<uint64_t> sensorsA, sensorsB;
+    std::map<uint64_t, std::vector<uint8_t>> reference = channels(unversioned, sensorsA),
+                                             other = channels(forSmall, sensorsB);
+    CHECK(reference.size() == other.size() && sensorsA == sensorsB);
+    for (std::map<uint64_t, std::vector<uint8_t>>::iterator it = reference.begin(); it != reference.end(); ++it) {
+        CHECK(other.count(it->first) && (it->first == 6 || it->first == 7 || other[it->first] == it->second));
+    }
     puts(
         "PASS capteurs AA : modele DHU reduit a NIGHT_MODE + DRIVING_STATUS (le telephone garde son GPS), canal 9 "
         "toujours retire par le coeur, autres canaux identiques, fichier voiture (modele, annee), version annoncee");

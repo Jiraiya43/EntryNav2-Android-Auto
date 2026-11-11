@@ -56,7 +56,7 @@ Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit p
 | Boussole envoyée au téléphone (carte orientée à l'arrêt) | idée |
 | Touche favori du tableau de bord qui ouvre Android Auto | idée |
 | Pochette de l'album sur l'iDrive | idée |
-| Autres tailles d'écran | il manque le rapport d'une voiture concernée |
+| Autres tailles d'écran | taille lue sur la voiture ; à l'essai sur un i3 en 800x480 ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)) |
 | Autre structure de la bibliothèque Bluetooth | refusée pour l'instant, il manque le rapport et la bibliothèque |
 | Message à l'écran si Android Auto ne démarre pas en production | idée |
 | Mise à jour sans refaire tout le parcours | idée |

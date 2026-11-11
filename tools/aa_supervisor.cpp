@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "alps_spp.hpp"
+#include "display_plan.hpp"
 #include "evo_ap.hpp"
 #include "evo_elf.hpp"
 #include "evo_gps.hpp"
@@ -244,10 +245,32 @@ std::string apDiagnosis() {
     }
     return s + ", wlan0 " + ip;
 }
+// The panel as the compositor gives it, when one of the phone's canvases holds it. detail: the size, and why not.
+bool readPanel(evo::EvoIlm& ilm, aa::DisplayPlan& display, std::string& detail) {
+    uint32_t w = 0, h = 0;
+    if (!ilm.screenSize(w, h)) {
+        detail = "screen size unreadable";
+        return false;
+    }
+    char size[32];
+    snprintf(size, sizeof(size), "%ux%u", w, h);
+    detail = size;
+    if (!aa::planDisplay(w, h, display)) {
+        detail += " larger than 1920x1080";
+        return false;
+    }
+    return true;
+}
 // The screen half of the preflight, all a start over USB needs.
 bool screenPreflight() {
     evo::EvoIlm ilm;
-    if (!ilm.validateTarget(surface, layer, 1280, 480)) {
+    aa::DisplayPlan display;
+    std::string panel;
+    if (!readPanel(ilm, display, panel)) {
+        ELOG("Supervisor", "preflight: %s: no Bluetooth change", panel.c_str());
+        return false;
+    }
+    if (!ilm.validateTarget(surface, layer, display.width, display.height)) {
         ELOG("Supervisor", "preflight: video target unavailable: no Bluetooth change");
         return false;
     }
@@ -364,7 +387,17 @@ int compatReport() {
         return 0;
     }
     evo::EvoIlm ilm;
-    compatLine(ilm.validateTarget(surface, layer, 1280, 480) ? "ok" : "block", "video");
+    aa::DisplayPlan display;
+    std::string panel;
+    if (!readPanel(ilm, display, panel)) {
+        compatLine("block", "video", panel);
+    } else {
+        const bool target = ilm.validateTarget(surface, layer, display.width, display.height);
+        compatLine(target ? "ok" : "block", "video", target ? panel : panel + ": layer or surface");
+        if (target && !display.reference()) {
+            compatLine("warn", "screen", panel + ": only 1280x480 has been tried in a car");
+        }
+    }
     bool topFirst = false;
     if (!ilm.renderOrderTopFirst(topFirst)) {
         compatLine("block", "order");

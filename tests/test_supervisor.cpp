@@ -88,6 +88,11 @@ EvoIlm::EvoIlm() {}
 bool EvoIlm::validateTarget(uint32_t, uint32_t, uint32_t, uint32_t, bool) {
     return true;
 }
+bool EvoIlm::screenSize(uint32_t& w, uint32_t& h) {
+    w = 1280;
+    h = 480;
+    return true;
+}
 bool EvoIlm::renderOrderTopFirst(bool& topFirst) {
     topFirst = true;
     return flipKnown;

@@ -48,7 +48,8 @@ ou seulement testée sur PC.
 
 ## Il faut
 
-- Une BMW avec une unité **EntryNav2** (appelée *EntryEVO* dans son système), un écran **1280×480** et le **Wi-Fi de
+- Une BMW avec une unité **EntryNav2** (appelée *EntryEVO* dans son système), un écran **1280×480** (les autres
+  tailles sont [à l'essai](docs/COMPATIBILITE.md#autres-tailles-décran)) et le **Wi-Fi de
   CarPlay**. Les NBT Evo, ID7 et MGU tournent sur d'autres systèmes : ce projet ne peut pas s'y exécuter.
 - Un PC avec un client SSH (Windows 10/11, Linux ou macOS) et un **câble ENET** (OBD vers Ethernet).
 - Le **mot de passe root** de l'unité. Il n'est pas fourni avec ce projet.

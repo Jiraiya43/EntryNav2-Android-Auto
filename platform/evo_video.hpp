@@ -8,8 +8,9 @@
 //   OMAP dma-bufs       carry the Annex B H.264 stream to the decoder (omap_dmabuf.hpp).
 //   LayerManager (ILM)  attaches and hides our surface in a layer that is already visible (evo_ilm.hpp).
 //
-// The phone renders a 1280x720 canvas; the panel is 1280x480 (omapdrm fb0 1280,480). The surface is cropped to the
-// top 480 lines, which hold the phone's UI.
+// The phone renders one of its three canvases, chosen for the panel (core/display_plan.hpp); the surface is cropped
+// to the top-left part the panel shows, which holds the phone's UI. On the reference car: a 1280x720 canvas, the
+// panel is 1280x480 (omapdrm fb0 1280,480) and shows its top 480 lines.
 #ifndef ENTRY_AAD_PLATFORM_EVO_VIDEO_HPP
 #define ENTRY_AAD_PLATFORM_EVO_VIDEO_HPP
 
@@ -31,14 +32,16 @@ namespace evo {
 const uint32_t kAaSurfaceId = 0x7eaa0001, kPillSurfaceId = 0x7eaa0002, kAaLayerId = 0x80000000;
 
 struct EvoVideoConfig {
-    uint32_t width, height;                // phone stream: 1280x720
-    uint32_t displayWidth, displayHeight;  // shown part of it: the 1280x480 panel
+    uint32_t width, height;                // phone stream, its canvas: 1280x720
+    uint32_t displayWidth, displayHeight;  // shown part of it, the panel: 1280x480
     uint32_t fps;                          // 0 = not imposed
     uint32_t surfaceId;                    // kAaSurfaceId
     uint32_t layerId;                      // kAaLayerId, already visible
     unsigned bufCount;                     // 8 dma-bufs
     uint32_t bufSize;                      // 1 MiB each
-    EvoVideoConfig();                      // this car's values
+    EvoVideoConfig();                      // the reference car's values
+    // The stream and its shown part for a panel. A 1920x1080 stream gets larger buffers for its keyframes.
+    void setDisplay(uint32_t canvasWidth, uint32_t canvasHeight, uint32_t panelWidth, uint32_t panelHeight);
 };
 
 class EvoVideo {
