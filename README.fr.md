@@ -1,12 +1,12 @@
 <div align="center">
 
-# entry-aad
+# EntryNav2 (EntryEvo) Android Auto
 
 **Android Auto sans fil dans l'iDrive des BMW équipées d'une unité EntryNav2.**<br>
 Sans boîtier, sans câble obligatoire, sans remplacer aucun fichier BMW.
 
-[![CI](https://github.com/Jiraiya43/entry-aad/actions/workflows/ci.yml/badge.svg)](https://github.com/Jiraiya43/entry-aad/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/release/Jiraiya43/entry-aad?include_prereleases&sort=semver&label=version)](https://github.com/Jiraiya43/entry-aad/releases)
+[![CI](https://github.com/Jiraiya43/EntryNav2-Android-Auto/actions/workflows/ci.yml/badge.svg)](https://github.com/Jiraiya43/EntryNav2-Android-Auto/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/release/Jiraiya43/EntryNav2-Android-Auto?include_prereleases&sort=semver&label=version)](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases)
 [![Licence](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE.md)
 
 [English](README.md) · Français
@@ -38,7 +38,7 @@ Sans boîtier, sans câble obligatoire, sans remplacer aucun fichier BMW.
 
 | | |
 |---|---|
-| Dernière version | voir les [versions publiées](https://github.com/Jiraiya43/entry-aad/releases) (avant 1.0 : des défauts restent) |
+| Dernière version | voir les [versions publiées](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) (avant 1.0 : des défauts restent) |
 | Essayé en voiture | une BMW G20 de 2019, logiciel iDrive `202111011321` |
 | Autres voitures | contrôle de compatibilité intégré ; aucune autre voiture essayée ([détails](docs/COMPATIBILITE.md)) |
 
@@ -61,7 +61,7 @@ L'installation est une courte procédure manuelle par SSH, détaillée pas à pa
 [docs/INSTALLATION.md](docs/INSTALLATION.md) :
 
 1. Télécharger `entry-aad-<version>-armhf.tar` dans les
-   [versions publiées](https://github.com/Jiraiya43/entry-aad/releases) et vérifier son empreinte SHA-256.
+   [versions publiées](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) et vérifier son empreinte SHA-256.
 2. Le copier dans le `/tmp` de l'unité avec `scp`.
 3. **Contrôler la voiture** : rien n'est écrit. Le chargeur de l'unité confirme chaque bibliothèque et fonction utilisée,
    et `aa-supervisor --compat` répète à blanc le démarrage d'Android Auto.
@@ -133,7 +133,7 @@ l'étape 3) ne modifie rien sur la voiture et c'est ce qui aide le plus. Failles
 
 ## Remerciements
 
-entry-aad est parti d'un portage de [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto)
+Ce projet est parti d'un portage de [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto)
 de Sq00ky, puis a été retravaillé et étendu pour l'EntryNav2. Merci à Sq00ky pour ce travail.
 
 ## Licence et avertissement

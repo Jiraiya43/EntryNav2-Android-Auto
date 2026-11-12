@@ -12,7 +12,7 @@ Only the latest release is supported: fixes are not backported.
 
 ## What this project touches
 
-entry-aad runs on a car's head unit. It is installed by hand over SSH on the car's ENET (OBD to Ethernet) cable, as
+This project runs on a car's head unit. It is installed by hand over SSH on the car's ENET (OBD to Ethernet) cable, as
 described in [docs/INSTALLATION.md](docs/INSTALLATION.md). Things worth knowing when assessing a report:
 
 | Area | Behaviour |

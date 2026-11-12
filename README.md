@@ -1,12 +1,12 @@
 <div align="center">
 
-# entry-aad
+# EntryNav2 (EntryEvo) Android Auto
 
 **Wireless Android Auto for BMW iDrive on the EntryNav2 head unit.**<br>
 No dongle, no cable needed, no BMW file replaced.
 
-[![CI](https://github.com/Jiraiya43/entry-aad/actions/workflows/ci.yml/badge.svg)](https://github.com/Jiraiya43/entry-aad/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Jiraiya43/entry-aad?include_prereleases&sort=semver)](https://github.com/Jiraiya43/entry-aad/releases)
+[![CI](https://github.com/Jiraiya43/EntryNav2-Android-Auto/actions/workflows/ci.yml/badge.svg)](https://github.com/Jiraiya43/EntryNav2-Android-Auto/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Jiraiya43/EntryNav2-Android-Auto?include_prereleases&sort=semver)](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE.md)
 
 English · [Français](README.fr.md)
@@ -37,7 +37,7 @@ English · [Français](README.fr.md)
 
 | | |
 |---|---|
-| Latest release | see [Releases](https://github.com/Jiraiya43/entry-aad/releases) (pre-1.0: expect rough edges) |
+| Latest release | see [Releases](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) (pre-1.0: expect rough edges) |
 | Tried in a car | one 2019 BMW G20, iDrive software `202111011321` |
 | Other cars | a compatibility check is built in; no other car has been tried yet ([details](docs/COMPATIBILITE.md)) |
 
@@ -58,7 +58,7 @@ counts as proof: [CHANGELOG.md](CHANGELOG.md) says for each version whether it w
 Installation is a short manual procedure over SSH, described step by step in
 [docs/INSTALLATION.md](docs/INSTALLATION.md) (in French; the commands speak for themselves):
 
-1. Download `entry-aad-<version>-armhf.tar` from [Releases](https://github.com/Jiraiya43/entry-aad/releases) and check
+1. Download `entry-aad-<version>-armhf.tar` from [Releases](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) and check
    its SHA-256.
 2. Copy it to the head unit's `/tmp` with `scp`.
 3. **Check the car**: nothing is written. The unit's own loader confirms every library and function the programs need,
@@ -131,7 +131,7 @@ step 3) changes nothing on the car and helps the most. Security issues: see [SEC
 
 ## Credits
 
-entry-aad started as a port of [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto) by
+This project started as a port of [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto) by
 Sq00ky, then was reworked and extended for the EntryNav2. Thanks to Sq00ky for that work.
 
 ## Licence and disclaimer

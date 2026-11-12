@@ -25,18 +25,18 @@ Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit p
 - [ ] Trajet de 20 à 30 minutes par câble, musique en Bluetooth
 - [ ] Câble débranché puis rebranché en cours de route
 - [ ] *Arrêter* puis *Démarrer* sans débrancher, puis retour au sans-fil
-- [x] Câble essayé sur une autre voiture : X3 G01 ([#17](https://github.com/Jiraiya43/entry-aad/issues/17)),
-  i3 ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)), G21
-  ([#26](https://github.com/Jiraiya43/entry-aad/issues/26))
+- [x] Câble essayé sur une autre voiture : X3 G01 ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)),
+  i3 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)), G21
+  ([#26](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/26))
 
 ## 1.0 : une autre voiture
 
 - [x] Rapport de compatibilité d'une deuxième voiture, sans rien installer : X3 G01 de 2020
-  ([#17](https://github.com/Jiraiya43/entry-aad/issues/17))
+  ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17))
 - [ ] Première installation sur une autre voiture, puis désinstallation vérifiée
 - [ ] Tableau des logiciels essayés rempli ([compatibilité](docs/COMPATIBILITE.md))
 - [x] Ancienne molette (contrôleurs C10/C20) essayée sur une vraie voiture : i3
-  ([#19](https://github.com/Jiraiya43/entry-aad/issues/19), 11 novembre 2026)
+  ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19), 11 novembre 2026)
 
 ## Limites connues
 
@@ -59,7 +59,7 @@ Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit p
 | Boussole envoyée au téléphone (carte orientée à l'arrêt) | idée |
 | Touche favori du tableau de bord qui ouvre Android Auto | idée |
 | Pochette de l'album sur l'iDrive | idée |
-| Autres tailles d'écran | taille lue sur la voiture ; à l'essai sur un i3 en 800x480 ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)) |
+| Autres tailles d'écran | taille lue sur la voiture ; à l'essai sur un i3 en 800x480 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) |
 | Autre structure de la bibliothèque Bluetooth | refusée pour l'instant, il manque le rapport et la bibliothèque |
 | Message à l'écran si Android Auto ne démarre pas en production | idée |
 | Mise à jour sans refaire tout le parcours | idée |

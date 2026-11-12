@@ -9,7 +9,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: entry-aad version
+      label: Project version
       description: The release you installed, or the commit you built.
       placeholder: 0.12.0-rc.6
     validations:

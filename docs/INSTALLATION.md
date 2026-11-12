@@ -14,7 +14,7 @@ voiture.
 - Un PC avec un client SSH : Windows 10 ou 11 (client OpenSSH intégré), Linux ou macOS.
 - Un **câble ENET** entre la prise OBD de la voiture et le PC. La carte réseau du PC reste en adressage automatique.
 - Le **mot de passe root** de l'unité. Il n'est pas fourni avec ce projet.
-- L'archive `entry-aad-<version>-armhf.tar` d'une [version publiée](https://github.com/Jiraiya43/entry-aad/releases),
+- L'archive `entry-aad-<version>-armhf.tar` d'une [version publiée](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases),
   dont l'empreinte SHA-256 correspond au fichier `.sha256` publié à côté, ou fabriquée par `tools/package_release.py`
   ([compiler](../README.fr.md#compiler)).
 
@@ -70,7 +70,7 @@ LD_LIBRARY_PATH=$L XDG_RUNTIME_DIR=/run/system/0 WAYLAND_DISPLAY=wayland-0 HOME=
   ligne `@block` : ne pas installer. Le sens de chaque point est dans [compatibilité](COMPATIBILITE.md).
 
 Ce résultat, avec la première ligne de `/etc/version`, fait un bon
-[rapport de compatibilité](https://github.com/Jiraiya43/entry-aad/issues/new/choose) pour une voiture pas encore listée.
+[rapport de compatibilité](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/new/choose) pour une voiture pas encore listée.
 
 ## 3. Installer
 
@@ -148,6 +148,6 @@ le retire aussi (avant `sync`). Garder `/var/local/data/AA` conserve les réglag
 |---|---|
 | Pas de ligne Android Auto dans *Media* | Vérifier l'étape 3 (`md5sum -c`), puis redémarrer l'unité : l'iDrive ne lit ses applis qu'au démarrage. |
 | L'iDrive redémarre plusieurs fois juste après l'avoir chargée | L'appli ne se lance plus au troisième essai et l'iDrive repart sans elle. Pour la réactiver après correction : `rm -f /var/local/data/AA/app.disable /var/local/data/AA/app-guard`, puis redémarrer. |
-| Android Auto ne démarre pas | Activer les journaux ([maintenance](MAINTENANCE.md)), reproduire, puis ouvrir un [ticket](https://github.com/Jiraiya43/entry-aad/issues/new/choose) avec les journaux. |
+| Android Auto ne démarre pas | Activer les journaux ([maintenance](MAINTENANCE.md)), reproduire, puis ouvrir un [ticket](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/new/choose) avec les journaux. |
 | Le système est resté en écriture | `mount -o remount,ro /`, ou redémarrer l'unité. |
 | L'écran de l'iDrive ne répond plus | Maintenir le bouton marche/arrêt de l'iDrive environ 30 secondes pour redémarrer l'unité. |

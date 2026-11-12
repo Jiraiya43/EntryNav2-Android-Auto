@@ -8,6 +8,13 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Modifié
+
+- Le projet s'appelle désormais **EntryNav2 (EntryEvo) Android Auto**, et son dépôt
+  `Jiraiya43/EntryNav2-Android-Auto`. L'ancienne adresse `Jiraiya43/entry-aad` redirige vers la nouvelle,
+  téléchargements des versions publiées compris. Les noms sur la voiture ne changent pas : programmes, dossiers, appli
+  de l'iDrive et réglages restent les mêmes, et une installation existante se met à jour comme avant.
+
 ### Corrigé
 
 - Flèches absentes sur le compteur du G01 / EntryNav2 002.146.002 : le compteur refusait le deuxième modèle
@@ -32,7 +39,7 @@ par-dessus une version précédente, elle demande un redémarrage de l'unité.
   téléphone l'image qui lui convient (800x480, 1280x720 ou 1920x1080), sans réglage. Le contrôle de compatibilité
   ne bloque plus sur la taille : il la donne (`@ok|video|800x480`) et prévient qu'elle n'a pas été essayée
   (`@warn|screen|`). Sur un écran 1280x480, ce qui est envoyé au téléphone est identique, octet pour octet.
-  [Détails](docs/COMPATIBILITE.md#autres-tailles-décran) ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)).
+  [Détails](docs/COMPATIBILITE.md#autres-tailles-décran) ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)).
   Essayé en voiture sur une i3 à écran 800x480, par câble ; les autres tailles sont testées sur PC.
 - Journaux : chaque connexion Bluetooth que la voiture ouvre, accepte ou perd dit maintenant si l'appareil est le
   téléphone d'Android Auto ou un autre (aucune adresse n'est écrite), et chaque coupure donne la raison du
@@ -68,7 +75,7 @@ par-dessus une version précédente, elle demande un redémarrage de l'unité.
   mais ne les demandait jamais, donc la voiture ne les lui donnait pas. Il les demande maintenant quand la molette
   ne répond pas dans le protocole de la G20 au bout de 2 secondes. Une voiture qui répond, comme la G20, ne reçoit
   rien de plus, et un seul protocole est gardé par voiture. Signalé par kedzior12
-  ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)), qui l'a essayé sur son i3 : rotation, appui et
+  ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)), qui l'a essayé sur son i3 : rotation, appui et
   inclinaison arrivent dans Android Auto.
 
 ## [0.12.0-rc.2] - 2026-11-11 · PC
@@ -89,9 +96,9 @@ par-dessus la 0.12.0-rc.1, elle demande un redémarrage de l'unité.
 ### Modifié
 
 - Installation : le numéro de version ne s'écrit plus que deux fois (commande `scp` et ligne `V=`), au lieu d'être
-  répété dans chaque commande ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)).
+  répété dans chaque commande ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)).
 - Feuille de route : le câble USB n'est plus « hors périmètre », ses essais restants y sont listés, et le premier
-  rapport de compatibilité d'une autre voiture y est noté ([#17](https://github.com/Jiraiya43/entry-aad/issues/17)).
+  rapport de compatibilité d'une autre voiture y est noté ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)).
 
 ## [0.12.0-rc.1] - 2026-11-11 · voiture
 
@@ -105,7 +112,7 @@ téléphones et voitures. Les changements de la 0.11.0-rc.1 sont inclus ; la 0.1
   attend un téléphone Android sur les prises USB de la voiture au lieu de préparer le Bluetooth et le Wi-Fi. Sans ce
   fichier, rien ne change : Android Auto reste sans fil. Le son reste sur le Bluetooth de la voiture.
   [Activation et limites](docs/USB.md). Idée, premiers essais en voiture et observations sur le service USB de BMW :
-  [@wowDaiver](https://github.com/wowDaiver) ([#18](https://github.com/Jiraiya43/entry-aad/pull/18)). Essayé en voiture.
+  [@wowDaiver](https://github.com/wowDaiver) ([#18](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/18)). Essayé en voiture.
 - Nouvelle écriture vers un appareil de la voiture : les requêtes du mode accessoire (AOA 51, 52, 53) et une
   réinitialisation USB, envoyées seulement à un téléphone Android branché, et seulement en mode USB. Aucune interface
   USB n'est prise à un pilote ou à un programme BMW.
@@ -118,19 +125,19 @@ elle demande un redémarrage de l'unité.
 ### Corrigé
 
 - Page vide de l'iDrive : ses délais (1, 3, 10 et 15 s) ne dépendent plus de l'heure de la voiture, que le GPS peut
-  remettre à l'heure en roulant ([#2](https://github.com/Jiraiya43/entry-aad/issues/2)). Testé sur PC.
+  remettre à l'heure en roulant ([#2](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/2)). Testé sur PC.
 - Marche arrière : la page vide n'est plus redemandée par-dessus la caméra de recul quand celle-ci prend la main avant
-  qu'Android Auto s'écarte ([#3](https://github.com/Jiraiya43/entry-aad/issues/3)). Testé sur PC.
+  qu'Android Auto s'écarte ([#3](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/3)). Testé sur PC.
 
 ### Modifié
 
 - Sans fichier `vehicle`, le téléphone voit une BMW « iDrive » au lieu d'une « M340i », le modèle de la voiture d'essai
-  ([#8](https://github.com/Jiraiya43/entry-aad/issues/8)). Le fichier `vehicle` donne le vrai modèle. Testé sur PC.
-- Le superviseur `evo-trial` s'appelle maintenant `aa-supervisor` ([#7](https://github.com/Jiraiya43/entry-aad/issues/7)) :
+  ([#8](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/8)). Le fichier `vehicle` donne le vrai modèle. Testé sur PC.
+- Le superviseur `evo-trial` s'appelle maintenant `aa-supervisor` ([#7](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/7)) :
   son programme est `/opt/aa/aa-supervisor`, et l'option `--trial-seconds` du service devient `--limit-seconds`.
   L'étape 3 de l'installation retire l'ancien programme. Testé sur PC.
 - Le service annonce au téléphone la version du projet (fichier `VERSION`) comme version logicielle de l'unité, au lieu
-  de la valeur fixe `1.3.33` ([#9](https://github.com/Jiraiya43/entry-aad/issues/9)). Testé sur PC.
+  de la valeur fixe `1.3.33` ([#9](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/9)). Testé sur PC.
 - Origine des données venues d'ailleurs (certificat Android Auto, description du DHU de Google, images d'attente,
   relevés de la voiture) notée dans les fichiers et dans la licence. Les programmes sont inchangés.
 
@@ -159,9 +166,9 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/entry-aad/compare/v0.12.0-rc.6...HEAD
-[0.12.0-rc.6]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.6
-[0.12.0-rc.2]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.2
-[0.12.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.12.0-rc.1
-[0.11.0-rc.1]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.11.0-rc.1
-[0.10.0]: https://github.com/Jiraiya43/entry-aad/releases/tag/v0.10.0
+[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.0-rc.6...HEAD
+[0.12.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.6
+[0.12.0-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.2
+[0.12.0-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.1
+[0.11.0-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.11.0-rc.1
+[0.10.0]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.10.0

@@ -95,5 +95,6 @@ l'iDrive en français. Chaque fichier source commence par :
 1. `make check`, la compilation ARM, `tests/run_qemu.py`, `make verify_binary verify_wireless`.
 2. Mettre à jour `VERSION` et `CHANGELOG.md` (section de la version, date, « PC » ou « voiture »).
 3. `python3 tools/package_release.py` : `artifacts/entry-aad-X.Y.Z-armhf.tar` et son `.sha256`.
-4. Demande de fusion `chore(version): X.Y.Z`, puis étiquette `vX.Y.Z` sur `main` et publication sur GitHub de l'archive
-   et de son `.sha256`, avec l'extrait du CHANGELOG. Une version jamais essayée en voiture est marquée *pre-release*.
+4. Demande de fusion `chore(version): X.Y.Z`, puis étiquette `vX.Y.Z` sur `main` et publication sur GitHub, sous le
+   titre « EntryNav2 (EntryEvo) Android Auto X.Y.Z », de l'archive et de son `.sha256`, avec l'extrait du CHANGELOG.
+   Une version jamais essayée en voiture est marquée *pre-release*.

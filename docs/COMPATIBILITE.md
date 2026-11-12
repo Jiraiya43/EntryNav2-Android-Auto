@@ -16,7 +16,7 @@ La **voiture de référence** est celle sur laquelle le projet est développé e
 |---|---|---|---|---|
 | G20 de 2019 (référence) | `202111011321` | pas encore essayé en voiture | 0.12.0-rc.1 | celles du [README](../README.fr.md#ce-que-ça-fait), limites dans la [feuille de route](../ROADMAP.md#limites-connues) |
 
-Chaque nouvelle voiture s'ajoute ici, avec son rapport de compatibilité ([ticket « Compatibility report »](https://github.com/Jiraiya43/entry-aad/issues/new/choose)).
+Chaque nouvelle voiture s'ajoute ici, avec son rapport de compatibilité ([ticket « Compatibility report »](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/new/choose)).
 
 ## Ce que le contrôle vérifie
 
@@ -65,7 +65,7 @@ téléphone de garder son affichage dans la zone visible, et ne montre que cette
 | Écran | Image demandée au téléphone | Zone montrée | État |
 |---|---|---|---|
 | 1280x480 | 1280x720 | les 480 lignes du haut | essayé en voiture (référence) : rien ne change |
-| 800x480 | 800x480 | tout | testé sur PC, à l'essai sur un i3 ([#19](https://github.com/Jiraiya43/entry-aad/issues/19)) |
+| 800x480 | 800x480 | tout | testé sur PC, à l'essai sur un i3 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) |
 | jusqu'à 1920x1080 | 1920x1080 | la zone de l'écran, en haut à gauche | testé sur PC, jamais essayé |
 
 La ligne `@ok|video|` du contrôle donne la taille lue. Un écran plus grand que 1920x1080 est refusé. Sur une autre
