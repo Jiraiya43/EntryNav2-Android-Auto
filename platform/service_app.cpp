@@ -27,6 +27,7 @@ ServiceApp::ServiceApp(uint16_t p, bool v, volatile sig_atomic_t* quit)
       ready(false),
       tcpPreparing(false),
       reverse(false),
+      inCall(false),
       awaitShow(false),
       asking(false),
       pendingFocus(0),
@@ -64,6 +65,8 @@ void ServiceApp::markReady() {
 void ServiceApp::requestStop() {
     pthread_mutex_lock(&mu);
     stopping = true;
+    mediaPress.cancel();
+    unlink(contract::kMediaRecallFile);
     pthread_mutex_unlock(&mu);
 }
 
@@ -216,6 +219,8 @@ void ServiceApp::hardKey(const char* name, void* user) {
     if (was) {
         a->focus = false;
         a->pendingFocus = 2;
+        a->mediaPress.cancel();
+        unlink(contract::kMediaRecallFile);
     }
     pthread_mutex_unlock(&a->mu);
     if (was) {
@@ -248,10 +253,27 @@ void ServiceApp::appKey(const char* name, void* user) {
          name);
 }
 
+void ServiceApp::mediaKey(unsigned state, void* user) {
+    ServiceApp* a = static_cast<ServiceApp*>(user);
+    pthread_mutex_lock(&a->mu);
+    const bool allowed = a->ready && a->videoEnabled && !a->asking && !*a->quit_ &&
+                         mediaRecallAllowed(a->session.isActive(), a->focus, a->stopping, a->inCall, a->reverse);
+    if (a->mediaPress.feed(state, monoMs(), allowed)) {
+        const bool written = writeMediaRecall(contract::kMediaRecallFile, static_cast<int>(getpid()), monoMs());
+        ELOG("ServiceApp", "double MEDIA: guarded iDrive recall request %s", written ? "written" : "FAILED");
+    }
+    pthread_mutex_unlock(&a->mu);
+}
+
 // Commands from the iDrive app (service mode): show, hide, await, drivemode, popup, gear, call, daynight, quit.
 void ServiceApp::command(const ControlCommand& c, void* user) {
     ServiceApp* a = static_cast<ServiceApp*>(user);
     pthread_mutex_lock(&a->mu);
+    if (c.verb == "show" || c.verb == "hide" || c.verb == "await" || c.verb == "quit" ||
+        (c.verb == "call" && (c.arg != 0) != a->inCall) || (c.verb == "gear" && (c.arg == 2) != a->reverse)) {
+        a->mediaPress.cancel();
+        unlink(contract::kMediaRecallFile);
+    }
     if (c.verb == "show") {
         a->focus = true;
         a->asking = false;
@@ -288,6 +310,7 @@ void ServiceApp::command(const ControlCommand& c, void* user) {
         }
         a->reverse = r;
     } else if (c.verb == "call") {  // iDrive app (CDS communication.callStatus): phone keys go to iDrive's call screen
+        a->inCall = c.arg != 0;
         if (a->knob) {
             a->knob->setPhoneToIdrive(c.arg != 0);
         }
@@ -315,6 +338,10 @@ void ServiceApp::applyDayNight(int v, const char* src) {
 void ServiceApp::videoFocus(bool projected, uint32_t reason, void* user) {
     ServiceApp* a = static_cast<ServiceApp*>(user);
     pthread_mutex_lock(&a->mu);
+    if (a->focus != projected) {
+        a->mediaPress.cancel();
+        unlink(contract::kMediaRecallFile);
+    }
     a->focus = projected;
     pthread_mutex_unlock(&a->mu);
     ELOG("ServiceApp", "video focus=%s reason=%u", projected ? "AA" : "BMW", reason);
@@ -344,6 +371,8 @@ void ServiceApp::ended(void* user) {
     pthread_mutex_lock(&a->mu);
     a->focus = false;
     a->asking = false;
+    a->mediaPress.cancel();
+    unlink(contract::kMediaRecallFile);
     pthread_mutex_unlock(&a->mu);
     a->server.notifySessionEnded();
     ELOG("ServiceApp", "session ended");
@@ -377,6 +406,8 @@ void ServiceApp::startProjection(int fd, bool overUsb) {
     pthread_mutex_lock(&a->mu);
     ++(overUsb ? a->usbLinks : a->tcpLinks);
     a->tcpPreparing = true;
+    a->mediaPress.cancel();
+    unlink(contract::kMediaRecallFile);
     pthread_mutex_unlock(&a->mu);
     ELOG("ServiceApp", "phone %s connection received; preparing the video and the AA session", overUsb ? "USB" : "TCP");
     a->session.stop();  // join callbacks before destroying/reinitializing video buffers

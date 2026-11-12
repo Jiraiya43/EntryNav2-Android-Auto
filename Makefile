@@ -140,7 +140,7 @@ tests/evo-check-host:
 	    platform/evo_process.cpp $(HOST_DBUS) -o $@
 
 test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture-host test-usb-host \
-           tests/evo-check-host
+           tests/evo-check-host test-media-host
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_evo_elf.cpp -o tests/test-evo-elf
 	if [ -f "$(SPP_FIXTURE_LIB)" ]; then ENTRY_AAD_FIXTURE_LIB="$(SPP_FIXTURE_LIB)" ./tests/test-evo-elf; else ./tests/test-evo-elf; fi
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_spp_snapshot.cpp platform/evo_spp_snapshot.cpp -o tests/test-spp-snapshot
@@ -204,6 +204,15 @@ test-spp-host: tests/evo-check-host
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_alps_spp.cpp platform/alps_spp.cpp platform/alps_spp_codec.cpp platform/evo_process.cpp $(HOST_DBUS) -o tests/test-alps-spp
 	env -u XDG_RUNTIME_DIR dbus-run-session -- sh -c 'DBUS_SYSTEM_BUS_ADDRESS="$$DBUS_SESSION_BUS_ADDRESS" ENTRY_AAD_TEST_BUS=1 ENTRY_AAD_DIAGNOSTIC=./tests/evo-check-host ./tests/test-alps-spp'
 
+.PHONY: test-media-host test-media-arm-build
+test-media-host:
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_media_recall.cpp platform/evo_knob.cpp platform/vmost_client.cpp -ldl -o tests/test-media-recall
+	./tests/test-media-recall
+
+test-media-arm-build:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_media_recall.cpp platform/evo_knob.cpp platform/vmost_client.cpp \
+	    -o tests/test-media-recall-arm $(LDSHLIB) -lpthread -ldl -lrt
+
 test-kombi-host:
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_kombi_phone.cpp platform/kombi_phone.cpp -o tests/test-kombi-phone
 	./tests/test-kombi-phone
@@ -250,7 +259,7 @@ test-touch-live:
 
 # ---- ARM tests, run on the PC under QEMU with the car's libraries (tests/run_qemu.py) --------------------------------
 # test-spawn-attr-arm checks how the app starts the service from HmiMain3D with the HU's own glibc 2.15.
-test-arm-all: dev-tools test-pb-arm-build test-sdr-arm-build test-kombi-arm-build test-session-silence-arm-build \
+test-arm-all: dev-tools test-pb-arm-build test-sdr-arm-build test-kombi-arm-build test-session-silence-arm-build test-media-arm-build \
               test-presentation-arm-build test-wireless-lifecycle-arm-build test-gps-arm-build test-supervisor-arm-build \
               test-hmiapp-arm-build test-spawn-arm-build test-lm-cli-arm-build test-phone-arm-build \
               test-usb-arm-build test-wifi-arm-build

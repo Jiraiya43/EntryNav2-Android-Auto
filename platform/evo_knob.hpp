@@ -94,6 +94,12 @@ public:
         appKeyCb_ = cb;
         appKeyUser_ = user;
     }
+    // Raw MEDIA state even while Android Auto is hidden; 7 cancels a gesture after another input.
+    using MediaCallback = void (*)(unsigned, void*);
+    void setMediaCallback(MediaCallback cb, void* user) {
+        mediaCb_ = cb;
+        mediaUser_ = user;
+    }
     // Each volume level the car reports (any source: knob, steering wheel, iDrive). Called on the vMOST thread.
     using VolumeLevelCallback = void (*)(const VolumeLevel&, void*);
     void setVolumeLevelCallback(VolumeLevelCallback cb, void* user) {
@@ -148,6 +154,8 @@ private:
     void* volUser_;
     HardKeyCallback appKeyCb_;
     void* appKeyUser_;
+    MediaCallback mediaCb_;
+    void* mediaUser_;
     std::atomic<bool> phoneToIdrive_;
     bool telDown_;
     uint8_t pushPrev_[8];
@@ -155,6 +163,7 @@ private:
     aa::CcsDecoder decoder_;
     aa::CcsProtocol protocol_;  // knob thread only
     bool otherProtocolLogged_;
+    void observeMedia(const VmostMsgView& m);
     void forwardKey(uint32_t keycode, const char* what);
     // Keys whose press reached Android Auto: their release always follows, even once the picture is gone (camera,
     // popup, driving mode, menu), or the phone would keep them down. Knob thread only.

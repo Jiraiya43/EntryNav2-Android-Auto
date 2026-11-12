@@ -31,6 +31,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "../platform/media_recall.hpp"
 #include "../platform/service_contract.hpp"
 #include "app_guards.hpp"
 #include "app_log.hpp"
@@ -310,6 +311,15 @@ void statusRun(void*) {
     }
     // A (re)started service knows neither: started in reverse, Android Auto would come up over the camera.
     g_hold.tellService(d);
+    if (takeMediaRecall(contract::kMediaRecallFile, d.pid, static_cast<uint32_t>(monoMs()))) {
+        // Consume even a blocked request: ending a call or leaving reverse must never replay it later.
+        const ServiceState current = readServiceState();
+        if (current.pid == d.pid && current.overlay == 0 && readyToShow(current)) {
+            g_hold.showAndHold("double MEDIA", monoSeconds());
+        } else {
+            alog("double MEDIA ignored: disconnected, visible, stopping, call or reverse");
+        }
+    }
     unsigned row = connected ? kTextRowOpen : connecting ? kTextRowConnecting : kTextStart;
     if (row != g_shownRow) {
         bmw::TextID text(row);

@@ -8,6 +8,15 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Ajouté
+
+- Retour à une session Android Auto connectée en arrière-plan par deux appuis courts sur MEDIA, espacés de
+  500 ms au plus entre leurs relâchements. Le lecteur du contrôleur déjà présent dans le service détecte le
+  geste ; l'appli de l'iDrive vérifie de nouveau la session, l'arrêt, les appels et la marche arrière avant
+  d'ouvrir l'image par le chemin du bouton *Ouvrir*. L'appui simple garde son effet habituel ; à l'écran,
+  MEDIA garde ses commandes Android Auto. Aucun nouveau processus, fournisseur MOST ou fichier BMW modifié.
+  Testé sur PC et sous QEMU ; pas encore essayé en voiture, sur CCS35up ni sur l'ancien contrôleur.
+
 ### Modifié
 
 - Le projet s'appelle désormais **EntryNav2 (EntryEvo) Android Auto**, et son dépôt

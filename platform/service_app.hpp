@@ -25,6 +25,7 @@
 #include "evo_pill.hpp"
 #include "evo_video.hpp"
 #include "kombi_nav.hpp"
+#include "media_recall.hpp"
 #include "peek_timing.hpp"
 #include "tcp_server.hpp"
 #include "usb_loop.hpp"
@@ -76,6 +77,7 @@ public:
     static void hardKey(const char* name, void* user);
     static void knobEvent(const aa::CcsEvent& ev, void* user);
     static void appKey(const char* name, void* user);
+    static void mediaKey(unsigned state, void* user);
     static void command(const ControlCommand& c, void* user);
     static void videoFocus(bool projected, uint32_t reason, void* user);
     static void micRequest(bool open, void* user);
@@ -115,7 +117,9 @@ public:
     // always after connectMu and never while holding mu.
     pthread_mutex_t mu, connectMu, videoMu;
     bool stopping, wirelessDone, focus, ready, tcpPreparing;
-    bool reverse;      // service: reverse gear from the iDrive app hides the picture (camera)
+    bool reverse;                 // service: reverse gear from the iDrive app hides the picture (camera)
+    bool inCall;                  // MEDIA recall never covers iDrive's call screen
+    MediaDoublePress mediaPress;  // under mu, fed by the existing vMOST reader
     bool awaitShow;    // service: the iDrive app asked ("await") that a phone that connects waits aside for its "show"
     bool asking;       // service: such a session, not shown yet
     int pendingFocus;  // service: 1 tell the phone FOCUSED, 2 NATIVE (sent from the main loop)

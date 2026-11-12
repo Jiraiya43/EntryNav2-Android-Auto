@@ -45,6 +45,21 @@ rm -f /var/local/data/AA/kombi-single-maneuver
 Aucun redémarrage de l'iDrive ni changement de codage n'est nécessaire. Résultat et limites :
 [compatibilité](COMPATIBILITE.md#flèches-sur-le-compteur-g01--logiciel-146).
 
+## Revenir à Android Auto avec MEDIA
+
+Quand le téléphone est connecté et que l'iDrive est à l'écran, appuyer deux fois brièvement sur MEDIA : chaque
+appui dure au plus 500 ms, et les deux relâchements sont espacés de 500 ms au plus. Aucun fichier de réglage à créer.
+Un appui simple conserve son action BMW ; lorsque l'image Android Auto est visible, MEDIA garde son action habituelle.
+
+Le raccourci ne lance aucune session. Il est ignoré pendant un appel, en marche arrière, pendant l'arrêt ou si la
+session s'est terminée. Les maintiens, le simple toucher et les copies répétées d'un même état ne sont pas deux appuis.
+Le service transmet une demande à usage unique à l'appli de l'iDrive ; elle vérifie l'état à nouveau avant de montrer
+l'image. Une demande vieille de plus de deux secondes ou issue d'un autre processus est supprimée.
+
+Le journal du service, en profil maintenance, écrit `double MEDIA: guarded iDrive recall request written` ;
+l'appli indique `double MEDIA` dans son journal quand elle traite la demande. Le geste est testé sur PC et sous QEMU,
+pas encore en voiture. NAV et le bouton natif CarLife ne font pas partie de ce raccourci.
+
 ## Journaux
 
 Sans le fichier `maintenance`, rien n'est journalisé, ni sur la mémoire flash ni en mémoire vive. Pour chercher une

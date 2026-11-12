@@ -317,6 +317,7 @@ int main(int argc, char** argv) {
         knob.setVolumeLevelCallback(evo::ServiceApp::volumeLevel, &app);
         knob.setHardKeyCallback(evo::ServiceApp::hardKey, &app);
         knob.setAppKeyCallback(evo::ServiceApp::appKey, &app);
+        knob.setMediaCallback(evo::ServiceApp::mediaKey, &app);
         {
             FILE* f = fopen(evo::contract::kDayNightFile, "r");
             int v = 0;  // written by the iDrive app (CDS)

@@ -43,6 +43,7 @@ CASES = [
     ("gps-native", "tests/test-evo-gps-arm", [], None),
     ("video-presentation", "tests/test-video-presentation-arm", [], None),
     ("input", "tests/test-evo-input-arm", [], None),
+    ("media-recall", "tests/test-media-recall-arm", [], None),
     ("supervisor", "tests/test-supervisor-arm", [], None),
     ("wireless-lifecycle", "tests/test-wireless-lifecycle-arm", [], None),
     ("session-phone", "tests/test-session-phone-arm", [str(ROOT / "tests/fixtures/session_phone.golden")], None),

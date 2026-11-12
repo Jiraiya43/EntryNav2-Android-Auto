@@ -119,3 +119,14 @@ en roulant. La signification OEM exacte de `0x26` reste inconnue. L'essai en voi
 la base 0.12.0-rc.2 ; le portage sur la branche actuelle est vérifié séparément sur PC.
 
 Pour activer ce mode ou revenir au graphe historique : [maintenance](MAINTENANCE.md#graphe-limité-à-la-prochaine-manœuvre).
+
+## Double appui sur MEDIA
+
+Le retour à une session connectée utilise le lecteur vMOST déjà actif dans le service, avec les états MEDIA
+CCS35up (E5.03/C47/C4F) et CCS (E5.01/C20). Il ne change pas les abonnements ni les requêtes MOST, n'ajoute pas de
+processus et ne remplace aucune ressource BMW. L'appli de l'iDrive ouvre l'image par son chemin *Ouvrir*, après
+vérification de la session, des appels, de la marche arrière et de l'arrêt. L'appui simple conserve son effet natif.
+
+La détection, les doublons, les maintiens, les changements de protection et les demandes à usage unique sont testés
+sur PC et sous QEMU avec les bibliothèques de la voiture. Le geste et son effet à l'écran n'ont pas encore été essayés
+en voiture, sur aucun contrôleur. Usage : [maintenance](MAINTENANCE.md#revenir-à-android-auto-avec-media).

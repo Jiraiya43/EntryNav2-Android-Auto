@@ -14,6 +14,7 @@
 #include "alps_spp.hpp"
 #include "evo_log.hpp"
 #include "service_app.hpp"
+#include "service_contract.hpp"
 #include "wireless_setup.hpp"
 
 static std::atomic<int> starts(0), waits(0), listens(0);
@@ -75,6 +76,74 @@ static void awaitStarts(int count) {
         usleep(10000);
     }
     assert(starts == count);
+}
+
+static void mediaClicks(evo::ServiceApp& app) {
+    const unsigned states[] = {0, 1, 0, 1, 0};
+    for (unsigned i = 0; i < sizeof(states) / sizeof(states[0]); ++i) {
+        evo::ServiceApp::mediaKey(states[i], &app);
+    }
+}
+
+static void mediaRecall(evo::ServiceApp& app) {
+    const char* request = evo::contract::kMediaRecallFile;
+    unlink(request);
+    quitFlag = 0;
+    app.ready = app.videoEnabled = true;
+    app.focus = false;
+    mediaClicks(app);
+    assert(!app.focus && evo::takeMediaRecall(request, static_cast<int>(getpid()), evo::monoMs()));
+    assert(!evo::takeMediaRecall(request, static_cast<int>(getpid()), evo::monoMs()));
+    // Every gate is checked while the real socketpair session is active.
+    bool* gates[] = {&app.focus, &app.asking, &app.reverse, &app.inCall, &app.stopping};
+    for (unsigned i = 0; i < sizeof(gates) / sizeof(gates[0]); ++i) {
+        *gates[i] = true;
+        mediaClicks(app);
+        assert(access(request, F_OK) != 0);
+        *gates[i] = false;
+    }
+    app.ready = false;
+    mediaClicks(app);
+    assert(access(request, F_OK) != 0);
+    app.ready = true;
+    quitFlag = 1;
+    mediaClicks(app);
+    assert(access(request, F_OK) != 0);
+    quitFlag = 0;
+    const char* verbs[] = {"call", "gear", "hide", "show", "quit"};
+    for (unsigned i = 0; i < sizeof(verbs) / sizeof(verbs[0]); ++i) {
+        app.focus = app.reverse = app.inCall = false;
+        quitFlag = 0;
+        mediaClicks(app);
+        assert(access(request, F_OK) == 0);
+        evo::ControlCommand command;
+        command.verb = verbs[i];
+        command.arg = i == 1 ? 2 : 1;
+        command.hasArg = i < 2;
+        evo::ServiceApp::command(command, &app);
+        assert(access(request, F_OK) != 0);  // a queued request cannot outlive a guard or focus change
+    }
+    app.focus = app.reverse = app.inCall = false;
+    quitFlag = 0;
+    evo::ServiceApp::mediaKey(0, &app);
+    evo::ServiceApp::mediaKey(1, &app);
+    evo::ServiceApp::mediaKey(0, &app);
+    evo::ControlCommand call;
+    call.verb = "call";
+    call.hasArg = true;
+    call.arg = 1;
+    evo::ServiceApp::command(call, &app);
+    call.arg = 0;
+    evo::ServiceApp::command(call, &app);
+    evo::ServiceApp::mediaKey(1, &app);
+    evo::ServiceApp::mediaKey(0, &app);
+    assert(access(request, F_OK) != 0);  // two clicks straddling a call never pair
+    app.mediaPress.cancel();
+    app.videoEnabled = app.ready = false;
+    app.focus = true;
+    puts(
+        "PASS service double MEDIA: live session, guarded request only, focus unchanged, queued and partial gestures "
+        "cancelled");
 }
 // One main-loop turn of the peeks, Android Auto on screen or not (no video in this test).
 static void onScreen(evo::ServiceApp& app, bool on, uint32_t later = 0) {
@@ -173,12 +242,18 @@ int main() {
     int peers[2];
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, peers) == 0);
     assert(app.session.start(peers[0]) && app.session.isActive());
+    mediaRecall(app);
     preparing(false);
     fixtureLink = true;  // phone reopens SPP while TCP projection is active
     const int listened = listens;
     usleep(350000);
     assert(starts == 1 && app.session.isActive() && listens > listened);
     app.session.stop();
+    app.ready = app.videoEnabled = true;
+    app.focus = false;
+    mediaClicks(app);
+    assert(access(evo::contract::kMediaRecallFile, F_OK) != 0);
+    app.ready = app.videoEnabled = false;
     close(peers[1]);
     awaitStarts(2);  // rearming is allowed only after the real session ended
     app.requestStop();

@@ -112,6 +112,8 @@ EvoKnob::EvoKnob()
       volUser_(nullptr),
       appKeyCb_(nullptr),
       appKeyUser_(nullptr),
+      mediaCb_(nullptr),
+      mediaUser_(nullptr),
       phoneToIdrive_(false),
       telDown_(false),
       volumeSteps_(0),
@@ -250,6 +252,24 @@ void EvoKnob::releaseHeldKeys(const char* why) {
     }
 }
 
+void EvoKnob::observeMedia(const VmostMsgView& m) {
+    if (!mediaCb_ || mode_ != INPUT_FORWARD || m.op != 0xC || !m.data) {
+        return;
+    }
+    if (m.inst == 3 && (m.fkt == 0xC47 || m.fkt == 0xC4F) && (m.len == 7 || m.len == 8)) {
+        for (unsigned i = 0; i < 7; ++i) {
+            if (i != 4 && m.data[i] >= 1 && m.data[i] <= 3) {
+                mediaCb_(7, mediaUser_);
+                return;
+            }
+        }
+        mediaCb_(m.data[4], mediaUser_);
+    } else if (m.inst == 1 && m.fkt == 0xC20 && m.len >= 7 && m.data[2] != 0xFF && m.data[3] <= 2 && m.data[5] == 0 &&
+               m.data[6] == (1u << 4)) {
+        mediaCb_(m.data[3], mediaUser_);
+    }
+}
+
 void EvoKnob::onMessage(const VmostMsgView& m) {
     ++messages_;
     if (m.fblock == kAudioMasterFblock) {  // volume level (copy of what the AudioMaster tells HmiMain3D)
@@ -328,6 +348,7 @@ void EvoKnob::onMessage(const VmostMsgView& m) {
         }
     }
     const uint8_t* data = m.data;
+    observeMedia(m);
     uint8_t keys[8];
     if (m.inst == 0x03 && (m.fkt == 0xC47 || m.fkt == 0xC4F) && m.op == 0xC && m.data && m.len <= sizeof(keys)) {
         // Match CcsDecoder's front-controller instance before updating retained state (status 7).
@@ -338,6 +359,10 @@ void EvoKnob::onMessage(const VmostMsgView& m) {
     const int n = decoder_.feed(m.fblock, m.inst, m.fkt, static_cast<uint8_t>(m.op), data, m.len, ev, 8);
     const bool send = mode_ == INPUT_FORWARD && owned_ && cb_;
     for (int i = 0; i < n; ++i) {
+        if (mediaCb_ && mode_ == INPUT_FORWARD &&
+            (ev[i].kind == 2 || (ev[i].kind == 1 && ev[i].down && ev[i].keycode != aa::AAK_MEDIA))) {
+            mediaCb_(7, mediaUser_);
+        }
         const char* what = ev[i].what ? ev[i].what : "?";
         // During a call, COM stays with iDrive's call screen (CarPlay does the same: ICallManager check).
         const bool localKey =

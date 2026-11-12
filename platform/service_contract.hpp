@@ -43,6 +43,8 @@ constexpr char kStateFile[] = "/tmp/entry-aad-state";             // "state pid 
 constexpr char kAppKeyFile[] = "/tmp/entry-aad-appkey";           // NAV/MEDIA/COM opened an Android Auto app
 constexpr char kDayNightFile[] = "/tmp/entry-aad-daynight";       // day or night, written by the app
 constexpr char kWirelessLock[] = "/tmp/entry-aad-wireless.lock";  // one wireless start at a time
+// One-shot double-MEDIA recall request: process id and monotonic timestamp, checked by the iDrive app.
+constexpr char kMediaRecallFile[] = "/tmp/entry-aad-media-recall";
 
 // ---- control messages from the app to the service: a Unix datagram socket, abstract name (control_address.hpp) ----
 constexpr char kControlName[] = "entry-aad-control";
