@@ -8,6 +8,16 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Flèches absentes sur le compteur du G01 / EntryNav2 002.146.002 : le compteur refusait le deuxième modèle
+  de route du trajet capturé avec `0x26`, puis le service effaçait le guidage. Créer
+  `/var/local/data/AA/kombi-single-maneuver` et redémarrer Android Auto sélectionne un graphe limité à la
+  prochaine manœuvre ; sans ce fichier, le graphe historique reste inchangé. Aucun nouvel appel réseau : un
+  sous-ensemble des méthodes de guidage existantes est envoyé. Essayé en voiture le 12 novembre 2026 sur la
+  base 0.12.0-rc.2 : flèches confirmées avec Google Maps et Yandex Maps, démarrage et nettoyage acquittés.
+  Le portage actuel est vérifié sur PC ; long trajet, manœuvres successives et voies restent à valider en roulant.
+
 ## [0.12.0-rc.6] - 2026-11-12 · voiture
 
 Version candidate, **essayée en voiture** sur une BMW G20, en sans-fil : l'iDrive accepte la nouvelle appli, et

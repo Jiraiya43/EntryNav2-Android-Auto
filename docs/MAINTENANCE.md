@@ -15,6 +15,7 @@ Le service ne lit aucun réglage dans son environnement : ses valeurs sont fixes
 | `autostart` | Présent : Android Auto démarre avec l'iDrive (case *Démarrage automatique* du menu) |
 | `entry-direct` | Présent : la ligne *Android Auto* de l'iDrive ouvre directement Android Auto, au lieu de son menu |
 | `kombi-off` | Présent : rien n'est envoyé au compteur ni à la tête haute |
+| `kombi-single-maneuver` | Présent au démarrage : graphe limité à la prochaine manœuvre, pour un compteur qui refuse le trajet complet (voir ci-dessous). Sans ce fichier : graphe historique |
 | `gps-telephone` | Présent : le téléphone garde son propre GPS, celui de la voiture n'est pas transmis |
 | `maintenance` | Présent : l'appli et le service gardent leurs journaux |
 
@@ -24,6 +25,25 @@ Exemple, couper le guidage sur le compteur, puis le rétablir :
 touch /var/local/data/AA/kombi-off
 rm /var/local/data/AA/kombi-off
 ```
+
+### Graphe limité à la prochaine manœuvre
+
+Si le compteur refuse le graphe à plusieurs routes avec `0x26`, arrêter Android Auto dans son menu,
+puis sélectionner le graphe limité à la prochaine manœuvre :
+
+```sh
+mkdir -p /var/local/data/AA && touch /var/local/data/AA/kombi-single-maneuver
+```
+
+Redémarrer Android Auto depuis son menu pour appliquer ce choix. Pour revenir au graphe historique,
+arrêter Android Auto, retirer le fichier, puis redémarrer Android Auto :
+
+```sh
+rm -f /var/local/data/AA/kombi-single-maneuver
+```
+
+Aucun redémarrage de l'iDrive ni changement de codage n'est nécessaire. Résultat et limites :
+[compatibilité](COMPATIBILITE.md#flèches-sur-le-compteur-g01--logiciel-146).
 
 ## Journaux
 

@@ -98,3 +98,24 @@ cas, un redémarrage de l'iDrive rétablit le Bluetooth.
 | Wi-Fi indisponible | Le service s'arrête avec un message |
 
 Ces protections sont testées sur PC, jamais sur une autre voiture que celle de référence.
+
+## Flèches sur le compteur G01 / logiciel 146
+
+Essai du 12 novembre 2026 : le compteur accepte le premier modèle de route du graphe capturé,
+mais refuse le deuxième (méthode `0x000E`, modèle `0x27000001`, réponse `0x26`). Les dix-sept
+requêtes précédentes réussissent ; ce n'est pas un refus systématique du client ni de la langue.
+
+Le fichier `/var/local/data/AA/kombi-single-maneuver`, lu au démarrage du service, sélectionne
+un graphe fermé pour le prochain changement de direction : un texte, une route, les modèles de
+la manœuvre 0, sa liste et l'état de guidage. Il ne crée pas les routes et textes supplémentaires
+du trajet enregistré. Le démarrage comporte 14 requêtes sans voies ; la prochaine manœuvre et
+sa distance réutilisent les mêmes modèles et positions. Sans ce fichier, le graphe historique
+reste sélectionné.
+
+L'utilisateur a confirmé les flèches avec Google Maps **et Yandex Maps** sur son G01 EntryNav2
+002.146.002. Les 14 requêtes et la suppression du guidage ont été acquittées par le compteur.
+Un long trajet, les changements successifs de manœuvre et les voies n'ont pas encore été validés
+en roulant. La signification OEM exacte de `0x26` reste inconnue. L'essai en voiture portait sur
+la base 0.12.0-rc.2 ; le portage sur la branche actuelle est vérifié séparément sur PC.
+
+Pour activer ce mode ou revenir au graphe historique : [maintenance](MAINTENANCE.md#graphe-limité-à-la-prochaine-manœuvre).

@@ -38,6 +38,7 @@ struct ArrowsConfig {
     uint32_t handle;             // the guidance instance, 0xC8 on every boot seen
     std::string offFile;         // present: the arrows are off
     std::string markerFile;      // present: an arrow may be up
+    std::string singleFile;      // present at construction: only the next maneuver's graph
     GuideSettings guide;
     ArrowsConfig();
 };
@@ -85,6 +86,7 @@ private:
     void markArrow(bool up, bool force = false);
 
     const ArrowsConfig config_;
+    const bool singleManeuver_;
     RouteGraph graph_;
     ClusterLink link_;
     Output output_;
