@@ -8,6 +8,13 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.12.0] - 2026-11-13 · voiture
+
+Première version stable de la série 0.12 : la 0.12.0-rc.12, essayée en voiture sur la G20 de référence, plus deux
+lignes sur la page *Aide* de l'iDrive. Le code des trois programmes est celui de la rc.12 ; seul le numéro de version
+annoncé au téléphone change. La page *Aide* modifiée n'a été vue que sur PC. Elle change l'appli de l'iDrive :
+installée par-dessus une version précédente, elle demande un redémarrage de l'unité.
+
 ### Ajouté
 
 - Page *Aide* du menu Android Auto de l'iDrive : deux lignes en bas disent que le logiciel est gratuit et ne se vend
@@ -220,7 +227,8 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.0-rc.12...HEAD
+[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0
 [0.12.0-rc.12]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.12
 [0.12.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.6
 [0.12.0-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.2
