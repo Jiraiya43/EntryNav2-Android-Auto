@@ -41,6 +41,11 @@ QEMU avec les bibliothèques de la voiture).
   sous-ensemble des méthodes de guidage existantes est envoyé. Essayé en voiture le 12 novembre 2026 sur la
   base 0.12.0-rc.2 : flèches confirmées avec Google Maps et Yandex Maps, démarrage et nettoyage acquittés.
   Le portage actuel est vérifié sur PC ; long trajet, manœuvres successives et voies restent à valider en roulant.
+- Molette qui agissait encore sur l'iDrive sous Android Auto, quand celui-ci revenait par-dessus un écran de l'iDrive
+  (double appui sur MEDIA, démarrage automatique) : l'iDrive refusait alors la page vide et Android Auto restait à
+  l'écran sans elle. Après le premier refus, l'appli ouvre sa propre fenêtre vide et demande la page vide en dessous,
+  comme quand l'iDrive refuse son menu au démarrage. Essayé en voiture sur la G20 de référence : double MEDIA sur
+  l'écran Média et démarrage automatique, la page vide est obtenue et la molette ne commande plus qu'Android Auto.
 
 ## [0.12.0-rc.6] - 2026-11-12 · voiture
 

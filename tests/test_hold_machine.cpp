@@ -205,12 +205,19 @@ void automaticStartOverIdriveScreen() {
 }
 
 void automaticStartRefused() {
-    {  // the menu never opens: three menu tries a second apart, event 52 once, then Android Auto stays unheld
+    {  // the menu never opens: a menu try, our popup and event 52 under it, two more menu tries a second apart,
+       // event 52 once, then Android Auto stays unheld
         Car c;
         connected(c);
         c.overlay(1);
         c.poll();
         CHECK_OUT(c, "event 51");
+        c.poll();
+        CHECK_OUT(c, "own popup 1");
+        CHECK(c.logged("iDrive refused our menu over its screen: our own popup opened (event 53)"));
+        c.poll();
+        CHECK_OUT(c, "event 52, own popup 0");
+        CHECK(c.logged("asked under our popup over an iDrive screen, popup closed"));
         c.poll();
         CHECK_OUT(c, "event 51");
         c.poll();
@@ -231,12 +238,13 @@ void automaticStartRefused() {
         CHECK_OUT(c, "");
         CHECK(c.logged("Android Auto is held"));
     }
-    {  // the menu never opens, event 52 alone works; once the blank state has the focus, the tries start over
+    {  // the menu never opens, event 52 under our popup works; once the blank state has the focus, the tries start
+       // over
         Car c;
         connected(c);
         c.overlay(1);
-        c.polls(4);
-        CHECK_OUT(c, "event 51, event 51, event 51, event 52");
+        c.polls(3);
+        CHECK_OUT(c, "event 51, own popup 1, event 52, own popup 0");
         c.blankFocus(true);  // the focus, without a visibility notification
         c.polls(5);
         CHECK_OUT(c, "");
@@ -405,8 +413,8 @@ void olderServiceRefused() {
     Car c;
     connected(c);
     c.overlay(1);
-    c.polls(5);
-    CHECK_OUT(c, "event 51, event 51, event 51, event 52");
+    c.polls(7);
+    CHECK_OUT(c, "event 51, own popup 1, event 52, own popup 0, event 51, event 51, event 52");
     c.polls(3);
     CHECK_OUT(c, "event 51, event 51, event 51");
     c.menu(true);
@@ -808,6 +816,50 @@ void shortlyAfterStart() {
     }
 }
 
+// Android Auto brought back over iDrive's media screen (double MEDIA), which refuses our pages: our own popup gets the
+// blank state under it, so the knob stops driving the media screen underneath (seen on the car).
+static void heldThenMediaScreen(Car& c) {
+    heldOnBlank(c);
+    c.blankLeft();  // MEDIA: iDrive's media screen
+    c.polls(2);
+    CHECK_OUT(c, "hide");  // the hard key, confirmed on a second poll
+    c.overlay(0);
+    c.poll();
+    c.take();
+    c.hold.showAndHold("double MEDIA", c.now);
+    CHECK_OUT(c, "show, event 52");
+    c.overlay(1);
+    c.poll();
+    CHECK_OUT(c, "event 51");
+    c.poll();
+    CHECK_OUT(c, "own popup 1");
+}
+void recallOverIdriveScreen() {
+    {
+        Car c;
+        heldThenMediaScreen(c);
+        c.poll();
+        CHECK_OUT(c, "event 52, own popup 0");
+        c.blankVisible(true);  // iDrive performed it: shown, the focus still with its screen
+        c.polls(10);
+        CHECK_OUT(c, "");  // held; no popup peek, no event while it has not had the focus
+        CHECK(c.hold.holding() && c.hold.blankShown() && !c.hold.popupPeek());
+        c.blankFocus(true);
+        c.polls(3);
+        CHECK_OUT(c, "");
+    }
+    {  // Android Auto steps aside while our popup is open: the popup goes with it
+        Car c;
+        heldThenMediaScreen(c);
+        c.overlay(0);
+        c.poll();
+        CHECK(c.take().find("own popup 0") != std::string::npos);
+        CHECK(!c.hold.holding());
+        c.polls(3);
+        CHECK_OUT(c, "");
+    }
+}
+
 int main() {
     shortlyAfterStart();
     manualOpen();
@@ -816,6 +868,7 @@ int main() {
     automaticStartRefused();
     waitsAsideForIdrive();
     olderServiceRefused();
+    recallOverIdriveScreen();
     comesUpOverOurMenu();
     backToOurMenu();
     popupOverBlank();
@@ -833,8 +886,8 @@ int main() {
         return 1;
     }
     puts(
-        "PASS hold machine: manual open, automatic start through the menu, refusals, waiting aside, BACK, popups, "
-        "driving mode, "
+        "PASS hold machine: manual open, automatic start through the menu, refusals, waiting aside, recall over an "
+        "iDrive screen, BACK, popups, driving mode, "
         "reverse, calls, app keys, hard keys, stepping aside, service restart");
     return 0;
 }

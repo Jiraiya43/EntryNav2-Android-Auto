@@ -7,9 +7,10 @@
 // the way native CarPlay holds its own. Event 52 asks for it, event 51 opens the app's menu, event 50 the iDrive main
 // menu (hmiapp/EntryAad.xml). What the machine does, case by case:
 // - Open row, entry button: "show" and event 52 at once, not at the next status poll.
-// - Android Auto comes up by itself (start automatically, phone reconnected): over our menu, event 52; during a call,
-//   event 52 over iDrive's call screen; over one of iDrive's own screens, where event 52 can be refused, our menu first
-//   (event 51), whose focus asks for event 52 at once. Up to 3 menu tries a second apart, then event 52 once.
+// - Android Auto comes up by itself (start automatically, phone reconnected, double MEDIA): over our menu, event 52;
+//   during a call, event 52 over iDrive's call screen; over one of iDrive's own screens, where event 52 can be refused,
+//   our menu first (event 51), whose focus asks for event 52 at once. After the first refused menu, our own popup
+//   (below) and event 52 under it; then up to 2 more menu tries a second apart, then event 52 once.
 // - A phone connects: the service keeps Android Auto aside and says so (it was told "await" when it started). Our
 //   menu is asked for (event 51) once a second; its focus sends "show" and event 52, so iDrive is on our pages
 //   before Android Auto shows.
@@ -148,6 +149,7 @@ private:
     long holdShownAt_;    // when showAndHold asked for the blank state before Android Auto confirmed
     int holdTries_;       // events 52 since the blank state last showed
     int menuRouteTries_;  // events 51 since the blank state last showed
+    bool popupTried_;     // our own popup was opened for it since the blank state last showed
     int unfocusedPolls_;  // polls with the blank state shown but unfocused
     long leftSeen_;       // first poll that saw iDrive away from the blank state (hard key), 0: none
     long menuHoldMs_;     // last event 52 fired by our menu's focus

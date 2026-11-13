@@ -26,6 +26,7 @@ HoldMachine::HoldMachine(HoldIo& io)
       holdShownAt_(0),
       holdTries_(0),
       menuRouteTries_(0),
+      popupTried_(false),
       unfocusedPolls_(0),
       leftSeen_(0),
       menuHoldMs_(-1000),
@@ -157,6 +158,7 @@ void HoldMachine::aaFocus(bool focused) {
         aaSeen_ = true;
         holdTries_ = 0;
         menuRouteTries_ = 0;
+        popupTried_ = false;
         holdGaveUp_ = false;
         underPopup_ = false;
     }
@@ -169,6 +171,7 @@ void HoldMachine::aaVisible(bool visible, long now) {
         aaSeen_ = true;
         holdTries_ = 0;
         menuRouteTries_ = 0;
+        popupTried_ = false;
     }
     say("hold: state %u visible -> %d", kAaState, static_cast<int>(visible));
     if (!visible && keepForAppKey("key opened an Android Auto app", now)) {
@@ -349,6 +352,7 @@ void HoldMachine::poll(const ServiceState& service, long now) {
         }
         holdTries_ = 0;
         menuRouteTries_ = 0;
+        popupTried_ = false;
         hideSent_ = false;
         holdGaveUp_ = false;
         holding_ = true;
@@ -363,6 +367,10 @@ void HoldMachine::poll(const ServiceState& service, long now) {
         return;
     }
     if (fell) {
+        if (popupOpen_) {
+            popupOpen_ = false;  // opened to hold Android Auto, which is gone
+            io_.ownPopup(false);
+        }
         // Android Auto stepped aside by itself (phone's exit icon, signal lost) while iDrive shows our blank state:
         // give the driver the iDrive main menu. Not in reverse, not when a hard key already took iDrive elsewhere.
         if (blank && !aaFocused_ && gear_ != kReverseGear) {
@@ -456,8 +464,27 @@ void HoldMachine::poll(const ServiceState& service, long now) {
     }
     if (!aaSeen_) {
         // Still on an iDrive screen a second after asking: through our menu (holdViaMenu), then event 52 once if the
-        // menu never opened.
-        if (menuRouteTries_ < kMenuRouteTries) {
+        // menu never opened. After the first refused menu, our own popup, as for a phone waiting aside
+        // (bringIdrive): iDrive performs no focus event of an app under one of its own popups, but does under an
+        // app's. Seen on the car after a double MEDIA: Android Auto back over iDrive's screen, every request
+        // refused, and the knob driving that screen underneath.
+        if (popupOpen_) {
+            io_.triggerEvent(kEvHoldAa);
+            io_.ownPopup(false);
+            popupOpen_ = false;
+            underPopup_ = true;
+            aaSeen_ = false;
+            holdTime_ = now;
+            say("hold: event %u -> state %u asked under our popup over an iDrive screen, popup closed", kEvHoldAa,
+                kAaState);
+        } else if (menuRouteTries_ == 1 && !popupTried_) {
+            popupTried_ = true;
+            popupOpen_ = true;
+            holdTime_ = now;
+            io_.ownPopup(true);
+            say("hold: iDrive refused our menu over its screen: our own popup opened (event %u) to ask under it",
+                kEvOwnPopup);
+        } else if (menuRouteTries_ < kMenuRouteTries) {
             holdViaMenu("state not shown over an iDrive screen", now);
         } else if (holdTries_ == 0) {
             fireHold("our menu did not open: state directly", now);
