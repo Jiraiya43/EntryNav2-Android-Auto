@@ -521,6 +521,10 @@ struct AlpsSppLink::Impl {
             return false;
         }
         if (!active || cfgStatus != 0) {
+            if (active) {
+                ELOG("SPP", "configuration %s of 0x%04x on instance %u refused (status %d)", writing ? "write" : "read",
+                     static_cast<unsigned>(id), static_cast<unsigned>(instance), cfgStatus);
+            }
             return false;
         }
         out = cfgData;
@@ -742,6 +746,10 @@ bool AlpsSppLink::readConfiguration(uint8_t instance, uint16_t id, std::vector<u
 bool AlpsSppLink::ensureDataInterface(bool allowWrite, int ms) {
     Lock request(p_->requestMu);
     std::vector<uint8_t> data;
+    if (!slotConfigurationReadable(p_->inst)) {
+        // Its read would give slot 0's value: written, and confirmed by the write's own status.
+        return allowWrite && p_->configuration(p_->inst, 0x6203, true, data, ms);
+    }
     if (!p_->configuration(p_->inst, 0x6203, false, data, ms) || data.size() != 1) {
         return false;
     }
@@ -764,6 +772,9 @@ bool AlpsSppLink::setDataInterface(uint8_t value, int ms) {
     std::vector<uint8_t> data;
     if (!p_->configuration(p_->inst, 0x6203, true, data, ms, value)) {
         return false;
+    }
+    if (!slotConfigurationReadable(p_->inst)) {
+        return true;
     }
     return p_->configuration(p_->inst, 0x6203, false, data, ms) && data.size() == 1 && data[0] == value;
 }

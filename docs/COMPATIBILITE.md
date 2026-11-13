@@ -74,8 +74,13 @@ essai est le bienvenu.
 
 ## Une autre version de la bibliothèque Bluetooth
 
-Android Auto emprunte un emplacement de la pile Bluetooth BMW, puis le rend. Pour vérifier cet emplacement, il lit ses tables
-en mémoire. Sur une autre voiture :
+Android Auto emprunte un emplacement de la pile Bluetooth BMW, puis le rend. La pile en crée six, de 0 à 5, et BMW n'en
+règle que deux : le 0, celui des BMW Apps, où se connecte l'appli My BMW, et le 1, celui de CarPlay. Android Auto prend le
+5, et laisse le 0 à My BMW. Sur une voiture où le 5 n'est pas démarré ou porte un autre identifiant, il prend le 0, comme
+avant : My BMW ne trouve alors plus la voiture tant qu'Android Auto tourne. Le journal du superviseur dit lequel il a pris
+(`Android Auto takes SPP 5` ou `takes SPP 0`).
+
+Pour vérifier cet emplacement, Android Auto lit les tables de la pile en mémoire. Sur une autre voiture :
 
 1. Les tables sont trouvées dans la bibliothèque de cette voiture, par leurs noms exportés.
 2. Leurs trois tailles doivent être celles de la voiture de référence. Sinon, la voiture est refusée, et le rapport donne

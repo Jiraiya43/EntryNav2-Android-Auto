@@ -23,6 +23,14 @@ QEMU avec les bibliothèques de la voiture).
   `Jiraiya43/EntryNav2-Android-Auto`. L'ancienne adresse `Jiraiya43/entry-aad` redirige vers la nouvelle,
   téléchargements des versions publiées compris. Les noms sur la voiture ne changent pas : programmes, dossiers, appli
   de l'iDrive et réglages restent les mêmes, et une installation existante se met à jour comme avant.
+- Bluetooth : Android Auto prend maintenant l'emplacement série 5 de la pile Bluetooth de la voiture, libre, au lieu
+  de l'emplacement 0 des BMW Apps où se connecte l'appli My BMW. Tant qu'Android Auto tournait, My BMW ne trouvait
+  plus la voiture, et le service BMW de cet emplacement traitait chaque lien comme le sien ; un utilisateur voyait la
+  lenteur du sans-fil disparaître en bloquant My BMW
+  ([#44](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/44)). Si l'emplacement 5 n'est pas libre,
+  Android Auto reste sur le 0 comme avant ; il est rendu à l'arrêt. Essayé en voiture sur la G20 de référence :
+  Android Auto démarre et tient sur le 5, l'emplacement 0 reste à My BMW. L'effet sur la lenteur reste à confirmer
+  chez ceux qui la voyaient.
 
 ### Corrigé
 

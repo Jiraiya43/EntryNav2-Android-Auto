@@ -10,7 +10,10 @@
 #include "../platform/spp_advertisement.hpp"
 
 namespace {
-evo::SppSlotSnapshot simulated;
+// simulated: the slot under test (testSlot), the one Android Auto takes; spare: the other allowed slot (0 or 5).
+evo::SppSlotSnapshot simulated, spare;
+unsigned testSlot = 0, started = 0, spareConfiguration = 0;
+bool spareReadable = false;
 unsigned configuration = 0, uuidWrites = 0, configWrites = 0, disconnects = 0;
 unsigned transientReads = 0, readerOpens = 0, readerCloses = 0;
 bool failUuid = false, failConfig = false, videoGone = true, liveLink = false, failRead = false;
@@ -32,7 +35,11 @@ void SppSnapshotReader::close() {
     ++readerCloses;
 }
 bool SppSnapshotReader::read(unsigned instance, SppSlotSnapshot& out, bool allowSplit) {
-    assert(instance == 0);
+    assert(instance == 0 || instance == 5);
+    if (instance != testSlot) {
+        out = spare;
+        return spareReadable;
+    }
     out = simulated;
     if (transientReads) {
         --transientReads;
@@ -43,7 +50,8 @@ bool SppSnapshotReader::read(unsigned instance, SppSlotSnapshot& out, bool allow
 AlpsSppLink::AlpsSppLink() : p_(0) {}
 AlpsSppLink::~AlpsSppLink() {}
 bool AlpsSppLink::start(uint8_t instance) {
-    assert(instance == 0);
+    assert(instance == 0 || instance == 5);
+    started = instance;
     return true;
 }
 void AlpsSppLink::setMonitorOnly(bool) {}
@@ -56,12 +64,16 @@ int AlpsSppLink::registerUuid(const char* uuid, int timeout) {
     assert(parseUuid128(uuid, parsed));
     return registerUuidPayload(buildSetUuidPayload(parsed, parsed), timeout);
 }
+// As the car's stack does: a read of slots 2 to 5 answers slot 0's value (slotConfigurationReadable).
 bool AlpsSppLink::readConfiguration(uint8_t instance, uint16_t id, std::vector<uint8_t>& out, int) {
-    assert(instance == 0 && id == 0x6203);
-    out.assign(1, configuration);
+    assert((instance == 0 || instance == 5) && id == 0x6203);
+    const unsigned answered = slotConfigurationReadable(instance) ? instance : 0;
+    out.assign(1, answered == testSlot ? configuration : spareConfiguration);
     return true;
 }
+// Every write goes to the slot Android Auto took, never to the other one.
 bool AlpsSppLink::setDataInterface(uint8_t value, int) {
+    assert(started == testSlot);
     ++configWrites;
     if (failConfig) {
         return false;
@@ -70,6 +82,7 @@ bool AlpsSppLink::setDataInterface(uint8_t value, int) {
     return true;
 }
 int AlpsSppLink::registerUuidPayload(const std::vector<uint8_t>& payload, int) {
+    assert(started == testSlot);
     ++uuidWrites;
     if (failUuid) {
         return -1;
@@ -78,6 +91,7 @@ int AlpsSppLink::registerUuidPayload(const std::vector<uint8_t>& payload, int) {
     return 0;
 }
 bool AlpsSppLink::requestSppDisconnect() {
+    assert(started == testSlot);
     ++disconnects;
     simulated.state = 1;
     simulated.transportState = 0;
@@ -110,8 +124,13 @@ bool loadAccessPoint(aa::ApInfo&, std::string&) {
     return apAvailable;
 }
 }  // namespace evo
+// The whole save / restore cycle on slot 0, on a car where slot 5 is unreadable (not there).
 static void recoveryCases(const std::vector<uint8_t>& original) {
     uuidWrites = configWrites = disconnects = configuration = 0;
+    const unsigned slot = 0;
+    testSlot = slot;
+    spare = evo::SppSlotSnapshot();
+    spareReadable = false;
     char cwd[4096];
     assert(getcwd(cwd, sizeof(cwd)));
     char dir[] = "/tmp/entry-aa-recovery-test-XXXXXX";
@@ -119,14 +138,15 @@ static void recoveryCases(const std::vector<uint8_t>& original) {
     Baseline b;
     b.pid = 123;
     b.identity = "456";
-    b.instance = 0;
+    b.instance = slot;
     b.interface = 0;
     b.uuid = original;
     evo::SppSnapshotReader reader;
+    simulated = evo::SppSlotSnapshot();
     simulated.state = 1;
     simulated.uuidPayload = simulated.transportUuidPayload = b.uuid;
     Baseline checked;
-    assert(preflight(reader, checked) && checked.uuid == b.uuid && checked.interface == 0);
+    assert(preflight(reader, checked) && checked.uuid == b.uuid && checked.interface == 0 && checked.instance == slot);
     // Every preflight attempt rescans Alps (close then open), so a retried preflight can pass.
     {
         unsigned o = readerOpens, c = readerCloses;
@@ -157,7 +177,7 @@ static void recoveryCases(const std::vector<uint8_t>& original) {
     simulated.uuidPayload = simulated.transportUuidPayload = b.uuid;
     assert(save(b));
     Baseline loaded;
-    assert(load(loaded) && loaded.uuid == b.uuid);
+    assert(load(loaded) && loaded.uuid == b.uuid && loaded.instance == slot);
     transientReads = 2;  // disconnect can leave the two snapshots in transition briefly
     assert(recover(b, reader));
     assert(uuidWrites == 0 && configWrites == 0 && disconnects == 0);
@@ -235,6 +255,139 @@ static void recoveryCases(const std::vector<uint8_t>& original) {
     assert(simulated.uuidPayload == original && simulated.transportUuidPayload == original);
     assert(chdir(cwd) == 0 && rmdir(dir) == 0);
 }
+// The whole cycle on slot 5, with slot 0 holding BMW Apps and My BMW connected to it. A read of slot 5's interface
+// would answer slot 0's: it is saved as its start value 0 and written back at every restore, never read.
+static void slot5Cases(const std::vector<uint8_t>& bmw, const std::vector<uint8_t>& generic) {
+    uuidWrites = configWrites = disconnects = 0;
+    testSlot = 5;
+    spare = evo::SppSlotSnapshot();
+    spare.state = 2;
+    spare.transportState = 1;
+    spare.connected = true;
+    spare.uuidPayload = spare.transportUuidPayload = bmw;
+    spareReadable = true;
+    spareConfiguration = 0;  // slot 0's interface: what a read of slot 5 answers
+    configuration = 1;       // slot 5's own, left at 1 by an earlier run
+    simulated = evo::SppSlotSnapshot();
+    simulated.state = 1;
+    simulated.uuidPayload = simulated.transportUuidPayload = generic;
+    char cwd[4096];
+    assert(getcwd(cwd, sizeof(cwd)));
+    char dir[] = "/tmp/entry-aa-slot5-test-XXXXXX";
+    assert(mkdtemp(dir) && chdir(dir) == 0);
+    evo::SppSnapshotReader reader;
+    Baseline b;
+    assert(preflight(reader, b) && b.instance == 5 && b.interface == 0 && b.uuid == generic);
+    assert(uuidWrites + configWrites + disconnects == 0);
+    // Android Auto registered and connected on slot 5: our link closed, the generic pair and the interface back.
+    assert(save(b));
+    simulated.uuidPayload = simulated.transportUuidPayload = aaPayload();
+    simulated.state = 2;
+    simulated.transportState = 1;
+    simulated.connected = true;
+    assert(recover(b, reader));
+    assert(disconnects == 1 && uuidWrites == 1 && configWrites == 1 && configuration == 0);
+    assert(simulated.uuidPayload == generic && access(journal, F_OK) != 0);
+    // A start that stopped before registering: the interface is written back all the same.
+    assert(save(b));
+    configuration = 1;
+    assert(recover(b, reader) && configWrites == 2 && configuration == 0 && uuidWrites == 1);
+    // An unconfirmed write keeps the journal.
+    assert(save(b));
+    failConfig = true;
+    assert(!recover(b, reader) && access(journal, F_OK) == 0);
+    failConfig = false;
+    // Someone else connected on the generic pair: postponed, nothing written.
+    simulated.state = 2;
+    simulated.connected = true;
+    const unsigned before = configWrites;
+    assert(!recover(b, reader) && configWrites == before && access(journal, F_OK) == 0);
+    simulated.state = 1;
+    simulated.transportState = 0;
+    simulated.connected = false;
+    assert(recover(b, reader) && access(journal, F_OK) != 0);
+    assert(spare.uuidPayload == bmw && spare.connected && spareConfiguration == 0);  // slot 0 never touched
+    spareReadable = false;
+    assert(chdir(cwd) == 0 && rmdir(dir) == 0);
+}
+// Which slot a start takes: 5 while it is free, 0 where 5 is not available, none while 5 is in use.
+static void slotCases(const std::vector<uint8_t>& bmw, const std::vector<uint8_t>& generic) {
+    const std::vector<uint8_t> aa = aaPayload();
+    evo::SppSlotSnapshot s;
+    assert(evo::spareSlotOffer(false, s, aa) == evo::kSlotAbsent);  // unreadable
+    s.uuidPayload = s.transportUuidPayload = generic;
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotAbsent);  // state 0: not started on this car
+    s.state = 1;
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotFree);
+    s.transportState = 4;
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotAbsent);  // started otherwise than slot 0 is
+    s.transportState = 0;
+    s.connected = true;
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotBusy);
+    s.connected = false;
+    s.state = 2;
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotBusy);
+    s.state = 1;
+    s.uuidPayload = s.transportUuidPayload = aa;  // ours already: never a second Android Auto record on slot 0
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotBusy);
+    s.transportUuidPayload = generic;  // half of a registration
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotBusy);
+    s.uuidPayload = s.transportUuidPayload = bmw;  // someone else's UUID
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotAbsent);
+    s.uuidPayload = generic;  // copies that disagree
+    assert(evo::spareSlotOffer(true, s, aa) == evo::kSlotAbsent);
+    assert(evo::aaSlotAllowed(0) && evo::aaSlotAllowed(5) && !evo::aaSlotAllowed(1) && !evo::aaSlotAllowed(3));
+
+    char cwd[4096];
+    assert(getcwd(cwd, sizeof(cwd)));
+    char dir[] = "/tmp/entry-aa-slot-test-XXXXXX";
+    assert(mkdtemp(dir) && chdir(dir) == 0);
+    evo::SppSnapshotReader reader;
+    Baseline checked;
+    const unsigned writes = uuidWrites + configWrites + disconnects;
+    // Slot 5 free, slot 0 idle with the BMW Apps pair: 5, and slot 0 is not even needed.
+    testSlot = 5;
+    simulated = evo::SppSlotSnapshot();
+    simulated.state = 1;
+    simulated.uuidPayload = simulated.transportUuidPayload = generic;
+    configuration = 0;
+    spare = evo::SppSlotSnapshot();
+    spare.state = 1;
+    spare.uuidPayload = spare.transportUuidPayload = bmw;
+    spareReadable = true;
+    assert(preflight(reader, checked) && checked.instance == 5 && checked.uuid == generic);
+    // Slot 5 still holding Android Auto: refused, although slot 0 is idle.
+    simulated.uuidPayload = simulated.transportUuidPayload = aa;
+    assert(!preflight(reader, checked));
+    // Slot 5 not started: slot 0, as before.
+    testSlot = 0;
+    simulated = spare;
+    spare = evo::SppSlotSnapshot();
+    spare.uuidPayload = spare.transportUuidPayload = generic;
+    assert(preflight(reader, checked) && checked.instance == 0 && checked.uuid == bmw);
+    // Slot 5 holding another UUID: left to its owner, slot 0.
+    spare.state = 1;
+    spare.uuidPayload = spare.transportUuidPayload = bmw;
+    assert(preflight(reader, checked) && checked.instance == 0);
+    assert(uuidWrites + configWrites + disconnects == writes);  // a preflight only reads
+    // The journal takes slot 5 and slot 0, nothing else.
+    Baseline b;
+    b.pid = 123;
+    b.identity = "456";
+    b.instance = 5;
+    b.interface = 0;
+    b.uuid = generic;
+    Baseline loaded;
+    assert(save(b) && load(loaded) && loaded.instance == 5 && loaded.uuid == generic);
+    assert(unlink(journal) == 0);
+    const char bad[] = "ENTRY_AA_TRIAL_V1\n123 456 3 0 011101011101\n";
+    int fd = open(journal, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    assert(fd >= 0 && write(fd, bad, sizeof(bad) - 1) == static_cast<ssize_t>(sizeof(bad) - 1) && close(fd) == 0);
+    assert(!load(loaded));
+    assert(unlink(journal) == 0);
+    spareReadable = false;
+    assert(chdir(cwd) == 0 && rmdir(dir) == 0);
+}
 static void advertisementCases() {
     evo::AdvertisementSchedule schedule;
     assert(!schedule.due(0) && !schedule.due(14999) && schedule.due(15000));
@@ -242,31 +395,33 @@ static void advertisementCases() {
     assert(!schedule.due(89999) && schedule.due(90000) && !schedule.due(180000));
     evo::SppSnapshotReader reader;
     evo::AlpsSppLink bt;
+    testSlot = started = evo::kAaSlot;  // the slot the service's link was started on
     simulated = evo::SppSlotSnapshot();
     simulated.state = 1;
     simulated.uuidPayload = simulated.transportUuidPayload = evo::androidAutoPair();
+    const unsigned slot = evo::kAaSlot;
     unsigned before = uuidWrites;
-    assert(evo::refreshAdvertisement(bt, reader) && uuidWrites == before + 1);
+    assert(evo::refreshAdvertisement(bt, reader, slot) && uuidWrites == before + 1);
     assert(simulated.uuidPayload == aaPayload() && simulated.transportUuidPayload == aaPayload());
     before = uuidWrites;
     liveLink = true;
-    assert(evo::refreshAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader, slot));
     liveLink = false;
     simulated.connected = true;
-    assert(evo::refreshAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader, slot));
     simulated.connected = false;
     simulated.transportState = 1;
-    assert(evo::refreshAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader, slot));
     simulated.transportState = 0;
     failRead = true;
-    assert(evo::refreshAdvertisement(bt, reader));
+    assert(evo::refreshAdvertisement(bt, reader, slot));
     failRead = false;
     simulated.uuidPayload[1] ^= 1;
     simulated.transportUuidPayload = simulated.uuidPayload;
-    assert(!evo::refreshAdvertisement(bt, reader) && uuidWrites == before);
+    assert(!evo::refreshAdvertisement(bt, reader, slot) && uuidWrites == before);
     simulated.uuidPayload = simulated.transportUuidPayload = aaPayload();
     failUuid = true;
-    assert(!evo::refreshAdvertisement(bt, reader));
+    assert(!evo::refreshAdvertisement(bt, reader, slot));
     failUuid = false;
 }
 int main() {
@@ -303,8 +458,10 @@ int main() {
     assert(!evo::snapshotMatchesBaseline(slot, hex(aaPayload())));
     recoveryCases(genericPair);
     recoveryCases(bmw);
+    slot5Cases(bmw, genericPair);
+    slotCases(bmw, genericPair);
     advertisementCases();
     puts(
         "PASS supervisor: actual BMW and generic preflight, exact child snapshot, saved pairs reloaded/restored, "
-        "partial failures and busy/third-party refusals");
+        "partial failures and busy/third-party refusals, slot 5 with slot 0 left to BMW Apps");
 }

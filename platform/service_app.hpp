@@ -62,9 +62,9 @@ public:
     // Session, focus and peeks into what shows: the video layer, its opacity, the pill. Holds videoMu while
     // LayerManagerControl runs. service: started by the iDrive app (aa-supervisor --service).
     Turn turn(bool service);
-    // Registers the Android Auto UUID again while nothing is connected (refreshAdvertisement). False when that
-    // failed and the service must stop.
-    bool refreshAdvertisementIfIdle(bool service, SppSnapshotReader& reader);
+    // Registers the Android Auto UUID again on its SPP slot while nothing is connected (refreshAdvertisement). False
+    // when that failed and the service must stop.
+    bool refreshAdvertisementIfIdle(bool service, SppSnapshotReader& reader, unsigned slot);
     // Car day/night (CDS vehicle.dayNightChangeOver via the iDrive app): 1 day, 2 night, 0 no change, 3 invalid.
     void applyDayNight(int v, const char* src);
 
