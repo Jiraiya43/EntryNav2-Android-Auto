@@ -124,6 +124,11 @@ bool AASession::onControl(uint16_t id, const Message& message) {
         case msg::kPingRequest:
             onPing(message);
             break;
+        case msg::kPingResponse:  // to our own ping: like any data, it already reset the silence
+            if (pingAnswers_++ < kPingsLogged || pingAnswers_ % kPingsLogEvery == 0) {
+                printf("[AASession] >>> PingResponse %u to ours\n", pingAnswers_);
+            }
+            break;
         default:
             printf("[AASession] Control Message RX: ID=0x%04X, Len=%u\n", id, static_cast<unsigned>(message.size()));
             break;

@@ -46,7 +46,7 @@ public:
     void stop();
     bool isActive() const { return running(); }
     // The longest time the phone sent nothing since the previous call, in milliseconds, and starts over. Any thread.
-    // A phone that projects sends pings and status every second: seconds here are a link that stalled.
+    // After 2 s of silence the head unit pings the phone, which answers at once: seconds here are a link that stalled.
     uint32_t takeLongestSilenceMs() { return longestSilenceMs_.exchange(0); }
 
     // Set before start().
@@ -106,6 +106,7 @@ private:
     bool sendFrame(uint8_t channel, uint8_t flags, const uint8_t* payload, size_t size);
     bool sendPlain(uint8_t channel, const Message& message);
     bool sendSealed(uint8_t channel, const Message& message, uint8_t flags = frame::kSealed);
+    bool askPhone(uint64_t silentMs);  // our own ping to a silent phone; false: not possible yet
     Received receive(uint8_t& channel, Message& message);
 
     // Car input (aa_session.cpp).
@@ -165,6 +166,7 @@ private:
     // Log throttles, per session.
     unsigned framesSeen_[256];
     unsigned keysLogged_, movesLogged_, navigationLogged_, pings_;
+    unsigned pingsAsked_, pingAnswers_;  // our own pings, and the phone's answers to them
     uint32_t playbackState_;
 };
 

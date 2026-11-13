@@ -34,6 +34,14 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Corrigé
 
+- Session Android Auto coupée 5 secondes après MENU ou MAP quand aucune musique ne joue : certains téléphones
+  n'envoient plus rien tant que l'iDrive a l'écran, et le service les croyait partis. Après 2 secondes sans
+  nouvelles, l'unité envoie maintenant elle-même un ping au téléphone, puis un par seconde. Un téléphone qui répond
+  garde sa session ; un téléphone qui ne répond pas la perd toujours au bout de 5 secondes, comme avant. Trouvé par
+  [@wowDaiver](https://github.com/wowDaiver) sur un X3 G01 par câble USB
+  ([#40](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/40)). Essayé en voiture sur la G20 de référence,
+  sans changement visible ; son téléphone envoie ses propres pings, donc le cas du téléphone muet n'a été vérifié
+  que sur PC et sous QEMU.
 - Flèches absentes sur le compteur du G01 / EntryNav2 002.146.002 : le compteur refusait le deuxième modèle
   de route du trajet capturé avec `0x26`, puis le service effaçait le guidage. Créer
   `/var/local/data/AA/kombi-single-maneuver` et redémarrer Android Auto sélectionne un graphe limité à la

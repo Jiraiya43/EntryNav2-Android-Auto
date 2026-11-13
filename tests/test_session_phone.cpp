@@ -93,6 +93,12 @@ const uint32_t kKeyHome = 3, kKeyBack = 4, kKeyUp = 19, kRotary = 65536;
 
 const int kWaitMs = 4000;  // per frame; under the head unit's 5 s silence limit, ample under QEMU
 
+long long monotonicMs() {
+    timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return static_cast<long long>(t.tv_sec) * 1000 + t.tv_nsec / 1000000;
+}
+
 Bytes bytes(std::initializer_list<int> list) {
     Bytes out;
     for (int v : list) {
@@ -428,6 +434,32 @@ public:
         }
     }
     void setQuiet(bool quiet) { quiet_ = quiet; }
+    // The phone says nothing of its own for ms milliseconds, and counts the head unit's encrypted pings, answering
+    // each with the same timestamp when asked to. Stops early when the head unit closes.
+    int headUnitPings(int ms, bool answer) {
+        int asked = 0;
+        const long long until = monotonicMs() + ms;
+        while (!lost_) {
+            const long long left = until - monotonicMs();
+            pollfd pfd = {fd_, POLLIN, 0};
+            if (left <= 0 || poll(&pfd, 1, static_cast<int>(left)) <= 0) {
+                break;
+            }
+            uint8_t channel = 0, flags = 0;
+            Bytes message;
+            if (receive(channel, flags, message) <= 0) {
+                break;
+            }
+            if (channel == 0 && flags == kSealed && message.size() > 2 && message[0] == 0x00 && message[1] == 0x0b) {
+                ++asked;
+                if (answer) {
+                    send(0, kSealed, bytes({0x00, 0x0c}) + Bytes(message.begin() + 2, message.end()));
+                }
+            }
+        }
+        return asked;
+    }
+    bool lost() const { return lost_; }
 
 private:
     void frame(uint8_t channel, uint8_t flags, const Bytes& payload, const uint32_t* total) {
@@ -962,6 +994,29 @@ void lifecycle(std::vector<std::string>& log) {
     ended(link, log);
 }
 
+// A phone that stops speaking by itself (iDrive has the screen, no music) keeps its session as long as it answers the
+// head unit's pings; one that answers nothing loses it within the 5 s silence limit, pings or not. Run on the clock,
+// so it is checked here and kept out of the golden. An empty verdict: passed.
+std::string quietPhone() {
+    std::vector<std::string> log;
+    Link link;
+    Phone phone(link.phoneFd, log);
+    phone.handshake();
+    phone.discover();
+    const int answered = phone.headUnitPings(8000, true);  // without pings, the session would end after 5 s
+    if (!link.session.isActive() || phone.lost() || answered < 3) {
+        return format("answering phone: session active=%d, %d pings in 8 s", link.session.isActive() ? 1 : 0, answered);
+    }
+    const long long since = monotonicMs();
+    const int ignored = phone.headUnitPings(9000, false);
+    const long long lasted = monotonicMs() - since;
+    // The last answer came up to 2 s before; the silence is checked about once a second.
+    if (!phone.lost() || !waitEnded(link.session) || ignored < 2 || lasted < 2500 || lasted > 7500) {
+        return format("silent phone: closed=%d, %d pings, ended after %lld ms", phone.lost() ? 1 : 0, ignored, lasted);
+    }
+    return std::string();
+}
+
 struct Scenario {
     const char* name;
     void (*run)(std::vector<std::string>&);
@@ -1040,6 +1095,8 @@ int main(int argc, char** argv) {
             out.push_back("cb " + events[k]);
         }
     }
+    const std::string quiet = writing ? std::string() : quietPhone();
+    takeEvents();
     fflush(stdout);
     dup2(console, 1);
     close(sink);
@@ -1074,5 +1131,10 @@ int main(int argc, char** argv) {
         "PASS session with a fake phone: %u lines as the golden (TLS handshake, discovery, every channel, car input "
         "queues, odd fragments, cut frames, start/stop)\n",
         static_cast<unsigned>(out.size()));
+    if (!quiet.empty()) {
+        printf("FAIL session, quiet phone: %s\n", quiet.c_str());
+        return 1;
+    }
+    puts("PASS session, quiet phone: answered pings keep it, unanswered ones end it within the silence limit");
     return 0;
 }

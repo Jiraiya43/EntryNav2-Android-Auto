@@ -21,10 +21,17 @@ namespace aa {
 namespace {
 
 // Silence from the phone after which it is gone: a wireless phone can vanish without closing the socket, and its last
-// picture would stay on screen. It pings every second and reports its media status every second, even while iDrive
-// has the screen. Measured on the clock (tests/test_session_silence): car input wakes the thread about 10 times a
-// second. 5 s, so that a short Wi-Fi gap does not end the session.
+// picture would stay on screen. Measured on the clock (tests/test_session_silence): car input wakes the thread about
+// 10 times a second. 5 s, so that a short Wi-Fi gap does not end the session.
 const uint64_t kSilenceMs = 5000;
+// A phone does not always speak by itself. Some ping every second; others stop once iDrive has the screen and no
+// music plays (X3 G01 over USB: the session ended 5 s after MENU or MAP, PR #40). So after kPingAfterMs of silence,
+// once TLS is up, the head unit asks with a ping of its own, then again every kPingEveryMs. The answer is data like
+// any other; unanswered, the silence limit above still ends the session. Only data from the phone resets it.
+const uint64_t kPingAfterMs = 2000;
+const uint64_t kPingEveryMs = 1000;
+const unsigned kOwnPingsLogged = 5;  // then one in kOwnPingsLogEvery
+const unsigned kOwnPingsLogEvery = 300;
 const unsigned kFramesLoggedFirst = 40;  // per channel, then one frame in kFramesLoggedEvery
 const unsigned kFramesLoggedEvery = 300;
 const unsigned kKeysLogged = 200;  // evo_knob logs every key anyway
@@ -170,7 +177,7 @@ void AASession::closeSocket() {
 }
 
 void AASession::resetCounters() {
-    keysLogged_ = movesLogged_ = navigationLogged_ = pings_ = 0;
+    keysLogged_ = movesLogged_ = navigationLogged_ = pings_ = pingsAsked_ = pingAnswers_ = 0;
     playbackState_ = kNoField;
     memset(framesSeen_, 0, sizeof(framesSeen_));
 }
@@ -279,6 +286,8 @@ void AASession::finish() {
 bool AASession::receiveExactly(uint8_t* to, size_t size) {
     size_t got = 0;
     uint64_t lastDataMs = locationClockMs();
+    uint64_t lastPingMs = 0;  // our last ping in this silence, 0: none yet
+    unsigned unanswered = 0;  // our pings sent in this silence
     const int wakeFd = inbox_.wakeFd();
     while (got < size && running()) {
         const int fd = socket_;
@@ -309,11 +318,18 @@ bool AASession::receiveExactly(uint8_t* to, size_t size) {
         }
         if (ready == 0 || !FD_ISSET(fd, &readable)) {
             // Silence is measured on the clock: car input wakes this loop far more often than once a second.
-            const uint64_t silentMs = locationClockMs() - lastDataMs;
+            const uint64_t nowMs = locationClockMs();
+            const uint64_t silentMs = nowMs - lastDataMs;
             if (silentMs >= kSilenceMs) {
-                printf("[AASession] No data from phone for %u s: treating session as dead.\n",
-                       static_cast<unsigned>(silentMs / 1000));
+                printf(
+                    "[AASession] No data from phone for %u s (%u pings of ours unanswered): treating session as "
+                    "dead.\n",
+                    static_cast<unsigned>(silentMs / 1000), unanswered);
                 return false;
+            }
+            if (silentMs >= kPingAfterMs && (!lastPingMs || nowMs - lastPingMs >= kPingEveryMs) && askPhone(silentMs)) {
+                lastPingMs = nowMs;
+                ++unanswered;
             }
             continue;
         }
@@ -365,6 +381,21 @@ bool AASession::sendPlain(uint8_t channel, const Message& message) {
 bool AASession::sendSealed(uint8_t channel, const Message& message, uint8_t flags) {
     std::vector<uint8_t> records;
     return tls_.seal(&message[0], message.size(), records) && sendFrame(channel, flags, &records[0], records.size());
+}
+
+// Encrypted, as the phone sends its own. False before the TLS handshake ended: nothing can be sealed yet, and the
+// phone is busy with it anyway. A ping that could not be sent counts as asked: the silence limit decides.
+bool AASession::askPhone(uint64_t silentMs) {
+    if (!tls_.established()) {
+        return false;
+    }
+    const bool sent = sendSealed(channel::kControl, message::pingRequest(monotonicUs()));
+    ++pingsAsked_;
+    if (!sent || pingsAsked_ <= kOwnPingsLogged || pingsAsked_ % kOwnPingsLogEvery == 0) {
+        printf("[AASession] phone silent for %u ms: PingRequest %u of ours %s\n", static_cast<unsigned>(silentMs),
+               pingsAsked_, sent ? "sent" : "SEND FAILED");
+    }
+    return true;
 }
 
 AASession::Received AASession::receive(uint8_t& channel, Message& message) {
