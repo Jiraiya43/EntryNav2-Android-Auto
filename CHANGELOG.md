@@ -8,6 +8,13 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Page *Aide* : en voiture, elle n'affiche que 6 lignes d'environ 36 caractères et ne défile pas (ses lignes ne se
+  sélectionnent pas). Le crédit, en 8e à 10e position, restait invisible, et plusieurs lignes étaient coupées. La
+  page tient maintenant en 6 lignes courtes : le crédit en tête (« Gratuit : github.com/Jiraiya43 », le profil qui
+  mène au dépôt), puis NAV, MEDIA, COM, MENU et BACK, et le téléphone appairé pour le son.
+
 ## [0.12.0] - 2026-11-13 · voiture
 
 Première version stable de la série 0.12 : la 0.12.0-rc.12, essayée en voiture sur la G20 de référence, plus deux

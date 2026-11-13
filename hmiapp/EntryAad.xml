@@ -56,13 +56,7 @@
       <textIdModel id="84" textId="24">
         <synonyms/>
       </textIdModel>
-      <textIdModel id="85" textId="25">
-        <synonyms/>
-      </textIdModel>
       <textIdModel id="86" textId="26">
-        <synonyms/>
-      </textIdModel>
-      <textIdModel id="87" textId="27">
         <synonyms/>
       </textIdModel>
       <raIntModel id="40" modelType="NativeStateID" value="1"/>
@@ -87,16 +81,12 @@
       </hmiState>
       <hmiState id="12" parentId="10" text="Aide" textModel="36">
         <components>
+          <label id="99" model="86"/>
           <label id="90" model="80"/>
           <label id="91" model="81"/>
           <label id="92" model="82"/>
           <label id="93" model="83"/>
-          <separator id="95"/>
           <label id="94" model="84"/>
-          <label id="96" model="85"/>
-          <separator id="98"/>
-          <label id="99" model="86"/>
-          <label id="100" model="87"/>
         </components>
       </hmiState>
       <hmiState id="13" parentId="10" text=" " textModel="37">
