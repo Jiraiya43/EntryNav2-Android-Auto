@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Jiraiya43
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-"""Build the release archive: artifacts/entry-aad-<version>-armhf.tar, ready to copy to the head unit.
+"""Build the release archive: artifacts/entrynav2-android-auto-<version>-armhf.tar, ready to copy to the head unit.
 
 Its files sit at the paths they take on the car (opt/aa/..., opt/hmi/data/ro/Plugins/EntryAad/...), with MD5SUMS
 checkable by the car's BusyBox before and after the copy (docs/INSTALLATION.md). Only the programs recorded by the last
@@ -60,7 +60,7 @@ def release_files() -> dict:
 
 def main() -> None:
     version = (ROOT / "VERSION").read_text().strip()
-    top = f"entry-aad-{version}"
+    top = f"entrynav2-android-auto-{version}"
     epoch = int(
         subprocess.run(["git", "log", "-1", "--format=%ct"], cwd=ROOT, capture_output=True, text=True).stdout or 0
     )

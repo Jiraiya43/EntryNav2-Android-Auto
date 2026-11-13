@@ -58,6 +58,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `evo_video`, `evo_ilm`, `omap_dmabuf` | Décodage et affichage de la vidéo, gestion de sa couche |
 | `evo_pill`, `volume_pill.hpp` | Pastille du volume au-dessus d'Android Auto : client Wayland, dessin |
 | `evo_knob`, `evo_touch`, `input_mode.hpp` | Entrées : molette, touches, tactile |
+| `media_recall.hpp` | Double appui sur MEDIA : geste, conditions, demande à usage unique lue par l'appli de l'iDrive |
 | `vmost_client` | Accès au bus vMOST de la voiture (molette, touches, Wi-Fi), chargé à l'exécution |
 | `evo_ccs.hpp`, `evo_touch_frame.hpp` | Messages de la molette BMW (deux générations de contrôleur) et trames du tactile |
 | `evo_gps` | Lecture passive du GPS de la voiture |
@@ -114,6 +115,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `tests/test_wifi_link.cpp` | Qualité du Wi-Fi : messages du noyau, ligne de journal, connexion rendue en fin de session |
 | `tests/test_pending_restart.cpp` | Redémarrage d'Android Auto quand la case du câble USB change en marche |
 | `tests/test_hold_machine.cpp` | Page vide de l'iDrive : ouverture, démarrage automatique, fenêtres, modes, appels, touches |
+| `tests/test_media_recall.cpp` | Double appui sur MEDIA : geste lu par le vrai décodeur, conditions, demande à usage unique |
 | `tests/test_aa_frame.cpp`, `tests/test_aa_messages.cpp`, `tests/test_tcp_server.cpp` | Trames hostiles, messages construits, écoute TCP |
 | `make verify_binary verify_wireless` | Programmes ARM : bibliothèques résolues sur la voiture, empreintes des programmes validés |
 | `tools/verify_repo.py`, `tools/verify_core.py` | Contenu de git : ni mot de passe, ni programme compilé, ni fichier BMW ; licence |

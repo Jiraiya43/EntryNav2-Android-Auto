@@ -60,7 +60,7 @@ ou seulement testée sur PC.
 L'installation est une courte procédure manuelle par SSH, détaillée pas à pas dans
 [docs/INSTALLATION.md](docs/INSTALLATION.md) :
 
-1. Télécharger `entry-aad-<version>-armhf.tar` dans les
+1. Télécharger `entrynav2-android-auto-<version>-armhf.tar` dans les
    [versions publiées](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) et vérifier son empreinte SHA-256.
 2. Le copier dans le `/tmp` de l'unité avec `scp`.
 3. **Contrôler la voiture** : rien n'est écrit. Le chargeur de l'unité confirme chaque bibliothèque et fonction utilisée,
@@ -108,7 +108,7 @@ docker build -t entrynav2-tc:4.7 toolchain              # une fois : GCC 4.7 pou
 bash toolchain/tc.sh make -j4 all hmiapp test-arm-all   # programmes ARM, liés aux bibliothèques de la voiture
 python3 -I tests/run_qemu.py                            # tests ARM sous QEMU avec les bibliothèques de la voiture
 make verify_binary verify_wireless                      # enregistre les programmes qui ont passé les tests
-python3 tools/package_release.py                        # artifacts/entry-aad-<version>-armhf.tar
+python3 tools/package_release.py                        # artifacts/entrynav2-android-auto-<version>-armhf.tar
 ```
 
 Tests et règles du projet : [CONTRIBUTING.md](CONTRIBUTING.md).

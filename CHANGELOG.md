@@ -8,6 +8,14 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.12.0-rc.12] - 2026-11-13 · voiture
+
+Version candidate, **essayée en voiture** sur la G20 de référence (logiciel 202111011321), en sans-fil, avec un kit
+d'essai identique : démarrage automatique à chaque mise en route, Android Auto sur l'emplacement Bluetooth 5,
+double appui sur MEDIA, BACK, MAP et MENU. Les numéros 0.12.0-rc.7 à rc.11 n'ont servi qu'à des kits d'essai et
+n'ont pas été publiés. L'archive s'appelle désormais `entrynav2-android-auto-<version>-armhf.tar`. Elle change l'appli
+de l'iDrive : installée par-dessus une version précédente, elle demande un redémarrage de l'unité.
+
 ### Ajouté
 
 - Retour à une session Android Auto connectée en arrière-plan par deux appuis courts sur MEDIA, espacés de
@@ -15,7 +23,9 @@ QEMU avec les bibliothèques de la voiture).
   geste ; l'appli de l'iDrive vérifie de nouveau la session, l'arrêt, les appels et la marche arrière avant
   d'ouvrir l'image par le chemin du bouton *Ouvrir*. L'appui simple garde son effet habituel ; à l'écran,
   MEDIA garde ses commandes Android Auto. Aucun nouveau processus, fournisseur MOST ou fichier BMW modifié.
-  Testé sur PC et sous QEMU ; pas encore essayé en voiture, sur CCS35up ni sur l'ancien contrôleur.
+  Proposé par [@wowDaiver](https://github.com/wowDaiver) ([#40](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/40)).
+  Essayé en voiture sur la G20 de référence (CCS35up, sans-fil) et sur un X3 G01 (par câble USB) ; pas encore
+  sur l'ancien contrôleur.
 
 ### Modifié
 
@@ -204,7 +214,8 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.0-rc.6...HEAD
+[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.0-rc.12...HEAD
+[0.12.0-rc.12]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.12
 [0.12.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.6
 [0.12.0-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.2
 [0.12.0-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.1

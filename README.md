@@ -58,7 +58,7 @@ counts as proof: [CHANGELOG.md](CHANGELOG.md) says for each version whether it w
 Installation is a short manual procedure over SSH, described step by step in
 [docs/INSTALLATION.md](docs/INSTALLATION.md) (in French; the commands speak for themselves):
 
-1. Download `entry-aad-<version>-armhf.tar` from [Releases](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) and check
+1. Download `entrynav2-android-auto-<version>-armhf.tar` from [Releases](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) and check
    its SHA-256.
 2. Copy it to the head unit's `/tmp` with `scp`.
 3. **Check the car**: nothing is written. The unit's own loader confirms every library and function the programs need,
@@ -106,7 +106,7 @@ docker build -t entrynav2-tc:4.7 toolchain              # once: GCC 4.7 for ARMv
 bash toolchain/tc.sh make -j4 all hmiapp test-arm-all   # ARM programs, linked against the car's libraries
 python3 -I tests/run_qemu.py                            # ARM tests under QEMU with the car's libraries
 make verify_binary verify_wireless                      # record the programs that passed
-python3 tools/package_release.py                        # artifacts/entry-aad-<version>-armhf.tar
+python3 tools/package_release.py                        # artifacts/entrynav2-android-auto-<version>-armhf.tar
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full test list and the project's rules.

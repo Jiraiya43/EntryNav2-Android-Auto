@@ -14,9 +14,10 @@ voiture.
 - Un PC avec un client SSH : Windows 10 ou 11 (client OpenSSH intégré), Linux ou macOS.
 - Un **câble ENET** entre la prise OBD de la voiture et le PC. La carte réseau du PC reste en adressage automatique.
 - Le **mot de passe root** de l'unité. Il n'est pas fourni avec ce projet.
-- L'archive `entry-aad-<version>-armhf.tar` d'une [version publiée](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases),
+- L'archive `entrynav2-android-auto-<version>-armhf.tar` d'une [version publiée](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases),
   dont l'empreinte SHA-256 correspond au fichier `.sha256` publié à côté, ou fabriquée par `tools/package_release.py`
-  ([compiler](../README.fr.md#compiler)).
+  ([compiler](../README.fr.md#compiler)). Jusqu'à la 0.12.0-rc.6, l'archive et son dossier s'appelaient
+  `entry-aad-<version>` : pour ces versions, remplacer `entrynav2-android-auto` par `entry-aad` dans les commandes.
 
 Le numéro de version ne s'écrit que deux fois : dans la commande `scp` de l'étape 1 et sur la ligne `V=` de l'étape 2.
 Y mettre celui de l'archive téléchargée. `169.254.1.0` est l'adresse de la voiture de référence sur le câble ENET : la
@@ -30,7 +31,7 @@ ancienne, suivre celle de l'archive (dans la 0.10.0, le superviseur s'appelle `e
 Depuis le PC, dans le dossier de l'archive :
 
 ```sh
-scp entry-aad-0.12.0-rc.6-armhf.tar root@169.254.1.0:/tmp/
+scp entrynav2-android-auto-0.12.0-rc.12-armhf.tar root@169.254.1.0:/tmp/
 ssh root@169.254.1.0
 ```
 
@@ -42,8 +43,8 @@ encore écrit sur la mémoire flash.
 Rien n'est modifié pendant cette étape.
 
 ```sh
-V=0.12.0-rc.6
-cd /tmp && rm -rf entry-aad-$V && tar -xf entry-aad-$V-armhf.tar && cd entry-aad-$V
+V=0.12.0-rc.12
+cd /tmp && rm -rf entrynav2-android-auto-$V && tar -xf entrynav2-android-auto-$V-armhf.tar && cd entrynav2-android-auto-$V
 md5sum -c MD5SUMS
 head -n 1 /etc/version
 df -k /
@@ -88,7 +89,7 @@ chmod 755 /opt/aa/entry-aad /opt/aa/aa-supervisor /opt/hmi/data/ro/Plugins/Entry
 touch /opt/aa/.installed-by-entryaad /opt/hmi/data/ro/Plugins/EntryAad/.installed-by-entryaad
 sync
 mount -o remount,ro /
-cd / && md5sum -c /tmp/entry-aad-$V/MD5SUMS
+cd / && md5sum -c /tmp/entrynav2-android-auto-$V/MD5SUMS
 ```
 
 - `rm -f` avant la copie : l'iDrive garde l'ancienne appli en mémoire jusqu'à son redémarrage, et un fichier effacé puis
@@ -107,7 +108,7 @@ mkdir -p /var/local/data/AA && printf 'model=320d\nyear=2020\n' > /var/local/dat
 Puis redémarrer l'unité :
 
 ```sh
-rm -rf /tmp/entry-aad-$V /tmp/entry-aad-$V-armhf.tar
+rm -rf /tmp/entrynav2-android-auto-$V /tmp/entrynav2-android-auto-$V-armhf.tar
 reboot
 ```
 
