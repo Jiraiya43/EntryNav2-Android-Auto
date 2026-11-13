@@ -221,6 +221,7 @@ void ServiceApp::hardKey(const char* name, void* user) {
         a->pendingFocus = 2;
         a->mediaPress.cancel();
         unlink(contract::kMediaRecallFile);
+        unlink(contract::kAppKeyFile);  // a BACK just before: iDrive leaves for this key, not to be pulled back
     }
     pthread_mutex_unlock(&a->mu);
     if (was) {
@@ -238,8 +239,9 @@ void ServiceApp::knobEvent(const aa::CcsEvent& ev, void* user) {
     }
 }
 
-// NAV / MEDIA / COM / steering wheel phone opened an Android Auto app (evo_knob.cpp): Android Auto stays on screen.
-// iDrive also switched screens underneath; the iDrive app sees this file and puts iDrive back on its blank state.
+// NAV / MEDIA / COM / steering wheel phone opened an Android Auto app, or BACK / tilt left went to it (evo_knob.cpp):
+// Android Auto stays on screen. iDrive may also have switched screens underneath; the iDrive app sees this file and,
+// if iDrive left its blank state, puts it back.
 void ServiceApp::appKey(const char* name, void* user) {
     (void)user;
     const std::string tmp = std::string(contract::kAppKeyFile) + ".tmp";
@@ -248,6 +250,10 @@ void ServiceApp::appKey(const char* name, void* user) {
         fprintf(f, "appkey %s\n", name);
         fclose(f);
         rename(tmp.c_str(), contract::kAppKeyFile);
+    }
+    if (!strcmp(name, "BACK") || !strcmp(name, "TILT_LEFT")) {
+        // Every BACK goes through here: logged with the knob's own line only.
+        return;
     }
     ELOG("ServiceApp", "key %s: opened in Android Auto (as with CarPlay), iDrive brought back under Android Auto",
          name);

@@ -192,6 +192,13 @@ int main() {
         CHECK(hk.slotKey(aa::CcsDecoder::slotByName("BACK")) == aa::AAK_BACK);
         CHECK(evo::isAppKey(aa::AAK_TEL) && evo::isAppKey(aa::AAK_NAVIGATION) && evo::isAppKey(aa::AAK_MEDIA) &&
               !evo::isAppKey(aa::AAK_BACK) && !evo::isAppKey(0) && !evo::isAppKey(aa::AAK_CALL));
+        // BACK and tilt left also make iDrive move underneath (#43): Android Auto keeps the screen for them too.
+        CHECK(evo::keepsAndroidAuto(aa::AAK_TEL) && evo::keepsAndroidAuto(aa::AAK_NAVIGATION) &&
+              evo::keepsAndroidAuto(aa::AAK_MEDIA) && evo::keepsAndroidAuto(aa::AAK_BACK) &&
+              evo::keepsAndroidAuto(aa::AAK_DPAD_LEFT));
+        CHECK(!evo::keepsAndroidAuto(0) && !evo::keepsAndroidAuto(aa::AAK_DPAD_RIGHT) &&
+              !evo::keepsAndroidAuto(aa::AAK_DPAD_UP) && !evo::keepsAndroidAuto(aa::AAK_DPAD_DOWN) &&
+              !evo::keepsAndroidAuto(aa::AAK_DPAD_CENTER) && !evo::keepsAndroidAuto(aa::AAK_CALL));
         setenv("EVO_KEY_COM", "0", 1);  // the environment is never read
         aa::CcsDecoder ov;
         evo::configureHardKeys(ov);
@@ -284,6 +291,15 @@ int main() {
         CHECK(rec.n == 3 && rec.e[2].keycode == aa::AAK_TEL && rec.apps == 2);
         pv.data = k0;
         kk.onMessage(pv);
+        // BACK goes to Android Auto and is reported too: iDrive may walk back to the screen NAV opened.
+        uint8_t kBack[7] = {0, 1, 0, 0, 0, 0, 0};
+        pv.data = kBack;
+        kk.onMessage(pv);
+        CHECK(rec.n == 5 && rec.e[4].keycode == aa::AAK_BACK && rec.e[4].down == 1 && rec.apps == 3 &&
+              !strcmp(rec.appKey, "BACK"));
+        pv.data = k0;
+        kk.onMessage(pv);
+        CHECK(rec.n == 6 && rec.e[5].down == 0 && rec.apps == 3);  // the release is not reported
         // A press that reached Android Auto gets its release, once, even if the picture left meanwhile.
         {
             const int beforeHold = rec.n, appsBefore = rec.apps;
@@ -345,7 +361,7 @@ int main() {
         tv.data = t1;
         kk.onMessage(tv);  // one press
         CHECK(rec.n == before + 2 && rec.e[before].keycode == aa::AAK_TEL && rec.e[before].down == 1 &&
-              rec.e[before + 1].down == 0 && rec.apps == 3 && !strcmp(rec.appKey, "WHEEL_PHONE"));
+              rec.e[before + 1].down == 0 && rec.apps == 4 && !strcmp(rec.appKey, "WHEEL_PHONE"));
         tv.data = t0;
         kk.onMessage(tv);
         // Voice button 15.02.512 (same status byte): stays with iDrive, nothing reaches Android Auto.

@@ -35,8 +35,9 @@
 //   event 52 every two polls without focus.
 // - Hard key (MENU, MEDIA, NAV, COM, MAP, OPTION): iDrive left the blank state. Confirmed on a second poll within 3 s,
 //   Android Auto steps aside ("hide"), the way MENU leaves native CarPlay; the Android Auto entry brings it back.
-// - NAV, MEDIA or COM opened an Android Auto app (the service wrote its app key file within the last 2 s): iDrive
-//   switched to its own screen underneath, event 52 at once so the knob does not act on that hidden screen.
+// - NAV, MEDIA or COM opened an Android Auto app, or BACK / tilt left went to it (the service wrote its app key file
+//   within the last 2 s): iDrive switched to its own screen underneath, or went back to the one NAV / MEDIA / COM
+//   opened, event 52 at once so the knob does not act on that hidden screen.
 // - Android Auto steps aside by itself (exit icon, signal lost) over the blank state: event 50 (iDrive main menu), or
 //   event 51 when OPTION opened iDrive's option panel over it. Nothing in reverse or after a hard key.
 // - Open row, but Android Auto never came up (session dropped): after 3 s on the blank state, event 51 (menu back).
@@ -72,7 +73,8 @@ public:
     virtual void send(const char* message) = 0;     // a control message to the service ("show", "hide", ...)
     virtual void log(const char* line) = 0;         // one line of the app's log
     // Read only when a decision needs them, at that moment: the service's state (reading it may ask its control port),
-    // and the app key file the service writes when NAV / MEDIA / COM opened an Android Auto app.
+    // and the app key file the service writes when NAV / MEDIA / COM opened an Android Auto app, or BACK / tilt left
+    // went to it.
     virtual ServiceState readService() = 0;
     virtual bool appKeyAge(long* seconds) = 0;  // how long ago the file was written; false: no app key file
     virtual void removeAppKey() = 0;

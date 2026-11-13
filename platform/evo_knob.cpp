@@ -84,6 +84,10 @@ bool isAppKey(uint32_t k) {
     return k == aa::AAK_TEL || k == aa::AAK_NAVIGATION || k == aa::AAK_MEDIA;
 }
 
+bool keepsAndroidAuto(uint32_t k) {
+    return isAppKey(k) || k == aa::AAK_BACK || k == aa::AAK_DPAD_LEFT;
+}
+
 static void vmostCallback(void* msg, void* user) {
     VmostMsgView v;
     if (user && parseVmostMsg(msg, v)) {
@@ -376,7 +380,7 @@ void EvoKnob::onMessage(const VmostMsgView& m) {
             }
             continue;
         }
-        if (ev[i].kind == 1 && isAppKey(ev[i].keycode) && ev[i].down && send && appKeyCb_) {
+        if (ev[i].kind == 1 && keepsAndroidAuto(ev[i].keycode) && ev[i].down && send && appKeyCb_) {
             appKeyCb_(what, appKeyUser_);
         }
         // A press goes to Android Auto only while it owns the screen; a release goes wherever its press went.

@@ -40,7 +40,7 @@ constexpr char kServiceDir[] = "/tmp/entry-aa-service";
 constexpr char kServiceStop[] = "/tmp/entry-aa-service/STOP";  // created by the app: the supervisor stops
 constexpr char kServiceLog[] = "/tmp/entry-aa-service.log";
 constexpr char kStateFile[] = "/tmp/entry-aad-state";             // "state pid overlay", written by the service
-constexpr char kAppKeyFile[] = "/tmp/entry-aad-appkey";           // NAV/MEDIA/COM opened an Android Auto app
+constexpr char kAppKeyFile[] = "/tmp/entry-aad-appkey";           // NAV/MEDIA/COM/BACK kept Android Auto up
 constexpr char kDayNightFile[] = "/tmp/entry-aad-daynight";       // day or night, written by the app
 constexpr char kWirelessLock[] = "/tmp/entry-aad-wireless.lock";  // one wireless start at a time
 // One-shot double-MEDIA recall request: process id and monotonic timestamp, checked by the iDrive app.

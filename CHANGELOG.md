@@ -34,6 +34,14 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Corrigé
 
+- Android Auto qui se retirait environ 1,5 seconde après un appui sur BACK, quand il avait été ouvert par NAV, MEDIA
+  ou COM (par exemple BACK dans sa carte). L'iDrive ouvre alors aussi son propre écran en dessous, et BACK l'y
+  ramène ; l'appli de l'iDrive prenait ce changement pour une touche qui quitte Android Auto. BACK et l'inclinaison à
+  gauche sont maintenant traités comme NAV, MEDIA et COM : Android Auto garde l'écran et l'iDrive est remis sur la
+  page vide. MENU, MAP et OPTION quittent toujours Android Auto, même juste après BACK. Vu dans les journaux d'un F30
+  ([#43](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/43)). Essayé en voiture sur la G20 de référence
+  (BACK et inclinaison à gauche sous Android Auto, MAP et MENU qui en sortent) ; le cas exact du F30, BACK après NAV,
+  reste à confirmer sur un F30.
 - Session Android Auto coupée 5 secondes après MENU ou MAP quand aucune musique ne joue : certains téléphones
   n'envoient plus rien tant que l'iDrive a l'écran, et le service les croyait partis. Après 2 secondes sans
   nouvelles, l'unité envoie maintenant elle-même un ping au téléphone, puis un par seconde. Un téléphone qui répond

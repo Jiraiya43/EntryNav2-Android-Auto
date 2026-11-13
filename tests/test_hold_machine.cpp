@@ -604,10 +604,30 @@ void appKeys() {
         c.now += 1;
         c.blankLeft();
         CHECK_OUT(c, "app key removed, event 52");
-        CHECK(c.logged("key opened an Android Auto app, try 1"));
+        CHECK(c.logged("a key kept Android Auto on screen, try 1"));
         c.blankShown();
         c.polls(3);
         CHECK_OUT(c, "");
+        // Later, BACK in Android Auto's map (the service writes the same file): iDrive walks back to its navigation
+        // screen, not to our menu. Seen on an F30 (#43): Android Auto stepped aside. Now: event 52 at once, no "hide".
+        c.now += 5;
+        c.io.appKey = true;
+        c.io.appKeyAt = c.now;
+        c.blankLeft();
+        CHECK_OUT(c, "app key removed, event 52");
+        c.blankShown();
+        c.polls(4);
+        CHECK_OUT(c, "");
+    }
+    {  // no file (MENU removed the one BACK wrote just before): iDrive left the blank state for a hard key
+        Car c;
+        heldOnBlank(c);
+        c.blankLeft();
+        CHECK_OUT(c, "");
+        c.poll();
+        CHECK_OUT(c, "");
+        c.poll();
+        CHECK_OUT(c, "hide");
     }
     {  // the key file appears after iDrive left the blank state: the poll catches it
         Car c;
@@ -618,7 +638,7 @@ void appKeys() {
         c.io.appKeyAt = c.now + 1;
         c.poll();
         CHECK_OUT(c, "app key removed, event 52");
-        CHECK(c.logged("key opened an Android Auto app (poll)"));
+        CHECK(c.logged("a key kept Android Auto on screen (poll)"));
     }
     {  // a key file older than 2 s is a hard key
         Car c;
