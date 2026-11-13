@@ -129,6 +129,12 @@ Bug reports, compatibility reports from other cars and pull requests are welcome
 [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md). A compatibility report (the check of
 step 3) changes nothing on the car and helps the most. Security issues: see [SECURITY.md](SECURITY.md).
 
+## Supporting the project
+
+This project is free and stays free; nothing is expected in return. If you want to support it, you can do so through
+[GitHub Sponsors](https://github.com/sponsors/Jiraiya43). Support will go towards fitting an MGU head unit (iDrive 7)
+to my G20 and offering open-source apps for iDrive 7.
+
 ## Credits
 
 This project started as a port of [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto) by

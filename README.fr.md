@@ -131,6 +131,12 @@ Signalements de bugs, rapports de compatibilité d'autres voitures et demandes d
 [CONTRIBUTING.md](CONTRIBUTING.md) et le [code de conduite](CODE_OF_CONDUCT.md). Un rapport de compatibilité (le contrôle de
 l'étape 3) ne modifie rien sur la voiture et c'est ce qui aide le plus. Failles de sécurité : voir [SECURITY.md](SECURITY.md).
 
+## Soutenir le projet
+
+Ce projet est gratuit et le restera ; rien n'est attendu en retour. Qui veut le soutenir peut le faire par
+[GitHub Sponsors](https://github.com/sponsors/Jiraiya43). Le soutien servira à installer une unité MGU (iDrive 7) sur
+ma G20 et à proposer des applications open source pour l'iDrive 7.
+
 ## Remerciements
 
 Ce projet est parti d'un portage de [Supra-iDrive6-Android-Auto](https://github.com/Sq00ky/Supra-iDrive6-Android-Auto)
