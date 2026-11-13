@@ -2,19 +2,28 @@
 
 ## Voitures concernées
 
-Une BMW avec une **unité EntryNav2** (appelée EntryEVO dans son système) et le **Wi-Fi de CarPlay**. L'écran essayé
-en voiture est le **1280x480** ; les autres tailles sont à l'essai (voir [plus bas](#autres-tailles-décran)).
+Une BMW avec une **unité EntryNav2** (appelée EntryEVO dans son système). Le sans-fil passe par le **Wi-Fi de
+CarPlay** de l'unité ; sans lui, le [câble USB](USB.md) marche aussi. Écrans essayés en voiture : **1280x480** et
+**800x480** (voir [plus bas](#autres-tailles-décran)).
 
 Les NBT Evo, ID7 et MGU tournent sur d'autres systèmes : ce programme ne peut pas s'y exécuter. L'installation demande
 aussi une connexion SSH à l'unité, avec son mot de passe root.
 
 ## Voitures essayées
 
-La **voiture de référence** est celle sur laquelle le projet est développé et essayé.
+La **voiture de référence** est celle sur laquelle le projet est développé et essayé. Les autres lignes viennent des
+rapports de leurs propriétaires : elles disent ce qu'ils ont vu, avec la version qu'ils avaient alors.
 
-| Voiture | Logiciel (`/etc/version`) | Contrôle de compatibilité | Dernière version essayée | Fonctions essayées |
-|---|---|---|---|---|
-| G20 de 2019 (référence) | `202111011321` | pas encore essayé en voiture | 0.12.0-rc.1 | celles du [README](../README.fr.md#ce-que-ça-fait), limites dans la [feuille de route](../ROADMAP.md#limites-connues) |
+| Voiture | Logiciel (`/etc/version`) | Écran | Liaison | Dernière version essayée | Ce qui a été vu |
+|---|---|---|---|---|---|
+| G20 de 2019 (référence) | `202111011321` | 1280x480 | sans fil, USB | 0.12.0-rc.12 | celles du [README](../README.fr.md#ce-que-ça-fait), limites dans la [feuille de route](../ROADMAP.md#limites-connues) |
+| G20 de 2019 | `202207190806` | 1280x480 | sans fil | 0.12.0-rc.6 | marche ; lenteur au bout d'une minute avec un Galaxy Z Fold7, disparue en bloquant My BMW ([#44](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/44)) |
+| G21 320d de 2020 | `202402191339` | 1280x480 | sans fil | 0.12.0-rc.2 | marche, guidage au compteur avec Waze ; lenteur en sans-fil avec un Galaxy S26 Ultra ([#26](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/26)) |
+| X3 G01 de 2020 | `202003311616` | 1280x480 | sans fil, USB | 0.12.0-rc.6 | marche, double MEDIA ; flèches au compteur avec `kombi-single-maneuver` ; lenteur en sans-fil avec un Galaxy S24+ ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)) |
+| F30 330d LCI de 2018 | `202402191339` | 1280x480 | sans fil | 0.12.0-rc.6 | marche, ancien contrôleur ; touche MAP non reconnue sur ce contrôleur ([#43](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/43)) |
+| F45 225xe | non indiqué | 1280x480 | sans fil, USB | 0.12.0-rc.6 | marche ; lenteur en sans-fil, fluide par câble ; glissements tactiles à l'étude ([discussion #30](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/30)) |
+| F20 118i de 2018 | `202402191339` | 800x480 | USB (unité sans Wi-Fi) | 0.12.0-rc.6 | marche ; pastille du volume pas vue ([#45](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/45)) |
+| i3 | `202012141616` | 800x480 | USB ; sans fil avec une clé Wi-Fi USB | 0.13.0-alpha.2 | marche, ancien contrôleur ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) |
 
 Chaque nouvelle voiture s'ajoute ici, avec son rapport de compatibilité ([ticket « Compatibility report »](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/new/choose)).
 
@@ -65,12 +74,11 @@ téléphone de garder son affichage dans la zone visible, et ne montre que cette
 | Écran | Image demandée au téléphone | Zone montrée | État |
 |---|---|---|---|
 | 1280x480 | 1280x720 | les 480 lignes du haut | essayé en voiture (référence) : rien ne change |
-| 800x480 | 800x480 | tout | testé sur PC, à l'essai sur un i3 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) |
+| 800x480 | 800x480 | tout | essayé en voiture sur une i3 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) et une F20 ([#45](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/45)), par câble |
 | jusqu'à 1920x1080 | 1920x1080 | la zone de l'écran, en haut à gauche | testé sur PC, jamais essayé |
 
-La ligne `@ok|video|` du contrôle donne la taille lue. Un écran plus grand que 1920x1080 est refusé. Sur une autre
-taille que 1280x480, le menu de l'appli iDrive et la pastille du volume n'ont jamais été vus : le rapport d'un
-essai est le bienvenu.
+La ligne `@ok|video|` du contrôle donne la taille lue. Un écran plus grand que 1920x1080 est refusé. En 800x480,
+l'image et le menu de l'appli iDrive ont été vus en voiture, pas encore la pastille du volume ({iss(45)}).
 
 ## Une autre version de la bibliothèque Bluetooth
 

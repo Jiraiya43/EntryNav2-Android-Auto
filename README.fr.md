@@ -38,9 +38,9 @@ Sans boîtier, sans câble obligatoire, sans remplacer aucun fichier BMW.
 
 | | |
 |---|---|
-| Dernière version | voir les [versions publiées](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases) (avant 1.0 : des défauts restent) |
-| Essayé en voiture | une BMW G20 de 2019, logiciel iDrive `202111011321` |
-| Autres voitures | contrôle de compatibilité intégré ; aucune autre voiture essayée ([détails](docs/COMPATIBILITE.md)) |
+| Dernière version | [0.12.0](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/latest), essayée en voiture (avant 1.0 : des défauts restent) |
+| Essayé en voiture | la voiture de référence, une BMW G20 de 2019 (logiciel iDrive `202111011321`) |
+| Autres voitures | signalées fonctionnelles par leurs propriétaires : G20, G21, X3 G01, F30, F45, F20, i3 ([liste](docs/COMPATIBILITE.md#voitures-essayées)) ; contrôle de compatibilité intégré |
 
 Chaque changement est testé sur PC, et les programmes ARM tournent sous QEMU avec les bibliothèques de la voiture. Seul
 un essai en voiture vaut preuve : le [CHANGELOG](CHANGELOG.md) dit pour chaque version si elle a été essayée en voiture
@@ -48,9 +48,10 @@ ou seulement testée sur PC.
 
 ## Il faut
 
-- Une BMW avec une unité **EntryNav2** (appelée *EntryEVO* dans son système), un écran **1280×480** (les autres
-  tailles sont [à l'essai](docs/COMPATIBILITE.md#autres-tailles-décran)) et le **Wi-Fi de
-  CarPlay**. Les NBT Evo, ID7 et MGU tournent sur d'autres systèmes : ce projet ne peut pas s'y exécuter.
+- Une BMW avec une unité **EntryNav2** (appelée *EntryEVO* dans son système), avec un écran **1280×480** ou
+  **800×480** ([écrans](docs/COMPATIBILITE.md#autres-tailles-décran)). Le sans-fil demande le **Wi-Fi de CarPlay** de
+  l'unité ; sans lui, le [câble USB](docs/USB.md) marche aussi.
+  Les NBT Evo, ID7 et MGU tournent sur d'autres systèmes : ce projet ne peut pas s'y exécuter.
 - Un PC avec un client SSH (Windows 10/11, Linux ou macOS) et un **câble ENET** (OBD vers Ethernet).
 - Le **mot de passe root** de l'unité. Il n'est pas fourni avec ce projet.
 - Un téléphone Android avec Android Auto.
