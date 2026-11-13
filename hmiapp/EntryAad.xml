@@ -59,6 +59,12 @@
       <textIdModel id="85" textId="25">
         <synonyms/>
       </textIdModel>
+      <textIdModel id="86" textId="26">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="87" textId="27">
+        <synonyms/>
+      </textIdModel>
       <raIntModel id="40" modelType="NativeStateID" value="1"/>
     </models>
     <events>
@@ -88,6 +94,9 @@
           <separator id="95"/>
           <label id="94" model="84"/>
           <label id="96" model="85"/>
+          <separator id="98"/>
+          <label id="99" model="86"/>
+          <label id="100" model="87"/>
         </components>
       </hmiState>
       <hmiState id="13" parentId="10" text=" " textModel="37">

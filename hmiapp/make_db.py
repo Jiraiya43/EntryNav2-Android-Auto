@@ -43,6 +43,8 @@ TEXTS = {
     23: "MENU: iDrive - OPTION: this menu - BACK: back",
     24: "Phone: wireless Android Auto on, paired with the car",
     25: "USB cable: a data cable, the phone still paired for the sound",
+    26: "Free of charge, never for sale:",
+    27: "github.com/Jiraiya43/EntryNav2-Android-Auto",
     30: " ",
 }  # blank title of the page held under Android Auto (no "Android Auto" tab during the volume)
 LANG_TEXTS = {  # ASCII only
@@ -61,6 +63,7 @@ LANG_TEXTS = {  # ASCII only
         23: "MENU : iDrive - OPTION : ce menu - BACK : retour",
         24: "Telephone : Android Auto sans fil active, appaire a la voiture",
         25: "Cable USB : cable de donnees, telephone toujours appaire pour le son",
+        26: "Gratuit, jamais vendu :",
     },
     "de": {
         2: "Android Auto: Verbinden...",
@@ -77,6 +80,7 @@ LANG_TEXTS = {  # ASCII only
         23: "MENU: iDrive - OPTION: dieses Menue - BACK: zurueck",
         24: "Telefon: Android Auto kabellos an, mit dem Auto gekoppelt",
         25: "USB-Kabel: Datenkabel, Telefon fuer den Ton weiter gekoppelt",
+        26: "Kostenlos, nie zu verkaufen:",
     },
 }
 LANG_TEXTS["fr-CA"] = LANG_TEXTS["fr-FR"]

@@ -8,6 +8,12 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Ajouté
+
+- Page *Aide* du menu Android Auto de l'iDrive : deux lignes en bas disent que le logiciel est gratuit et ne se vend
+  pas, avec l'adresse du dépôt (`github.com/Jiraiya43/EntryNav2-Android-Auto`). Elles restent visibles dans toute copie
+  redistribuée de l'archive. Textes en anglais, français et allemand.
+
 ## [0.12.0-rc.12] - 2026-11-13 · voiture
 
 Version candidate, **essayée en voiture** sur la G20 de référence (logiciel 202111011321), en sans-fil, avec un kit
