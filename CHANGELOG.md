@@ -8,6 +8,14 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Touche MEDIA d'une F20 au petit contrôleur ZBE3 toujours sans effet en 0.12.1-rc.1 : cette voiture est codée avec
+  la variante 0x5141, et l'iDrive traduit alors sa touche média en code 15, laissé sans touche Android Auto. Le code
+  15 ne vient que de ce bouton : il est maintenant MEDIA, comme le code 5 des autres petits contrôleurs F (ouvre la
+  musique d'Android Auto, sert au double appui). Signalé avec le codage relevé sur la voiture
+  ([#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)). Testé sur PC et sous QEMU.
+
 ## [0.12.1-rc.2] - 2026-11-14 · PC
 
 Version candidate, pour faire essayer le glissement du doigt sur une F45 (lecture de l'état du doigt comme l'iDrive),

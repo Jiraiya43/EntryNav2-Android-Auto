@@ -610,9 +610,12 @@ int main() {
               aa::olderSensorSlot(0x04, f) == aa::kSlotOptions && aa::olderSensorSlot(0x10, f) == aa::kSlotMedia);
         CHECK(aa::ccs35upByteSlot(3, f) == aa::kSlotMedia && aa::ccs35upByteSlot(5, f) == aa::kSlotNav &&
               aa::ccs35upByteSlot(6, f) == aa::kSlotCom);
-        ControllerCoding f5141 = f;  // the other F variant: 0x08 is iDrive's code 15, no Android Auto key
-        f5141.v5141 = true;
-        CHECK(aa::olderSensorCode(0x08, f5141) == 15 && aa::olderSensorSlot(0x08, f5141) == aa::kNoSlot);
+        ControllerCoding f5141 = f;  // the F20 of #55 as it reported it (b80=0 5141=1 4e59=1 4f1e=0 5486=0 role=1):
+        f5141.v5141 = true;          // its MEDIA (0x08) is iDrive's code 15, MEDIA for Android Auto; COM still COM
+        f5141.v4f1e = f5141.v5486 = false;
+        f5141.role = 1;
+        CHECK(aa::olderSensorCode(0x08, f5141) == 15 && aa::olderSensorSlot(0x08, f5141) == aa::kSlotMedia);
+        CHECK(aa::olderSensorSlot(0x40, f5141) == aa::kSlotCom && aa::olderSensorSlot(0x20, f5141) == aa::kNoSlot);
         ControllerCoding fNoTel = f;  // without 0x4E59, 0x40 is nothing on an F controller
         fNoTel.v4e59 = false;
         CHECK(aa::olderSensorSlot(0x40, fNoTel) == aa::kNoSlot);
@@ -636,10 +639,10 @@ int main() {
         CHECK(!aa::parseControllerCoding("coding b80=2 5141=0 4e59=1 4f1e=1 5486=1 role=0", kept) && !kept.known);
         CHECK(!aa::parseControllerCoding("coding b80=1", kept) && !aa::parseControllerCoding(nullptr, kept));
 
-        // The F20's own messages (#55), with its coding: MEDIA (0x08) is MEDIA, COM (0x40) is COM.
+        // The F20 own messages (#55), with its reported coding: MEDIA (0x08) is MEDIA, COM (0x40) is COM.
         aa::CcsDecoder d;
         evo::configureHardKeys(d);
-        d.setCoding(f);
+        d.setCoding(f5141);  // the coding the F20 reported
         aa::CcsEvent ev[8];
         const uint8_t media[7] = {0x01, 0x1D, 0x3F, 0x01, 0x00, 0x00, 0x08};
         CHECK(d.feed(0xE5, 0x01, 0xC20, 0xC, media, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_MEDIA && ev[0].down &&
@@ -674,7 +677,7 @@ int main() {
         memset(&seen, 0, sizeof(seen));
         evo::EvoKnob f20;
         f20.attachForTest(evo::INPUT_FORWARD, &Media::key, &seen);
-        f20.setCoding(f);
+        f20.setCoding(f5141);
         f20.setMediaCallback(&Media::cb, &seen);
         evo::VmostMsgView mv;
         mv.addr = 0x0100;

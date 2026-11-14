@@ -3,21 +3,23 @@
 // Which key each controller button is, the way iDrive itself decides it: from the car's coding.
 //
 // Read in the reference car's HmiMain3D (iDrive 202111011321). iDrive turns a button into one of its own key codes:
-// 1 MENU, 2 BACK, 3 OPTION, 4 MEDIA, 5 RADIO (the media key of the small F controllers), 6 TEL (COM), 7 NAV (G style),
-// 17 map / navigation (MAP on G controllers, NAV on F ones). Several buttons depend on coding variants, read with
-// IHmiVariantServer::isVariantSet; 0xB80 is the G-style controller (COM and MAP keys):
+// 1 MENU, 2 BACK, 3 OPTION, 4 MEDIA, 5 RADIO and 15 (the media key of the small F controllers, 15 with variant
+// 0x5141), 6 TEL (COM), 7 NAV (G style), 17 map / navigation (MAP on G controllers, NAV on F ones). Several buttons
+// depend on coding variants, read with IHmiVariantServer::isVariantSet; 0xB80 is the G-style controller (COM and MAP
+// keys):
 //   older protocol, E5.01 C20, cluster 0x00, one sensor bit per button (CHmiCCSController::pushbuttonToKeycode):
 //     0x01 1, 0x02 2, 0x04 3, 0x10 4;
-//     0x08: variant 0x5141 without 0xB80: 15 (no Android Auto key); without 0xB80: 5; 0x4E59: 6; role 1: 5; else 6;
+//     0x08: variant 0x5141 without 0xB80: 15; without 0xB80: 5; 0x4E59: 6; role 1: 5; else 6;
 //     0x20: neither 0x4F1E nor 0x5486: nothing; 0xB80: 7; else 17;
 //     0x40: 0xB80: 17; 0x4E59: 6; else nothing.
 //   CCS35up, C47/C4F, one byte per button (CDevCCS35up::pushbuttonsToKeycodeAction):
 //     bytes 0, 1, 2, 4: 1, 2, 3, 4; byte 3: 0xB80 ? 6 : 5; byte 5: 0xB80 ? 7 : 17; byte 6: 0xB80 ? 17 : 6.
-// A 5-key F20 ZBE3 (#55) sends MEDIA as 0x08 and COM as 0x40: read as COM and MAP before this table.
+// A 5-key F20 ZBE3 (#55) sends MEDIA as 0x08 and COM as 0x40: read as COM and MAP before this table. That car is
+// coded 0x5141 without 0xB80: its MEDIA is iDrive's code 15, the only button that can give it.
 //
 // Then iDrive's code becomes one of the decoder's slots (evo_ccs.hpp): Android Auto treats a key as on the G20, where
-// MEDIA, NAV and COM open its apps. So RADIO, the only media key of the small F controllers, is MEDIA (choice of
-// 14/11/2026), and the F controllers' NAV key (code 17) is NAV; only a G controller's MAP stays MAP.
+// MEDIA, NAV and COM open its apps. So RADIO and 15, the only media key of the small F controllers, are MEDIA
+// (choice of 14/11/2026), and the F controllers' NAV key (code 17) is NAV; only a G controller's MAP stays MAP.
 //
 // The iDrive app reads the variants inside HmiMain3D and writes them to contract::kControllerFile; without that file
 // (an older app), the G-style default below is the table used before. Pure: no I/O. tests/test_evo_input.cpp.
@@ -116,6 +118,7 @@ inline int slotOfIdriveCode(int code, bool gStyle) {
             return kSlotOptions;
         case 4:
         case 5:
+        case 15:
             return kSlotMedia;
         case 6:
             return kSlotCom;
