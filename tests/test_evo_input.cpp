@@ -104,6 +104,26 @@ int main() {
     CHECK(frame(t, 1279, 479, 1, 48, ev) == 1 && ev[0].action == 0 && ev[0].p[0].x == 1279 && ev[0].p[0].y == 479);
     CHECK(t.releaseAll(ev, 16) == 1 && ev[0].action == 1 && t.activeCount() == 0);  // lost "up"
     CHECK(t.feed(pkt, 20, ev, 16) == -1);                                           // not a touch PDU
+    // A panel that sets bits 6-7 of the state byte (iDrive keeps them apart, bits 4-5 are the state): its drag is a
+    // press, moves and a release, not a tap. Before: states 5, 6, 7 were dropped and the finger looked lifted (#30).
+    evo::TouchTracker f45;
+    CHECK(frame(f45, 300, 200, 0x5, 0, ev) == 1 && ev[0].action == 0 && ev[0].p[0].x == 300);      // 01 01: down
+    CHECK(frame(f45, 340, 200, 0x6, 12, ev) == 1 && ev[0].action == 2 && ev[0].p[0].x == 340);     // 01 10: move
+    CHECK(frame(f45, 380, 205, 0xA, 24, ev) == 1 && ev[0].action == 2 && ev[0].p[0].x == 380);     // 10 10: move
+    CHECK(f45.activeCount() == 1);                                                                 // still down
+    CHECK(frame(f45, 380, 205, 0x7, 36, ev) == 1 && ev[0].action == 1 && f45.activeCount() == 0);  // 01 11: up
+    {
+        unsigned char raw[112];
+        aa::TouchContact c = {2, 0xE, 640, 240, 9};  // id 2, bits 6-7 = 11, state 2
+        aa::buildTouchFrame(raw, &c, 1, 0, 0);
+        aa::TouchReassembler r;
+        aa::TouchMsg msg[aa::kTouchMaxMsgs];
+        aa::TouchContact got[2];
+        int declared = 0;
+        CHECK(r.feed(raw, sizeof(raw), msg, aa::kTouchMaxMsgs) == 1 &&
+              aa::parseTouchStream(msg[0], got, 2, &declared) == 1 && declared == 1 && got[0].state == 2 &&
+              got[0].id == 2 && got[0].x == 640 && got[0].y == 240);
+    }
     // Before the picture: a finger that touches down is ignored until it lifts, even once the picture is up.
     evo::TouchTracker early;
     early.setPictureStarted(false);

@@ -8,6 +8,15 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Glissements du doigt reçus comme de simples appuis sur une F45 : impossible de faire défiler une liste ou de
+  déplacer la carte, Android Auto ouvrait l'élément touché ([#30](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/30)).
+  Le service lisait l'état du doigt sur 4 bits ; l'iDrive le lit sur 2 bits (appui, mouvement, relâché) et range
+  les 2 bits voisins à part. Un écran qui met ces bits voisins voyait ses mouvements écartés, et le doigt paraissait
+  levé au bout d'environ 100 ms. Le service découpe maintenant l'octet comme l'iDrive. Rien ne change sur la G20 de
+  référence, dont l'écran laisse ces bits à 0. Testé sur PC et sous QEMU ; pas encore essayé en voiture.
+
 ## [0.12.1-rc.1] - 2026-11-14 · PC
 
 Version candidate, pour faire essayer les touches lues selon le codage de la voiture sur des contrôleurs de série F
