@@ -572,12 +572,114 @@ int main() {
         old.onMessage(ov);
         CHECK(got.n == 2);  // the other protocol is left out: one action, one event
     }
+    {  // Which key each button is, from the car's coding, as iDrive reads it (controller_layout.hpp).
+        using aa::ControllerCoding;
+        const ControllerCoding g = aa::defaultControllerCoding();  // no coding file: the table used before
+        CHECK(!g.known && g.gStyle);
+        const unsigned bits[7] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40};
+        for (int i = 0; i < 7; ++i) {
+            CHECK(aa::olderSensorSlot(bits[i], g) == i && aa::ccs35upByteSlot(i, g) == i);  // G: bit n = byte n
+        }
+        ControllerCoding f = g;  // F20 ZBE3 (#55): no G-style variant
+        f.known = true;
+        f.gStyle = false;
+        CHECK(aa::olderSensorCode(0x08, f) == 5 && aa::olderSensorSlot(0x08, f) == aa::kSlotMedia);  // its media key
+        CHECK(aa::olderSensorCode(0x40, f) == 6 && aa::olderSensorSlot(0x40, f) == aa::kSlotCom);
+        CHECK(aa::olderSensorCode(0x20, f) == 17 && aa::olderSensorSlot(0x20, f) == aa::kSlotNav);  // F's NAV key
+        CHECK(aa::olderSensorSlot(0x01, f) == aa::kSlotMenu && aa::olderSensorSlot(0x02, f) == aa::kSlotBack &&
+              aa::olderSensorSlot(0x04, f) == aa::kSlotOptions && aa::olderSensorSlot(0x10, f) == aa::kSlotMedia);
+        CHECK(aa::ccs35upByteSlot(3, f) == aa::kSlotMedia && aa::ccs35upByteSlot(5, f) == aa::kSlotNav &&
+              aa::ccs35upByteSlot(6, f) == aa::kSlotCom);
+        ControllerCoding f5141 = f;  // the other F variant: 0x08 is iDrive's code 15, no Android Auto key
+        f5141.v5141 = true;
+        CHECK(aa::olderSensorCode(0x08, f5141) == 15 && aa::olderSensorSlot(0x08, f5141) == aa::kNoSlot);
+        ControllerCoding fNoTel = f;  // without 0x4E59, 0x40 is nothing on an F controller
+        fNoTel.v4e59 = false;
+        CHECK(aa::olderSensorSlot(0x40, fNoTel) == aa::kNoSlot);
+        ControllerCoding gRole1 = g;  // G, role 1, without 0x4E59: 0x08 is iDrive's RADIO (5), MEDIA
+        gRole1.v4e59 = false;
+        gRole1.role = 1;
+        CHECK(aa::olderSensorCode(0x08, gRole1) == 5 && aa::olderSensorSlot(0x08, gRole1) == aa::kSlotMedia);
+        ControllerCoding noNav = g;  // neither 0x4F1E nor 0x5486: 0x20 is no key
+        noNav.v4f1e = noNav.v5486 = false;
+        CHECK(aa::olderSensorSlot(0x20, noNav) == aa::kNoSlot);
+        CHECK(aa::olderSensorSlot(0x03, g) == aa::kNoSlot && aa::olderSensorSlot(0x80, g) == aa::kNoSlot);
+
+        char line[96];
+        aa::formatControllerCoding(f, line, sizeof(line));
+        CHECK(!strcmp(line, "coding b80=0 5141=0 4e59=1 4f1e=1 5486=1 role=0"));
+        ControllerCoding back = g;
+        CHECK(aa::parseControllerCoding(line, back) && back.known && !back.gStyle && back.v4e59 && back.role == 0);
+        CHECK(aa::parseControllerCoding("coding b80=1 5141=1 4e59=0 4f1e=0 5486=1 role=2\n", back) && back.gStyle &&
+              back.v5141 && !back.v4e59 && !back.v4f1e && back.v5486 && back.role == 2);
+        ControllerCoding kept = g;
+        CHECK(!aa::parseControllerCoding("coding b80=2 5141=0 4e59=1 4f1e=1 5486=1 role=0", kept) && !kept.known);
+        CHECK(!aa::parseControllerCoding("coding b80=1", kept) && !aa::parseControllerCoding(nullptr, kept));
+
+        // The F20's own messages (#55), with its coding: MEDIA (0x08) is MEDIA, COM (0x40) is COM.
+        aa::CcsDecoder d;
+        evo::configureHardKeys(d);
+        d.setCoding(f);
+        aa::CcsEvent ev[8];
+        const uint8_t media[7] = {0x01, 0x1D, 0x3F, 0x01, 0x00, 0x00, 0x08};
+        CHECK(d.feed(0xE5, 0x01, 0xC20, 0xC, media, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_MEDIA && ev[0].down &&
+              !strcmp(ev[0].what, "MEDIA"));
+        const uint8_t mediaUp[7] = {0x01, 0x1D, 0x40, 0x00, 0x00, 0x00, 0x08};
+        CHECK(d.feed(0xE5, 0x01, 0xC20, 0xC, mediaUp, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_MEDIA && !ev[0].down);
+        const uint8_t com[7] = {0x01, 0x1D, 0xF1, 0x01, 0x00, 0x00, 0x40};
+        CHECK(d.feed(0xE5, 0x01, 0xC20, 0xC, com, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_TEL &&
+              !strcmp(ev[0].what, "COM"));
+        CHECK(d.sensorSlot(0x08) == aa::kSlotMedia && d.sensorSlot(0x40) == aa::kSlotCom);
+        // A CCS35up on an F coding: byte 3 (iDrive's RADIO) is MEDIA, byte 6 COM, each with its own state.
+        aa::CcsDecoder c;
+        evo::configureHardKeys(c);
+        c.setCoding(f);
+        const uint8_t radio[7] = {0, 0, 0, 1, 0, 0, 0}, radioAndMedia[7] = {0, 0, 0, 1, 1, 0, 0}, none[7] = {0};
+        CHECK(c.feed(0xE5, 0x03, 0xC47, 0xC, radio, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_MEDIA && ev[0].down);
+        CHECK(c.feed(0xE5, 0x03, 0xC47, 0xC, radioAndMedia, 7, ev, 8) == 1 && ev[0].keycode == aa::AAK_MEDIA);
+        CHECK(c.feed(0xE5, 0x03, 0xC47, 0xC, none, 7, ev, 8) == 2 && !ev[0].down && !ev[1].down);
+
+        // Double MEDIA through EvoKnob on the F20: its media key (0x08) is seen, COM (0x40) cancels the gesture.
+        struct Media {
+            static void cb(unsigned state, void* u) {
+                Media* m = static_cast<Media*>(u);
+                if (m->n < 8) {
+                    m->s[m->n++] = state;
+                }
+            }
+            static void key(const aa::CcsEvent&, void*) {}
+            unsigned s[8];
+            int n;
+        } seen;
+        memset(&seen, 0, sizeof(seen));
+        evo::EvoKnob f20;
+        f20.attachForTest(evo::INPUT_FORWARD, &Media::key, &seen);
+        f20.setCoding(f);
+        f20.setMediaCallback(&Media::cb, &seen);
+        evo::VmostMsgView mv;
+        mv.addr = 0x0100;
+        mv.fblock = 0xE5;
+        mv.inst = 0x01;
+        mv.fkt = 0xC20;
+        mv.op = 0xC;
+        mv.len = 7;
+        mv.data = media;
+        f20.onMessage(mv);
+        mv.data = mediaUp;
+        f20.onMessage(mv);
+        CHECK(seen.n >= 2 && seen.s[0] == 1 && seen.s[1] == 0);
+        const int before = seen.n;
+        mv.data = com;
+        f20.onMessage(mv);
+        CHECK(seen.n > before && seen.s[seen.n - 1] == 7);
+    }
     puts(
         "PASS ancienne molette BMW (C10/C20), lue seulement si la CCS35up reste muette, un seul protocole par voiture "
         "; "
         "entrees : IPv4/UDP de la copie, machine tactile (appui, glisse, "
         "relache, doublon, trame fragmentee, relache forcee, rien avant l'image), message vMOST -> decodeur molette ; "
         "touches comme CarPlay (effleurement ignore, NAV/MEDIA/COM et bouton telephone du volant -> applis AA, COM a "
-        "l iDrive pendant un appel) ; boutons de volume console/volant decodes ; niveau du volume (20.00.C08)");
+        "l iDrive pendant un appel) ; touches selon le codage de la voiture, comme l iDrive (controleur G ou F, F20 "
+        "ZBE3 #55, double MEDIA) ; boutons de volume console/volant decodes ; niveau du volume (20.00.C08)");
     return 0;
 }

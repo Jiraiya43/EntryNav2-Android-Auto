@@ -10,6 +10,15 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Corrigé
 
+- Touches de l'ancien contrôleur lues de travers sur les petits contrôleurs de série F : sur une F20 (ZBE3 à
+  5 touches), MEDIA était lu comme COM et COM comme MAP, et le double appui sur MEDIA ne marchait pas
+  ([#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)). L'iDrive choisit la touche de chaque bouton
+  d'après le codage de la voiture (contrôleur type G ou F) : l'appli de l'iDrive lit maintenant ce même codage au
+  démarrage et l'écrit pour le service (`/tmp/entry-aad-controller`), qui traduit les boutons comme l'iDrive. La
+  touche média d'un petit contrôleur F ouvre la musique d'Android Auto et sert au double appui ; la touche NAV d'un
+  contrôleur F ouvre sa navigation. Sans ce fichier (appli plus ancienne), la table d'avant reste. Sur un contrôleur
+  type G, rien ne change. Testé sur PC et sous QEMU ; pas encore essayé en voiture.
+
 - Page *Aide* : en voiture, elle n'affiche que 6 lignes d'environ 36 caractères et ne défile pas (ses lignes ne se
   sélectionnent pas). Le crédit, en 8e à 10e position, restait invisible, et plusieurs lignes étaient coupées. La
   page tient maintenant en 6 lignes courtes : le crédit en tête (« Gratuit : github.com/Jiraiya43 », le profil qui

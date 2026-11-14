@@ -80,6 +80,8 @@ public:
     EvoKnob();
     ~EvoKnob();
     bool start(InputMode mode, Callback cb, void* user);
+    // The car's coding, read by the iDrive app (controller_layout.hpp): which key each button is. Before start().
+    void setCoding(const aa::ControllerCoding& coding);
     void setOwned(bool owned);  // keys are forwarded only while the Android Auto picture shows
     using VolumeCallback = void (*)(unsigned int, void*);
     void setVolumeCallback(VolumeCallback cb, void* user) {

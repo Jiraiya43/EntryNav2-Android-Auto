@@ -61,6 +61,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `media_recall.hpp` | Double appui sur MEDIA : geste, conditions, demande à usage unique lue par l'appli de l'iDrive |
 | `vmost_client` | Accès au bus vMOST de la voiture (molette, touches, Wi-Fi), chargé à l'exécution |
 | `evo_ccs.hpp`, `evo_touch_frame.hpp` | Messages de la molette BMW (deux générations de contrôleur) et trames du tactile |
+| `controller_layout.hpp` | Quelle touche est chaque bouton, selon le codage de la voiture, comme l'iDrive (contrôleur type G ou F) |
 | `evo_gps` | Lecture passive du GPS de la voiture |
 | `evo_mic` | Micro de la voiture pour l'Assistant |
 | `evo_wlan`, `evo_ap` | Wi-Fi de la voiture, allumé comme le fait CarPlay |
@@ -87,6 +88,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `pending_restart.hpp` | Redémarrage d'Android Auto quand la case du câble USB change en marche (testé sur PC) |
 | `service_link` | Lancement du superviseur, commandes au service, arrêt |
 | `car_signals` | Marche arrière, appels, jour et nuit, mode de conduite, lus dans l'iDrive |
+| `controller_coding` | Codage des touches de la voiture, lu dans l'iDrive au démarrage de l'appli, écrit pour le service |
 | `app_guards` | Interrupteur, garde-fou contre les plantages, démarrage automatique |
 | `app_log`, `log_profile.hpp` | Journal de l'appli, profil maintenance |
 | `popup_peek.hpp`, `cds_parse.hpp` | Fenêtres de l'iDrive par-dessus Android Auto, lecture des données de l'iDrive |

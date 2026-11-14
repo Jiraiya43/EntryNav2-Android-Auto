@@ -326,6 +326,21 @@ int main(int argc, char** argv) {
         knob.setAppKeyCallback(evo::ServiceApp::appKey, &app);
         knob.setMediaCallback(evo::ServiceApp::mediaKey, &app);
         {
+            // The car's key coding, read by the iDrive app inside iDrive (controller_layout.hpp). Without it (an older
+            // app), the G-style table.
+            FILE* f = fopen(evo::contract::kControllerFile, "r");
+            char line[128] = {0};
+            aa::ControllerCoding coding = aa::defaultControllerCoding();
+            if (f && fgets(line, sizeof(line), f) && aa::parseControllerCoding(line, coding)) {
+                knob.setCoding(coding);
+            } else {
+                ELOG("Main", "controller coding not read from %s: G-style keys", evo::contract::kControllerFile);
+            }
+            if (f) {
+                fclose(f);
+            }
+        }
+        {
             FILE* f = fopen(evo::contract::kDayNightFile, "r");
             int v = 0;  // written by the iDrive app (CDS)
             if (f) {

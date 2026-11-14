@@ -85,7 +85,7 @@ aa-supervisor: $(SUPERVISOR_OBJ)
 # iDrive PluginApp (installed in /opt/hmi/data/ro/Plugins/EntryAad, loaded by HmiMain3D at boot). Its objects are
 # position independent and hidden: HmiMain3D only looks up pluginAppInfo, the one symbol the library exports.
 HMI_SRC = hmiapp/entry_aa_app.cpp hmiapp/bmw_framework.cpp hmiapp/app_log.cpp hmiapp/app_guards.cpp \
-          hmiapp/service_link.cpp hmiapp/car_signals.cpp hmiapp/hold_machine.cpp
+          hmiapp/service_link.cpp hmiapp/car_signals.cpp hmiapp/hold_machine.cpp hmiapp/controller_coding.cpp
 HMI_OBJ = $(HMI_SRC:.cpp=.o)
 HMI_LIBDIRS = -L$(SYSROOT)/opt/hmi/lib -Wl,-rpath-link,$(SYSROOT)/opt/hmi/lib
 hmiapp: hmiapp/libEntryAad.so

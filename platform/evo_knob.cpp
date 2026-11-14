@@ -151,6 +151,16 @@ void configureHardKeys(aa::CcsDecoder& d) {
     d.setSlotKey(aa::CcsDecoder::slotByName("MEDIA"), aa::AAK_MEDIA);
 }
 
+void EvoKnob::setCoding(const aa::ControllerCoding& coding) {
+    decoder_.setCoding(coding);
+    ELOG("Knob",
+         "controller keys as iDrive reads them on this car: %s controller (variant 0xb80 %s); older protocol "
+         "0x08 = %s, 0x20 = %s, 0x40 = %s",
+         coding.gStyle ? "G-style" : "F-style", coding.gStyle ? "set" : "not set",
+         aa::CcsDecoder::slotName(decoder_.sensorSlot(0x08)), aa::CcsDecoder::slotName(decoder_.sensorSlot(0x20)),
+         aa::CcsDecoder::slotName(decoder_.sensorSlot(0x40)));
+}
+
 EvoKnob::~EvoKnob() {
     stop();
 }
@@ -260,16 +270,25 @@ void EvoKnob::observeMedia(const VmostMsgView& m) {
     if (!mediaCb_ || mode_ != INPUT_FORWARD || m.op != 0xC || !m.data) {
         return;
     }
+    // Which buttons are MEDIA follows the car's coding (decoder_.setCoding): on a small F controller, its media key.
     if (m.inst == 3 && (m.fkt == 0xC47 || m.fkt == 0xC4F) && (m.len == 7 || m.len == 8)) {
-        for (unsigned i = 0; i < 7; ++i) {
-            if (i != 4 && m.data[i] >= 1 && m.data[i] <= 3) {
-                mediaCb_(7, mediaUser_);
-                return;
+        int state = -1;
+        for (int i = 0; i < 7; ++i) {
+            const bool pressed = m.data[i] >= 1 && m.data[i] <= 3;
+            if (decoder_.byteSlot(i) != aa::kSlotMedia) {
+                if (pressed) {
+                    mediaCb_(7, mediaUser_);
+                    return;
+                }
+            } else if (state < 0 || pressed) {
+                state = m.data[i];
             }
         }
-        mediaCb_(m.data[4], mediaUser_);
+        if (state >= 0) {
+            mediaCb_(static_cast<unsigned>(state), mediaUser_);
+        }
     } else if (m.inst == 1 && m.fkt == 0xC20 && m.len >= 7 && m.data[2] != 0xFF && m.data[3] <= 2 && m.data[5] == 0 &&
-               m.data[6] == (1u << 4)) {
+               decoder_.sensorSlot(m.data[6]) == aa::kSlotMedia) {
         mediaCb_(m.data[3], mediaUser_);
     }
 }
