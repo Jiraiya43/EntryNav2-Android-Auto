@@ -8,6 +8,13 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.12.1-rc.1] - 2026-11-14 · PC
+
+Version candidate, pour faire essayer les touches lues selon le codage de la voiture sur des contrôleurs de série F
+(F20, F45), en particulier les petits contrôleurs à 5 touches. La page *Aide* en 6 lignes a été vue en voiture sur la
+G20 de référence ; les touches selon le codage ne sont testées que sur PC et sous QEMU. Elle change l'appli de
+l'iDrive : installée par-dessus une version précédente, elle demande un redémarrage de l'unité.
+
 ### Corrigé
 
 - Touches de l'ancien contrôleur lues de travers sur les petits contrôleurs de série F : sur une F20 (ZBE3 à
@@ -243,7 +250,8 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.0...HEAD
+[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.1-rc.1...HEAD
+[0.12.1-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.1
 [0.12.0]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0
 [0.12.0-rc.12]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.12
 [0.12.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.6
