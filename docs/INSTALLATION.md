@@ -31,7 +31,7 @@ ancienne, suivre celle de l'archive (dans la 0.10.0, le superviseur s'appelle `e
 Depuis le PC, dans le dossier de l'archive :
 
 ```sh
-scp entrynav2-android-auto-0.12.1-rc.2-armhf.tar root@169.254.1.0:/tmp/
+scp entrynav2-android-auto-0.12.1-rc.3-armhf.tar root@169.254.1.0:/tmp/
 ssh root@169.254.1.0
 ```
 
@@ -43,7 +43,7 @@ encore écrit sur la mémoire flash.
 Rien n'est modifié pendant cette étape.
 
 ```sh
-V=0.12.1-rc.2
+V=0.12.1-rc.3
 cd /tmp && rm -rf entrynav2-android-auto-$V && tar -xf entrynav2-android-auto-$V-armhf.tar && cd entrynav2-android-auto-$V
 md5sum -c MD5SUMS
 head -n 1 /etc/version

@@ -8,6 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.12.1-rc.3] - 2026-11-14 · PC
+
+Version candidate, pour faire essayer la touche MEDIA de la F20 du #55 (contrôleur codé 0x5141), en plus de la
+0.12.1-rc.2. Testée sur PC et sous QEMU ; rien ne change sur un contrôleur type G.
+
 ### Corrigé
 
 - Touche MEDIA d'une F20 au petit contrôleur ZBE3 toujours sans effet en 0.12.1-rc.1 : cette voiture est codée avec
@@ -273,7 +278,8 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.1-rc.2...HEAD
+[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.12.1-rc.3...HEAD
+[0.12.1-rc.3]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.3
 [0.12.1-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.2
 [0.12.1-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.1
 [0.12.0]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0
