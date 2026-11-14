@@ -210,6 +210,46 @@ void controller(bool older) {
     }
     CHECK(c.recalls == 1);
 }
+// The older controller reports edges only, one message for the key concerned. As on the F20 of #55: MENU, then a
+// quick double MEDIA brings Android Auto back, right after the service started and again later. Before: the key
+// pressed in between made the detector forget MEDIA's state, and the next MEDIA press was lost.
+void afterAnotherKey() {
+    Controller c;
+    evo::EvoKnob knob;
+    knob.attachForTest(evo::INPUT_FORWARD, &Controller::phone, &c);
+    knob.setMediaCallback(&Controller::media, &c);
+    uint8_t bytes[8] = {0x01, 0x1D, 0x10, 0, 0, 0, 0, 0};
+    evo::VmostMsgView message = {0x0100, 0xE5, 1, 0xC20, 0xC, 7, bytes};
+    struct Edge {
+        static void send(evo::EvoKnob& k, evo::VmostMsgView& m, uint8_t* b, uint8_t sensor, bool down) {
+            ++b[2];
+            b[3] = down ? 1 : 0;
+            b[6] = sensor;
+            k.onMessage(m);
+        }
+    };
+    const uint8_t menu = 0x01, media = 0x10;       // G-style table (no coding file)
+    Edge::send(knob, message, bytes, menu, true);  // the first key since the service started
+    c.now += 120;
+    Edge::send(knob, message, bytes, menu, false);
+    for (int round = 0; round < 2; ++round) {
+        c.now += 2000;
+        Edge::send(knob, message, bytes, media, true);
+        c.now += 61;
+        Edge::send(knob, message, bytes, media, false);
+        c.now += 81;
+        Edge::send(knob, message, bytes, media, true);
+        c.now += 81;
+        Edge::send(knob, message, bytes, media, false);
+        CHECK(c.recalls == round + 1);
+        c.now += 2000;  // MENU again before the next round
+        Edge::send(knob, message, bytes, menu, true);
+        c.now += 120;
+        Edge::send(knob, message, bytes, menu, false);
+    }
+    CHECK(c.phoneKeys == 0);  // Android Auto hidden: nothing sent to the phone
+}
+
 }  // namespace
 
 int main() {
@@ -217,6 +257,7 @@ int main() {
     guardsAndFiles();
     controller(false);
     controller(true);
+    afterAnotherKey();
     puts(
         "PASS double MEDIA: short clicks, duplicate states, guards, session-bound requests, both controllers, "
         "foreground keys");

@@ -8,6 +8,7 @@
 
 #include "evo_knob.hpp"
 #include "evo_touch.hpp"
+#include "media_recall.hpp"
 #define CHECK(x)                                                 \
     do {                                                         \
         if (!(x)) {                                              \
@@ -690,11 +691,12 @@ int main() {
         f20.onMessage(mv);
         mv.data = mediaUp;
         f20.onMessage(mv);
-        CHECK(seen.n >= 2 && seen.s[0] == 1 && seen.s[1] == 0);
+        // An edge-only protocol: released before the press, then pressed, then released.
+        CHECK(seen.n == 3 && seen.s[0] == 0 && seen.s[1] == 1 && seen.s[2] == 0);
         const int before = seen.n;
         mv.data = com;
         f20.onMessage(mv);
-        CHECK(seen.n > before && seen.s[seen.n - 1] == 7);
+        CHECK(seen.n > before && seen.s[seen.n - 1] == evo::MediaDoublePress::kOtherInput);
     }
     puts(
         "PASS ancienne molette BMW (C10/C20), lue seulement si la CCS35up reste muette, un seul protocole par voiture "

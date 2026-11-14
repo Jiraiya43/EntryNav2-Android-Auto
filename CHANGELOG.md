@@ -8,6 +8,14 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Double appui sur MEDIA sans effet sur l'ancien contrôleur après une autre touche (MENU par exemple) : une autre
+  touche faisait oublier l'état de MEDIA, et l'ancien contrôleur, qui n'envoie qu'un message par appui, ne le
+  redonnait qu'au premier appui suivant, perdu pour le geste. Une autre touche annule maintenant le geste sans faire
+  oublier cet état, et chaque appui de l'ancien contrôleur vaut un relâché juste avant. Trouvé et analysé sur une F20
+  ([#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)). Testé sur PC et sous QEMU.
+
 ## [0.12.1-rc.3] - 2026-11-14 · PC
 
 Version candidate, pour faire essayer la touche MEDIA de la F20 du #55 (contrôleur codé 0x5141), en plus de la

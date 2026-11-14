@@ -20,6 +20,10 @@ class MediaDoublePress {
 public:
     static const uint32_t kShortMs = 500;
     static const uint32_t kPairMs = 500;
+    // Another key or the knob was used: the gesture is cancelled, but MEDIA's known state stays. Forgetting it, as an
+    // unknown state does, lost the next press on the older controller, which only reports edges: after MENU, the
+    // first MEDIA press was taken for the state and a double press counted one click (F20, #55).
+    static const unsigned kOtherInput = 8;
 
     MediaDoublePress() : seen_(false), down_(false), short_(false), first_(false), downAt_(0), firstAt_(0) {}
 
@@ -32,6 +36,10 @@ public:
     // Raw button state: 0 released, 1 pressed, 4 finger resting. Holds and unknown states cancel the gesture.
     // A first observation already pressed is not a new click. Duplicate status copies never make extra clicks.
     bool feed(unsigned state, uint32_t now, bool allowed) {
+        if (state == kOtherInput) {
+            cancel();
+            return false;
+        }
         if (state != 0 && state != 1 && state != 4) {
             cancel();
             seen_ = false;

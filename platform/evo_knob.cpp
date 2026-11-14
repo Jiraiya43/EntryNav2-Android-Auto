@@ -12,6 +12,7 @@
 #include <cstring>
 
 #include "evo_log.hpp"
+#include "media_recall.hpp"
 
 namespace evo {
 
@@ -277,7 +278,7 @@ void EvoKnob::observeMedia(const VmostMsgView& m) {
             const bool pressed = m.data[i] >= 1 && m.data[i] <= 3;
             if (decoder_.byteSlot(i) != aa::kSlotMedia) {
                 if (pressed) {
-                    mediaCb_(7, mediaUser_);
+                    mediaCb_(MediaDoublePress::kOtherInput, mediaUser_);
                     return;
                 }
             } else if (state < 0 || pressed) {
@@ -289,6 +290,11 @@ void EvoKnob::observeMedia(const VmostMsgView& m) {
         }
     } else if (m.inst == 1 && m.fkt == 0xC20 && m.len >= 7 && m.data[2] != 0xFF && m.data[3] <= 2 && m.data[5] == 0 &&
                decoder_.sensorSlot(m.data[6]) == aa::kSlotMedia) {
+        // One message per edge, never a status: before a press, the key was released. Without this, the first press
+        // after the service started only taught the detector the key's state.
+        if (m.data[3] == 1) {
+            mediaCb_(0, mediaUser_);
+        }
         mediaCb_(m.data[3], mediaUser_);
     }
 }
@@ -384,7 +390,7 @@ void EvoKnob::onMessage(const VmostMsgView& m) {
     for (int i = 0; i < n; ++i) {
         if (mediaCb_ && mode_ == INPUT_FORWARD &&
             (ev[i].kind == 2 || (ev[i].kind == 1 && ev[i].down && ev[i].keycode != aa::AAK_MEDIA))) {
-            mediaCb_(7, mediaUser_);
+            mediaCb_(MediaDoublePress::kOtherInput, mediaUser_);
         }
         const char* what = ev[i].what ? ev[i].what : "?";
         // During a call, COM stays with iDrive's call screen (CarPlay does the same: ICallManager check).
