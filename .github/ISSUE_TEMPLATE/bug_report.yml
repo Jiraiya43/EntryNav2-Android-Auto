@@ -11,7 +11,7 @@ body:
     attributes:
       label: Project version
       description: The release you installed, or the commit you built.
-      placeholder: 0.12.1-rc.1
+      placeholder: 0.12.1-rc.2
     validations:
       required: true
   - type: input
