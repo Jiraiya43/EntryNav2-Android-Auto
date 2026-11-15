@@ -35,6 +35,7 @@ Message pingResponse(const Message& request);
 Message pingRequest(uint64_t timestampUs);
 Message audioFocusResponse(uint32_t state);
 Message navigationFocusResponse();
+Message byeByeRequest();
 Message byeByeResponse();
 
 // Audio, video and microphone channels.

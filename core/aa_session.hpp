@@ -44,6 +44,8 @@ public:
     bool start(int client_fd);
     // Ends the session and joins its thread. The ended callback does not run.
     void stop();
+    // Wireless Stop: ask the phone to leave projection before closing the transport.
+    void stopGracefully();
     bool isActive() const { return running(); }
     // The longest time the phone sent nothing since the previous call, in milliseconds, and starts over. Any thread.
     // After 2 s of silence the head unit pings the phone, which answers at once: seconds here are a link that stalled.
@@ -154,6 +156,8 @@ private:
 
     CarInbox inbox_;
     std::atomic<uint32_t> longestSilenceMs_;
+    enum ShutdownState { kNoShutdown, kShutdownRequested, kShutdownSent };
+    std::atomic<ShutdownState> shutdownState_;
     // Session thread only.
     uint64_t lastReceivedMs_;  // when the phone last sent anything, 0 before its first byte
     TlsClient tls_;

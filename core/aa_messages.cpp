@@ -128,6 +128,10 @@ Message navigationFocusResponse() {
     return statusOnly(msg::kNavigationFocusResponse, focus::kNavigationProjected);
 }
 
+Message byeByeRequest() {
+    return statusOnly(msg::kByeByeRequest, 1);  // user requested Stop
+}
+
 Message byeByeResponse() {
     return withId(msg::kByeByeResponse);
 }
