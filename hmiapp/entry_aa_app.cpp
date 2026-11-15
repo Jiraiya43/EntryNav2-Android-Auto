@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "../platform/media_recall.hpp"
 #include "../platform/service_contract.hpp"
@@ -96,12 +97,17 @@ bool onAaVisible(void*, const bmw::Parcel& p) {
     g_hold.aaVisible(parcelBool(p), monoSeconds());
     return true;
 }
+void showSettings(bmw::PluginApp* app);
+
 bool menuFocus(unsigned state, const bmw::Parcel& p) {
     const bool focused = parcelBool(p);
     g_hold.menuFocus(state, focused, monoSeconds(), monoMs());
     return true;
 }
-bool onMenuFocus(void*, const bmw::Parcel& p) {
+bool onMenuFocus(void* self, const bmw::Parcel& p) {
+    if (self && parcelBool(p)) {
+        showSettings(static_cast<bmw::PluginApp*>(self));
+    }
     return menuFocus(kMenuState, p);
 }
 bool onHelpFocus(void*, const bmw::Parcel& p) {
@@ -215,11 +221,14 @@ bool onEntry(void* self, const bmw::Parcel&) {
     bmw::PluginApp* app = static_cast<bmw::PluginApp*>(self);
     ServiceState d = readServiceState();
     alog("entry: Android Auto selected (service %s, pid %d)", d.state, d.pid);
-    if (access(contract::kEntryDirect, F_OK) == 0 && readyToShow(d)) {
+    if (readyToShow(d)) {
         g_hold.showAndHold("entry button", monoSeconds());
         return true;
     }
-    app->triggerEvent(kEvOpenMenu);
+    if (app) {
+        showSettings(app);
+        app->triggerEvent(kEvOpenMenu);
+    }
     if (d.pid == 0 && !stopInProgress()) {
         forgetBootGuard();
         startServiceOrShow();
@@ -227,15 +236,11 @@ bool onEntry(void* self, const bmw::Parcel&) {
     return true;
 }
 
-bool onAutostartToggle(void*, const bmw::Parcel&) {
-    if (guardedByOverlay("start automatically")) {
-        if (g_runApp) {
-            showSettings(g_runApp);  // the checkbox flipped on screen: show the unchanged setting again
-        }
-        return true;
-    }
+bool onAutostartToggle(void* self, const bmw::Parcel&) {
     toggleAutostart();
-    if (g_runApp) {
+    if (self) {
+        showSettings(static_cast<bmw::PluginApp*>(self));
+    } else if (g_runApp) {
         showSettings(g_runApp);
     }
     return true;
@@ -244,26 +249,203 @@ bool onAutostartToggle(void*, const bmw::Parcel&) {
 // Wireless or USB cable: chosen here and nowhere else, never guessed from what is plugged in (a passenger's
 // phone on charge must not take Android Auto over). The service reads the choice at its start: one that runs is
 // stopped, and started again by the status poll once nothing of it is left.
-bool onUsbCableToggle(void*, const bmw::Parcel&) {
-    if (!guardedByOverlay("USB cable")) {
-        toggleUsbCable();
-        if (stopInProgress()) {
-            if (g_restart.asked()) {
-                g_restart.ask(monoSeconds());  // changed again during its own restart
-            }
-        } else if (readServiceState().pid != 0) {
-            alog("menu: link changed while Android Auto runs: stopping it, then starting it again");
-            beginStop();
-            g_restart.ask(monoSeconds());
+bool onUsbCableToggle(void* self, const bmw::Parcel&) {
+    toggleUsbCable();
+    if (stopInProgress()) {
+        if (g_restart.asked()) {
+            g_restart.ask(monoSeconds());  // changed again during its own restart
         }
+    } else if (readServiceState().pid != 0) {
+        alog("menu: link changed while Android Auto runs: stopping it, then starting it again");
+        beginStop();
+        g_restart.ask(monoSeconds());
     }
-    if (g_runApp) {
-        showSettings(g_runApp);  // the setting as it is now, changed or not
+    if (self) {
+        showSettings(static_cast<bmw::PluginApp*>(self));
+    } else if (g_runApp) {
+        showSettings(g_runApp);
     }
     return true;
 }
 
 // ---- the status poll: service state -> entry text, menu rows, hold, stop --------------------------------------------
+// ---- CarPlay main menu tab integration -------------------------------------------------------------
+namespace carplay_tab {
+
+using GetCarPlayCache = void* (*)();
+using GetCarPlayService = void* (*)(void* const*);
+using SetVisibleFn = void (*)(void*, bool);
+using IsConnectedFn = bool (*)(const void*);
+using RequestCarPlayUIFn = void (*)(void*, const void*);
+using ExecuteFn = void (*)(void*, int);
+using OpenEntryStateFn = void (*)(void*, int, unsigned int);
+
+static GetCarPlayCache s_getCache = nullptr;
+static GetCarPlayService s_getService = nullptr;
+static SetVisibleFn s_setVisible = nullptr;
+static IsConnectedFn s_isConnected = nullptr;
+static RequestCarPlayUIFn s_origRequestUI = nullptr;
+static ExecuteFn s_origExecute = nullptr;
+static OpenEntryStateFn s_origOpenEntryState = nullptr;
+static void** s_carPlayServiceVtable = nullptr;
+static void** s_carPlayEntryVtable = nullptr;
+static void** s_carPlayAppVtable = nullptr;
+static bool s_symbolsResolved = false;
+static bool s_tabVisible = false;
+
+static void triggerTabSelection(const char* source) {
+    alog("carplay tab: %s triggered", source);
+    ServiceState d = readServiceState();
+    if (readyToShow(d)) {
+        g_hold.showAndHold("CarPlay tab", monoSeconds());
+    }
+}
+
+static void onRequestCarPlayUI(void* self, const void* param) {
+    triggerTabSelection("requestCarPlayUI");
+    if (!readyToShow(readServiceState()) && s_origRequestUI) {
+        s_origRequestUI(self, param);
+    }
+}
+
+static void onCarPlayEntryExecute(void* self, int reason) {
+    triggerTabSelection("execute");
+    if (!readyToShow(readServiceState()) && s_origExecute) {
+        s_origExecute(self, reason);
+    }
+}
+
+static void onCarPlayAppOpenEntryState(void* self, int reason, unsigned int state) {
+    triggerTabSelection("openEntryState");
+    if (!readyToShow(readServiceState()) && s_origOpenEntryState) {
+        s_origOpenEntryState(self, reason, state);
+    }
+}
+
+static void resolveSymbols() {
+    if (s_symbolsResolved) {
+        return;
+    }
+    s_symbolsResolved = true;
+
+    s_getCache = reinterpret_cast<GetCarPlayCache>(
+        dlsym(RTLD_DEFAULT, "_ZN9hmiplugin3getI18IHmiCarPlayServiceEENS_25CPluginInstanceCacheUsageIT_EEv"));
+    s_getService = reinterpret_cast<GetCarPlayService>(
+        dlsym(RTLD_DEFAULT, "_ZNK9hmiplugin25CPluginInstanceCacheUsageI18IHmiCarPlayServiceE3getEv"));
+    s_setVisible = reinterpret_cast<SetVisibleFn>(
+        dlsym(RTLD_DEFAULT, "_ZN18CHmiCarPlayService25setCarPlayMainMenuVisibleEb"));
+    s_isConnected = reinterpret_cast<IsConnectedFn>(
+        dlsym(RTLD_DEFAULT, "_ZNK18CHmiCarPlayService18isCarPlayConnectedEv"));
+
+    void** srvVtbl = reinterpret_cast<void**>(dlsym(RTLD_DEFAULT, "_ZTV18CHmiCarPlayService"));
+    if (srvVtbl) {
+        s_carPlayServiceVtable = srvVtbl;
+        // In CHmiCarPlayService vtable: [9] is requestCarPlayUI(THmiString<unsigned short> const&)
+        s_origRequestUI = reinterpret_cast<RequestCarPlayUIFn>(srvVtbl[9]);
+    }
+
+    void** vtbl = reinterpret_cast<void**>(dlsym(RTLD_DEFAULT, "_ZTV24CHmiCarPlayMainMenuEntry"));
+    if (vtbl) {
+        s_carPlayEntryVtable = vtbl;
+        s_origExecute = reinterpret_cast<ExecuteFn>(vtbl[4]);
+    }
+
+    void** appVtbl = reinterpret_cast<void**>(dlsym(RTLD_DEFAULT, "_ZTV22CHmiCarPlayApplication"));
+    if (appVtbl) {
+        s_carPlayAppVtable = appVtbl;
+        s_origOpenEntryState = reinterpret_cast<OpenEntryStateFn>(appVtbl[9]);
+    }
+}
+
+static void hookVtables(bool hook) {
+    const uintptr_t pageSize = 4096;
+
+    if (s_carPlayServiceVtable && s_origRequestUI) {
+        void* srvTarget = hook ? reinterpret_cast<void*>(&onRequestCarPlayUI)
+                               : reinterpret_cast<void*>(s_origRequestUI);
+        if (s_carPlayServiceVtable[9] != srvTarget) {
+            uintptr_t srvAddr = reinterpret_cast<uintptr_t>(&s_carPlayServiceVtable[9]);
+            void* srvPage = reinterpret_cast<void*>(srvAddr & ~(pageSize - 1));
+            mprotect(srvPage, pageSize, PROT_READ | PROT_WRITE);
+            s_carPlayServiceVtable[9] = srvTarget;
+            mprotect(srvPage, pageSize, PROT_READ);
+        }
+    }
+
+    if (s_carPlayEntryVtable && s_origExecute) {
+        void* target = hook ? reinterpret_cast<void*>(&onCarPlayEntryExecute)
+                            : reinterpret_cast<void*>(s_origExecute);
+        if (s_carPlayEntryVtable[4] != target) {
+            uintptr_t addr = reinterpret_cast<uintptr_t>(&s_carPlayEntryVtable[4]);
+            void* page = reinterpret_cast<void*>(addr & ~(pageSize - 1));
+            mprotect(page, pageSize, PROT_READ | PROT_WRITE);
+            s_carPlayEntryVtable[4] = target;
+            mprotect(page, pageSize, PROT_READ);
+        }
+    }
+
+    if (s_carPlayAppVtable && s_origOpenEntryState) {
+        void* appTarget = hook ? reinterpret_cast<void*>(&onCarPlayAppOpenEntryState)
+                               : reinterpret_cast<void*>(s_origOpenEntryState);
+        if (s_carPlayAppVtable[9] != appTarget) {
+            uintptr_t appAddr = reinterpret_cast<uintptr_t>(&s_carPlayAppVtable[9]);
+            void* appPage = reinterpret_cast<void*>(appAddr & ~(pageSize - 1));
+            mprotect(appPage, pageSize, PROT_READ | PROT_WRITE);
+            s_carPlayAppVtable[9] = appTarget;
+            mprotect(appPage, pageSize, PROT_READ);
+        }
+    }
+    alog("carplay tab: vtables %s (service, entry, app)", hook ? "hooked" : "restored");
+}
+
+static void update(const ServiceState& service) {
+    resolveSymbols();
+    if (!s_getCache || !s_getService || !s_setVisible) {
+        return;
+    }
+
+    void* cache = s_getCache();
+    void* cpService = cache ? s_getService(&cache) : nullptr;
+    if (!cpService) {
+        return;
+    }
+
+    // Dual Bluetooth safety: If an iPhone has an active native CarPlay session, do not override it
+    const bool nativeCarPlayConnected = s_isConnected ? s_isConnected(cpService) : false;
+    if (nativeCarPlayConnected) {
+        if (s_tabVisible) {
+            hookVtables(false);
+            s_tabVisible = false;
+        }
+        return;
+    }
+
+    const bool want = readyToShow(service);
+    if (want != s_tabVisible) {
+        s_setVisible(cpService, want);
+        hookVtables(want);
+        s_tabVisible = want;
+        alog("carplay tab: visibility -> %s", want ? "visible" : "hidden");
+    }
+}
+
+static void finalize() {
+    if (s_tabVisible) {
+        resolveSymbols();
+        if (s_getCache && s_getService && s_setVisible) {
+            void* cache = s_getCache();
+            void* cpService = cache ? s_getService(&cache) : nullptr;
+            if (cpService) {
+                s_setVisible(cpService, false);
+            }
+        }
+        hookVtables(false);
+        s_tabVisible = false;
+    }
+}
+
+}  // namespace carplay_tab
+
 AppRunnable g_statusRunnable;
 unsigned g_shownText = kTextDefault;
 unsigned g_shownRow = kTextStart;
@@ -301,6 +483,7 @@ void statusRun(void*) {
         alog("entry text -> %u (%s)", want, d.state);
         g_shownText = want;
     }
+    carplay_tab::update(d);
     setConnectingAnimation(app, connecting);
     // Menu: "Stop Android Auto" only while it runs; the call state is (re)sent when the phone connects.
     static int s_stopShown = -1;
@@ -374,6 +557,7 @@ void appOnError(bmw::PluginApp*, unsigned code, const bmw::BasicString<char>& te
 void appOnFinalize(bmw::PluginApp* self) {
     alog("onFinalize");
     g_runApp = nullptr;
+    carplay_tab::finalize();
     self->onFinalize();
 }
 
