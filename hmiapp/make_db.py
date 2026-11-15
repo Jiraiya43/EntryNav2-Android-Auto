@@ -44,6 +44,7 @@ TEXTS = {
     24: "Phone paired, sound over Bluetooth",
     26: "Free: github.com/Jiraiya43",
     30: " ",
+    100: "Android Auto Settings",
 }  # blank title of the page held under Android Auto (no "Android Auto" tab during the volume)
 LANG_TEXTS = {  # ASCII only
     "fr-FR": {
@@ -61,6 +62,7 @@ LANG_TEXTS = {  # ASCII only
         23: "MENU : iDrive - BACK : retour",
         24: "Telephone appaire, son en Bluetooth",
         26: "Gratuit : github.com/Jiraiya43",
+        100: "Parametres Android Auto",
     },
     "de": {
         2: "Android Auto: Verbinden...",
@@ -77,6 +79,24 @@ LANG_TEXTS = {  # ASCII only
         23: "MENU: iDrive - BACK: zurueck",
         24: "Telefon gekoppelt, Ton per Bluetooth",
         26: "Kostenlos: github.com/Jiraiya43",
+        100: "Android Auto Einstellungen",
+    },
+    "it": {
+        2: "Android Auto: Connessione...",
+        10: "Avvia Android Auto",
+        11: "Arresta Android Auto",
+        13: "Connessione al telefono...",
+        14: "Apri Android Auto",
+        15: "Avvio automatico",
+        16: "Aiuto",
+        17: "Cavo USB anziche wireless",
+        20: "NAV: navigazione Android Auto",
+        21: "MEDIA: musica Android Auto",
+        22: "COM: telefono Android Auto",
+        23: "MENU: iDrive - BACK: indietro",
+        24: "Telefono abbinato, audio Bluetooth",
+        26: "Gratuito: github.com/Jiraiya43",
+        100: "Impostazioni Android Auto",
     },
 }
 LANG_TEXTS["fr-CA"] = LANG_TEXTS["fr-FR"]
