@@ -38,14 +38,34 @@ bool volumeDims(uint32_t t) {
 
 bool volumePill(uint32_t t) {
     evo::PeekTiming p = shownAt(t);
-    CHECK(!p.volumeLevel(false) && p.levelSeen());  // a level, but no pill: the key still dims
+    CHECK(!p.volumeLevel(false, t) && p.levelSeen());  // a level, but no pill: the key still dims
     CHECK(p.volumeKey(t, false) && p.dimUntil());
-    CHECK(p.volumeLevel(true) && !p.dimUntil());  // the pill takes over from the dim
+    CHECK(p.volumeLevel(true, t + 20) && !p.dimUntil());  // the pill takes over from the dim
     CHECK(!p.volumeKey(t + 10, true) && !p.dimUntil() && !p.hideUntil());
     p.turn(t + 20, false);
-    CHECK(!p.volumeLevel(true));  // picture gone: no pill over iDrive
+    CHECK(!p.volumeLevel(true, t + 20));  // picture gone: no pill over iDrive
     evo::PeekTiming fresh = shownAt(t);
     CHECK(fresh.volumeKey(t, true));  // no level seen yet: dimmed even with the pill ready
+    return true;
+}
+
+bool usbVolume(uint32_t t) {
+    evo::PeekTiming p(true);
+    p.turn(t, true);
+    CHECK(!p.volumeLevel(true, t));  // unprompted level after a touch
+    CHECK(p.levelSeen());
+    CHECK(p.volumeActivity(true));
+    CHECK(!p.volumeKey(t + 10, true));  // show speaker activity, while keeping the picture opaque
+    CHECK(p.turn(t + 60, true).opacity == 1.f);
+    CHECK(p.volumeLevel(true, t + 70) && !p.dimUntil());  // a fresh level takes over
+    CHECK(!p.volumeLevel(true, t + 275));  // a duplicate cannot re-open it
+    CHECK(!p.volumeKey(t + 300, true));
+    CHECK(!p.volumeLevel(true, t + 801));  // age exceeds the physical-key window
+    CHECK(p.turn(t + 850, true).opacity == 1.f);
+    CHECK(p.volumeKey(t + 855, false));  // preserve fallback when the compositor cannot draw
+    p.turn(t + 860, false);
+    p.turn(t + 870, true);
+    CHECK(!p.volumeLevel(true, t + 871));
     return true;
 }
 
@@ -115,7 +135,7 @@ bool hardKeyAndScreen(uint32_t t) {
 
 // Every case, at an ordinary time and across the 32-bit wrap of the millisecond clock.
 bool all(uint32_t t) {
-    return volumeDims(t) && volumePill(t) && opacityRefused(t) && driveMode(t) && popup(t) && hardKeyAndScreen(t);
+    return volumeDims(t) && volumePill(t) && usbVolume(t) && opacityRefused(t) && driveMode(t) && popup(t) && hardKeyAndScreen(t);
 }
 
 bool zeroMeansNone() {

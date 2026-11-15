@@ -5,10 +5,12 @@
 
 namespace evo {
 
-PeekTiming::PeekTiming()
+PeekTiming::PeekTiming(bool volumeKeyRequired)
     : hideFrom_(0),
       hideUntil_(0),
       dimUntil_(0),
+      volumeKeyRequired_(volumeKeyRequired),
+      volumeKeyUntil_(0),
       dimRefused_(false),
       levelSeen_(false),
       popupHide_(false),
@@ -28,8 +30,15 @@ void PeekTiming::hide(uint32_t now, uint32_t from, unsigned ms) {
 }
 
 bool PeekTiming::volumeKey(uint32_t now, bool pillReady) {
-    const bool usePill = levelSeen_ && pillReady;
-    if (!shownNow_ || usePill) {  // Android Auto not on screen, or the pill shows the level
+    if (!shownNow_) {
+        return false;
+    }
+    if (volumeKeyRequired_) {
+        volumeKeyUntil_ = nz(now + 500);
+        if (volumeActivity(pillReady)) {
+            return false;
+        }
+    } else if (levelSeen_ && pillReady) {
         return false;
     }
     if (!dimRefused_) {
@@ -42,11 +51,17 @@ bool PeekTiming::volumeKey(uint32_t now, bool pillReady) {
     return start;
 }
 
-bool PeekTiming::volumeLevel(bool pillReady) {
+bool PeekTiming::volumeLevel(bool pillReady, uint32_t now) {
     levelSeen_ = true;
     if (!visibleNow_ || !pillReady) {
         return false;
     }
+    // In USB mode BMW also sends unchanged levels after touch input. Only show a level after a real volume key.
+    if (volumeKeyRequired_ &&
+        (!volumeKeyUntil_ || static_cast<int32_t>(volumeKeyUntil_ - now) <= 0)) {
+        return false;
+    }
+    volumeKeyUntil_ = 0;
     dimUntil_ = 0;
     return true;
 }
@@ -55,7 +70,7 @@ bool PeekTiming::hardKey() {
     if (!shownNow_) {
         return false;
     }
-    hideFrom_ = hideUntil_ = dimUntil_ = 0;
+    hideFrom_ = hideUntil_ = dimUntil_ = volumeKeyUntil_ = 0;
     return true;
 }
 
@@ -98,7 +113,7 @@ PeekTiming::Picture PeekTiming::turn(uint32_t now, bool onScreen) {
         dimUntil_ = 0;
     }
     if (!onScreen) {
-        hideFrom_ = hideUntil_ = dimUntil_ = 0;
+        hideFrom_ = hideUntil_ = dimUntil_ = volumeKeyUntil_ = 0;
     }
     Picture picture;
     picture.shown = onScreen && !hiding;

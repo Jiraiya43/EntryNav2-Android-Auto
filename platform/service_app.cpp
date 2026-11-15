@@ -16,7 +16,7 @@
 
 namespace evo {
 
-ServiceApp::ServiceApp(uint16_t p, bool v, volatile sig_atomic_t* quit)
+ServiceApp::ServiceApp(uint16_t p, bool v, volatile sig_atomic_t* quit, bool usb)
     : knob(nullptr),
       server(p),
       port(p),
@@ -31,6 +31,7 @@ ServiceApp::ServiceApp(uint16_t p, bool v, volatile sig_atomic_t* quit)
       awaitShow(false),
       asking(false),
       pendingFocus(0),
+      peek(usb),
       sppLinks(0),
       tcpLinks(0),
       usbLinks(0),
@@ -168,11 +169,15 @@ void ServiceApp::touchEvent(const aa::TouchEventOut& ev, void* user) {
     static_cast<ServiceApp*>(user)->session.postTouchEvent(ev);
 }
 
-// Volume key (knob or steering wheel). With the pill working, the level message that follows shows it.
+// Volume key (knob or steering wheel). USB shows activity before BMW sends a usable level.
 void ServiceApp::volumeEvent(unsigned steps, void* user) {
     ServiceApp* a = static_cast<ServiceApp*>(user);
     pthread_mutex_lock(&a->mu);
-    const bool start = a->peek.volumeKey(monoMs(), a->pill.ready());
+    const bool ready = a->pill.ready();
+    const bool start = a->peek.volumeKey(monoMs(), ready);
+    if (a->peek.volumeActivity(ready)) {
+        a->pill.show(0, 0, 0);  // no level yet: speaker only
+    }
     const bool refused = a->peek.dimRefused();
     pthread_mutex_unlock(&a->mu);
     if (start) {
@@ -187,7 +192,7 @@ void ServiceApp::volumeLevel(const VolumeLevel& level, void* user) {
     pthread_mutex_lock(&a->mu);
     const bool first = !a->peek.levelSeen();
     const bool ready = a->pill.ready();
-    if (a->peek.volumeLevel(ready)) {
+    if (a->peek.volumeLevel(ready, monoMs())) {
         a->pill.show(level.value, level.min, level.max);  // only takes the pill's own short lock
     }
     pthread_mutex_unlock(&a->mu);

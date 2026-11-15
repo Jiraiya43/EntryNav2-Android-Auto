@@ -90,6 +90,11 @@ int main(int argc, char** argv) {
             save(px, argv[1], values[i]);
         }
     }
+    evo::pill::draw(&px[0], kWidth, 0, 0, 0);
+    CHECK(alpha(px[(kHeight / 2) * kWidth + kWidth / 2]) >= 200);
+    CHECK(px[(kHeight / 2) * kWidth + 100] == 0);
+    CHECK(px[(kHeight / 2) * kWidth + kWidth - 40] == 0);
+    CHECK(fillEnd(px) < 0);
     // Segments: 8 lights all seven, 1 only two.
     CHECK(evo::pill::digitSegments(8) == 0x7f && evo::pill::digitSegments(1) == 0x06 &&
           evo::pill::digitSegments(10) == 0);

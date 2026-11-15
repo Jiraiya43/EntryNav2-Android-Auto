@@ -166,19 +166,22 @@ inline void draw(uint32_t* px, int stridePx, unsigned value, unsigned min, unsig
     const float W = kWidth, H = kHeight, R = H / 2;
     const Rgba body = {14 / 255.f, 17 / 255.f, 22 / 255.f, .88f}, edge = {1.f, 1.f, 1.f, .10f};
     const Rgba white = {1.f, 1.f, 1.f, .95f}, track = {1.f, 1.f, 1.f, .16f}, fill = {.27f, .58f, 1.f, 1.f};
-    c.roundBox(0, 0, W, H, R, body);
-    c.roundBox(0, 0, W, H, R, edge, 1.f);
+    // A zero-width range is volume activity without a reported level.
+    const bool known = max > min;
+    const float left = known ? 0.f : (W - 78.f) / 2;
+    c.roundBox(left, 0, W - left, H, R, body);
+    c.roundBox(left, 0, W - left, H, R, edge, 1.f);
     const float frac = max > min ? (value > max   ? 1.f
                                     : value < min ? 0.f
                                                   : float(value - min) / float(max - min))
                                  : 0.f;
 
     // Speaker: box and cone, then one or two waves (a cross when muted).
-    const float sx = 26, sy = H / 2;
+    const float sx = known ? 26.f : left + 20.f, sy = H / 2;
     c.roundBox(sx, sy - 6, sx + 7, sy + 6, 1.5f, white);
     const float cx[4] = {sx + 6, sx + 16, sx + 16, sx + 6}, cy[4] = {sy - 6, sy - 13, sy + 13, sy + 6};
     c.polygon(cx, cy, 4, white);
-    if (value <= min) {
+    if (known && value <= min) {
         const float mx = sx + 27;
         const float ax[4] = {mx - 6, mx - 4, mx + 6, mx + 4}, ay[4] = {sy - 6, sy - 8, sy + 6, sy + 8};
         const float bx[4] = {mx + 4, mx + 6, mx - 4, mx - 6}, by[4] = {sy - 8, sy - 6, sy + 8, sy + 6};
@@ -186,9 +189,13 @@ inline void draw(uint32_t* px, int stridePx, unsigned value, unsigned min, unsig
         c.polygon(bx, by, 4, white);
     } else {
         c.wave(sx + 17, sy, 8, 2.6f, white);
-        if (frac > .5f) {
+        if (!known || frac > .5f) {
             c.wave(sx + 17, sy, 15, 2.6f, white);
         }
+    }
+
+    if (!known) {
+        return;
     }
 
     // Bar with its end dot.

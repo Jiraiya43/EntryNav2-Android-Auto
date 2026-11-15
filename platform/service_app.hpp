@@ -53,7 +53,7 @@ public:
     };
 
     // port: the TCP port told to the phone. quit: the main loop's flag, set by the "quit" command.
-    ServiceApp(uint16_t port, bool videoEnabled, volatile sig_atomic_t* quit);
+    ServiceApp(uint16_t port, bool videoEnabled, volatile sig_atomic_t* quit, bool usb = false);
     ~ServiceApp();
 
     // ---- main loop ----

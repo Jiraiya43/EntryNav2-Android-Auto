@@ -35,15 +35,15 @@ public:
         float opacity;  // kVolumeDim while dimmed, 1 otherwise
     };
 
-    PeekTiming();
+    explicit PeekTiming(bool volumeKeyRequired = false);
 
     // Volume key (knob or steering wheel). pillReady: the pill can show a level. Once the car has reported a level and
-    // the pill is ready, the level message that follows shows it and nothing happens here. True when a peek window
+    // the pill is ready, wireless waits for a level and USB shows volume activity immediately. True when a peek window
     // starts (none was running).
     bool volumeKey(uint32_t now, bool pillReady);
     // A level reported by the car. True when the pill shows it now (the picture is visible and the pill ready): a dim
     // started by the key just before gives way to it.
-    bool volumeLevel(bool pillReady);
+    bool volumeLevel(bool pillReady, uint32_t now);
     // A hard key iDrive acts on: every peek ends. False when Android Auto was not on screen (nothing to do).
     bool hardKey();
     // Driving mode change: the picture steps aside after a delay. False when Android Auto is not on screen.
@@ -60,6 +60,7 @@ public:
     bool onScreen() const { return shownNow_; }      // as of the last turn, peeks included
     bool visible() const { return visibleNow_; }     // as of the last turn, not in a peek either
     bool levelSeen() const { return levelSeen_; }    // the car reported a volume level
+    bool volumeActivity(bool pillReady) const { return volumeKeyRequired_ && visibleNow_ && pillReady; }
     bool dimRefused() const { return dimRefused_; }  // the compositor refused the opacity
     bool popupOpen() const { return popupHide_; }
     uint32_t hideFrom() const { return hideFrom_; }
@@ -72,6 +73,8 @@ private:
     void hide(uint32_t now, uint32_t from, unsigned ms);
 
     uint32_t hideFrom_, hideUntil_, dimUntil_;
+    const bool volumeKeyRequired_;
+    uint32_t volumeKeyUntil_;
     bool dimRefused_;
     bool levelSeen_;
     bool popupHide_;

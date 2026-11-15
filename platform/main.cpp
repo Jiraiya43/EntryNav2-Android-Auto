@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
         ELOG("Main", "screen %ux%u: the phone is asked for %ux%u%s", display.width, display.height, display.canvasWidth,
              display.canvasHeight, display.reference() ? "" : " (a size not tried on the reference car)");
     }
-    evo::ServiceApp app(kAaPort, video, &quit);
+    evo::ServiceApp app(kAaPort, video, &quit, usb);
     app.videoConfig.setDisplay(display.canvasWidth, display.canvasHeight, display.width, display.height);
     app.session.setDisplay(display);
     app.usbPort = usbPort ? usbPort : "";
@@ -423,7 +423,11 @@ int main(int argc, char** argv) {
     app.pill.stop();    // nothing calls show() any more
     control.stop();     // state file removed: the iDrive app shows "Android Auto" again
     app.server.stop();  // join the accept thread before stopping its last session
-    app.session.stop();
+    if (usb || failed) {
+        app.session.stop();
+    } else {
+        app.session.stopGracefully();
+    }
     app.video.stop();
     app.bt.stop();
     if (input != evo::INPUT_OFF) {
