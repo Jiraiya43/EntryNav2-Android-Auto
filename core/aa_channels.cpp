@@ -121,6 +121,12 @@ bool AASession::onControl(uint16_t id, const Message& message) {
         case msg::kByeByeRequest:
             onByeBye(message);
             return false;
+        case msg::kByeByeResponse:
+            if (shutdownState_ == kShutdownSent) {
+                printf("[AASession] wireless Stop: ByeByeResponse received\n");
+                return false;
+            }
+            break;
         case msg::kPingRequest:
             onPing(message);
             break;

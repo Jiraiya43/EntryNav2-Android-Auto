@@ -32,6 +32,7 @@ void messages() {
     CHECK(channelOpenResponse() == Bytes({0x00, 0x08, 0x08, 0x00}));
     CHECK(audioFocusResponse(3) == Bytes({0x00, 0x13, 0x08, 0x03}));
     CHECK(navigationFocusResponse() == Bytes({0x00, 0x0e, 0x08, 0x02}));
+    CHECK(byeByeRequest() == Bytes({0x00, 0x0f, 0x08, 0x01}));
     CHECK(byeByeResponse() == Bytes({0x00, 0x10}));
 
     // The ping's timestamp comes back as it was written, cut at its last byte or at 16 bytes of answer.

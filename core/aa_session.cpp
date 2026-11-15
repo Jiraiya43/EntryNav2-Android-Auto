@@ -62,6 +62,7 @@ AASession::AASession()
       vehicleFile_(nullptr),
       softwareVersion_(nullptr),
       longestSilenceMs_(0),
+      shutdownState_(kNoShutdown),
       lastReceivedMs_(0),
       videoReady_(false),
       mediaMessages_(0),
@@ -217,6 +218,7 @@ bool AASession::start(int client_fd) {
     audioMessages_[0] = audioMessages_[1] = 0;
     lastReceivedMs_ = 0;  // the previous thread is joined
     longestSilenceMs_.store(0);
+    shutdownState_ = kNoShutdown;
     resetCounters();
     setRunning(true);
     if (pthread_create(&thread_, nullptr, &AASession::threadMain, this) != 0) {
@@ -239,6 +241,18 @@ void AASession::stop() {
         thread_ = 0;
     }
     closeSocket();
+}
+
+void AASession::stopGracefully() {
+    if (running()) {
+        const uint64_t started = locationClockMs();
+        shutdownState_ = kShutdownRequested;
+        inbox_.wake();
+        while (running() && locationClockMs() - started < 900) {
+            usleep(10000);
+        }
+    }
+    stop();
 }
 
 void* AASession::threadMain(void* self) {
@@ -276,7 +290,7 @@ void AASession::finish() {
     // runs only in the first case.
     const bool endedByItself = clearRunning();
     closeSocket();
-    if (endedByItself && ended_.fn) {
+    if (endedByItself && shutdownState_ == kNoShutdown && ended_.fn) {
         ended_.fn(ended_.user);
     }
 }
@@ -312,9 +326,19 @@ bool AASession::receiveExactly(uint8_t* to, size_t size) {
             }
             return false;
         }
+        if (shutdownState_ == kShutdownRequested) {
+            shutdownState_ = kShutdownSent;
+            const bool sent = tls_.established() && sendSealed(channel::kControl, message::byeByeRequest());
+            printf("[AASession] wireless Stop: ByeByeRequest %s\n", sent ? "sent" : "not sent");
+            if (!sent) {
+                return false;
+            }
+        }
         if (ready > 0 && wakeFd >= 0 && FD_ISSET(wakeFd, &readable)) {
             inbox_.emptyWake();
-            sendCarInput();
+            if (shutdownState_ == kNoShutdown) {
+                sendCarInput();
+            }
         }
         if (ready == 0 || !FD_ISSET(fd, &readable)) {
             // Silence is measured on the clock: car input wakes this loop far more often than once a second.

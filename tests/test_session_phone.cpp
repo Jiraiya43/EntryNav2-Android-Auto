@@ -416,6 +416,18 @@ public:
         }
         receive(channel, flags, message);  // AuthComplete
     }
+    bool receiveHeadUnitStop(bool answer) {
+        uint8_t channel = 0, flags = 0;
+        Bytes message;
+        if (receive(channel, flags, message) <= 0 || channel != 0 || !(flags & 0x08) ||
+            message != bytes({0x00, 0x0f, 0x08, 0x01})) {
+            return false;
+        }
+        if (answer) {
+            send(0, kSealed, bytes({0x00, 0x10}));
+        }
+        return true;
+    }
     void discover() {
         send(0, kSealed, bytes({0x00, 0x05, 0x22, 0x05}) + text("Phone"));
         settle();
@@ -556,6 +568,26 @@ struct Link {
         close(phoneFd);
     }
 };
+
+bool gracefulStop(bool answer) {
+    std::vector<std::string> log;
+    Link link;
+    Phone phone(link.phoneFd, log);
+    phone.handshake();
+    const uint64_t started = aa::locationClockMs();
+    pthread_t stopThread;
+    if (pthread_create(&stopThread, nullptr, [](void* data) -> void* {
+            static_cast<aa::AASession*>(data)->stopGracefully();
+            return nullptr;
+        }, &link.session) != 0) {
+        return false;
+    }
+    const bool request = phone.receiveHeadUnitStop(answer);
+    pthread_join(stopThread, nullptr);
+    const uint64_t elapsed = aa::locationClockMs() - started;
+    return request && !link.session.isActive() && elapsed < 2000 &&
+           (answer || elapsed >= 800) && takeEvents().empty();
+}
 
 void ended(Link& link, std::vector<std::string>& log) {
     log.push_back(format("session ended=%d", waitEnded(link.session) ? 1 : 0));
@@ -1136,5 +1168,10 @@ int main(int argc, char** argv) {
         return 1;
     }
     puts("PASS session, quiet phone: answered pings keep it, unanswered ones end it within the silence limit");
+    if (!gracefulStop(true) || !gracefulStop(false)) {
+        puts("FAIL wireless Stop: request, acknowledgement, or bounded timeout");
+        return 1;
+    }
+    puts("PASS wireless Stop: an encrypted ByeBye request, with an answer and with no answer");
     return 0;
 }

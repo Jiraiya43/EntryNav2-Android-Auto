@@ -53,6 +53,7 @@ public:
     void postNight(bool night);  // kept across sessions
     void postLocation(const CarLocation& location);
     void postMicrophone(const uint8_t* pcm, size_t size);
+    void wake();
 
     // Session thread.
     int wakeFd() const { return wake_[0]; }
@@ -71,7 +72,6 @@ public:
     void reset();
 
 private:
-    void wake();
     unsigned queueKey(const CarKey& key, unsigned& drops);  // 0 when queued, else the drops of that kind so far
 
     pthread_mutex_t mutex_;
