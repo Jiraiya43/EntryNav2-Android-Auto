@@ -172,6 +172,11 @@ public:
             CHECK(
                 dbus_message_get_args(m, 0, DBUS_TYPE_UINT64, &function, DBUS_TYPE_BYTE, &instance, DBUS_TYPE_INVALID));
             CHECK(function == 1 && instance == 2);
+            DBusMessage* confirmation = dbus_message_new_signal(path, dm, "BtApplDeviceDisconnectCfm");
+            uint8_t statusCode = 0;
+            CHECK(confirmation &&
+                  dbus_message_append_args(confirmation, DBUS_TYPE_BYTE, &statusCode, DBUS_TYPE_INVALID));
+            send(confirmation);
             device(false, instance);
         } else {
             CHECK(dbus_message_has_interface(m, spp));
@@ -366,6 +371,7 @@ int main() {
             sleepMs(10);
         }
         CHECK(!link.linkUp());
+        CHECK(link.sppDisconnectStatus() == 0);
         link.closeLink();
     }
     {

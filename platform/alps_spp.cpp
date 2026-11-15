@@ -95,7 +95,8 @@ struct AlpsSppLink::Impl {
     int pair[2];
     bool link, borrowed, requireConnect, remoteClosed, txPending, txAllowed, uuidWaiting, cfgWaiting;
     bool uuidPoisoned, cfgPoisoned, cfgWrite;
-    int uuidStatus, cfgStatus;
+    int uuidStatus, cfgStatus, disconnectStatus;
+    bool disconnectPending;
     uint8_t cfgInst;
     uint16_t cfgId;
     uint32_t txSince;
@@ -125,6 +126,8 @@ struct AlpsSppLink::Impl {
           cfgWrite(false),
           uuidStatus(-1),
           cfgStatus(-1),
+          disconnectStatus(-1),
+          disconnectPending(false),
           cfgInst(0),
           cfgId(0),
           txSince(0),
@@ -240,6 +243,18 @@ struct AlpsSppLink::Impl {
             }
         }
         if (dbus_message_has_interface(m, dm)) {
+            if (!strcmp(member, "BtApplDeviceDisconnectCfm")) {
+                uint8_t status;
+                if (dbus_message_get_args(m, nullptr, DBUS_TYPE_BYTE, &status, DBUS_TYPE_INVALID)) {
+                    // This signal carries no instance. Only the slot snapshot confirms recovery.
+                    ELOG("SPP", "BtApplDeviceDisconnectCfm status=%u", status);
+                    if (disconnectPending) {
+                        disconnectStatus = status;
+                        disconnectPending = false;
+                    }
+                }
+                return;
+            }
             if (!strcmp(member, "BtApplReadConfigurationCfm") || !strcmp(member, "BtApplSetConfigurationCfm")) {
                 const bool writing = !strcmp(member, "BtApplSetConfigurationCfm");
                 if (!dbus_message_has_signature(m, writing ? "yyq" : "yyqqay")) {
@@ -280,7 +295,12 @@ struct AlpsSppLink::Impl {
             if (!connecting && strcmp(member, "BtApplDeviceDisconnectInd")) {
                 return;
             }
-            if (!dbus_message_has_signature(m, connecting ? "yayty" : "yayyty")) {
+            const char* expectedSignature = connecting ? "yayty" : "yayyty";
+            if (!dbus_message_has_signature(m, expectedSignature)) {
+                if (!monitor) {
+                    ELOG("SPP", "Ignoring %s: D-Bus signature '%s', expected '%s'", member,
+                         dbus_message_get_signature(m), expectedSignature);
+                }
                 return;
             }
             DBusMessageIter it;
@@ -788,7 +808,13 @@ bool AlpsSppLink::requestSppDisconnect() {
     DBusMessage* m = dbus_message_new_method_call(p_->owner.c_str(), path, dm, "BtApplDeviceDisconnectReq");
     bool valid =
         m && dbus_message_append_args(m, DBUS_TYPE_UINT64, &function, DBUS_TYPE_BYTE, &p_->inst, DBUS_TYPE_INVALID);
-    return sendRequest(p_->conn, m, valid);
+    p_->disconnectStatus = -1;
+    p_->disconnectPending = sendRequest(p_->conn, m, valid);
+    return p_->disconnectPending;
+}
+int AlpsSppLink::sppDisconnectStatus() {
+    Lock lock(p_->mu);
+    return p_->disconnectStatus;
 }
 std::string AlpsSppLink::introspect(const char* objectPath) {
     Lock request(p_->requestMu);
