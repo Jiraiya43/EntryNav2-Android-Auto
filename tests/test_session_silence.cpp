@@ -113,12 +113,12 @@ int main() {
     setvbuf(stdout, 0, _IONBF, 0);
     crashOrder();
     puts("PASS crash : ligne de crash, puis le crochet, puis l'ancien gestionnaire");
-    const double quiet = silentPhone(false, 10);
+    const double quiet = silentPhone(false, 15);
     printf("telephone muet, sans reveil : fin apres %.1f s\n", quiet);
-    assert(quiet > 4 && quiet < 7);  // 5 s of silence (kRxSilenceMs, core/aa_session.cpp)
-    const double woken = silentPhone(true, 10);
+    assert(quiet > 9 && quiet < 12);  // 10 s of silence (kRxSilenceMs, core/aa_session.cpp)
+    const double woken = silentPhone(true, 15);
     printf("telephone muet, reveils 10 fois par seconde : fin apres %.1f s\n", woken);
-    assert(woken > 4 && woken < 7);
+    assert(woken > 9 && woken < 12);
     puts("PASS session : un telephone disparu met fin a la session, meme reveillee par le GPS");
     return 0;
 }
