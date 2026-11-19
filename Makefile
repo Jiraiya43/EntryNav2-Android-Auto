@@ -141,7 +141,7 @@ tests/evo-check-host:
 	    platform/evo_process.cpp $(HOST_DBUS) -o $@
 
 test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture-host test-usb-host \
-           tests/evo-check-host test-media-host test-frame-host test-session-host
+           test-media-host test-frame-host test-session-host
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_evo_elf.cpp -o tests/test-evo-elf
 	if [ -f "$(SPP_FIXTURE_LIB)" ]; then ENTRY_AAD_FIXTURE_LIB="$(SPP_FIXTURE_LIB)" ./tests/test-evo-elf; else ./tests/test-evo-elf; fi
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_spp_snapshot.cpp platform/evo_spp_snapshot.cpp -o tests/test-spp-snapshot
