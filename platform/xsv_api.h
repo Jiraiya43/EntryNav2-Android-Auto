@@ -22,13 +22,8 @@
 extern "C" {
 #endif
 
-// Driver types (first argument of xsv_open).
-enum {
-    XSV_TYPE_ANALOG_CAM = 0,
-    XSV_TYPE_DIGITAL_CAM = 1,  // H.264 decoder onto an IVI surface: the one used here
-    XSV_TYPE_FILE_PLAYER = 2,
-    XSV_TYPE_STATIC_PIC = 3
-};
+// Driver used by this port (first argument of xsv_open).
+enum { XSV_TYPE_DIGITAL_CAM = 1 };
 
 // Events returned by xsv_receive_event (first word of the event).
 enum {
@@ -51,9 +46,8 @@ void xsv_close(xsv_handle h);
 // Queues the stream configuration. early-video passes 0.0f as the frame rate.
 int xsv_configure_stream(xsv_handle h, uint32_t width, uint32_t height, float fps);
 
-// Size of the displayed output (opcode 8) and input viewport (opcode 7).
+// Size of the displayed output (opcode 8).
 int xsv_set_output_dimension(xsv_handle h, uint32_t width, uint32_t height);
-int xsv_set_input_viewport(xsv_handle h, uint32_t x, uint32_t y, uint32_t w, uint32_t hgt);
 
 // Submits one encoded picture: fd of a dma-buf holding length bytes of Annex B H.264.
 // XSV_EVENT_DMABUF_COMPLETE reports when the buffer is free again.
@@ -61,15 +55,12 @@ int xsv_decode_video_frame(xsv_handle h, int dmabuf_fd, uint32_t length);
 
 int xsv_start(xsv_handle h);
 int xsv_stop(xsv_handle h);
-int xsv_pause(xsv_handle h);
 int xsv_update(xsv_handle h);  // applies the pending settings (opcode 0x15)
 
 int xsv_enable_frame_events(xsv_handle h);
-int xsv_disable_frame_events(xsv_handle h);
 
-// Event queue: either a bounded blocking wait, or the fd for a poll() loop.
+// Bounded blocking wait for an event.
 int xsv_receive_event(xsv_handle h, int* event_out, int timeout_ms);
-int xsv_get_event_queue_fd(xsv_handle h);
 
 #ifdef __cplusplus
 }
