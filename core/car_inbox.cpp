@@ -220,6 +220,13 @@ void CarInbox::deferFocus(FocusRequest focus) {
     }
 }
 
+FocusRequest CarInbox::takeFocus() {
+    MutexLock lock(mutex_);
+    const FocusRequest focus = focus_;
+    focus_ = kFocusNone;
+    return focus;
+}
+
 int CarInbox::nightState() {
     MutexLock lock(mutex_);
     return night_;

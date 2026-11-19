@@ -254,6 +254,10 @@ void AASession::onSetup(uint8_t channel) {
         sendVideoFocus(true, false);
         videoReady_ = true;
         keyframe_.videoStarted(locationClockMs());
+        const FocusRequest deferred = inbox_.takeFocus();
+        if (deferred != kFocusNone && (deferred == kFocusProjected) != projected_) {
+            sendCarFocus(deferred);
+        }
     }
 }
 
