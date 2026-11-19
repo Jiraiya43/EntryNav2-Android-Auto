@@ -43,11 +43,18 @@ MessageAssembler::Outcome MessageAssembler::add(const FrameHeader& header, const
     const uint8_t position = header.position();
     if (position == frame::kWhole) {
         // A message of its own, one frame long: what is being assembled or skipped on the channel stays as it is.
+        if (payload.size() > frame::kMaxMessage) {
+            return kOverflow;
+        }
         message = payload;
         return kComplete;
     }
     if (position == frame::kFirst) {
         // Replaces an unfinished message, or ends the tail of a lost one whose LAST never came.
+        if (payload.size() > frame::kMaxMessage) {
+            forget(header.channel, position);
+            return kOverflow;
+        }
         Pending& pending = pending_[header.channel];
         pending.data = payload;
         pending.lostTail = false;
@@ -67,7 +74,7 @@ MessageAssembler::Outcome MessageAssembler::add(const FrameHeader& header, const
         }
         return kRestOfLost;
     }
-    if (pending.data.size() + payload.size() > frame::kMaxMessage) {
+    if (payload.size() > frame::kMaxMessage - pending.data.size()) {
         forget(header.channel, position);
         return kOverflow;
     }
@@ -81,7 +88,7 @@ MessageAssembler::Outcome MessageAssembler::add(const FrameHeader& header, const
     const uint32_t size = pending.size;
     pending.data.insert(pending.data.end(), payload.begin(), payload.end());
     message.swap(pending.data);
-    pending_.erase(header.channel);
+    pending_.erase(it);
     // The announced size counts plain bytes and the length fields count TLS records, which are larger: only a
     // shortfall tells that this LAST closed an incomplete message.
     if (size != 0 && onWire < size) {

@@ -91,8 +91,8 @@ void reassembly() {
     CHECK(a.add(header(6, aa::frame::kLast, 10), Bytes({3}), m) == aa::MessageAssembler::kComplete);
     CHECK(m == Bytes({2, 3}));
 
-    // Bounded: past 8 MiB on one channel the message is dropped and the rest of it skipped. A whole frame is a
-    // message of its own, which the bound does not concern.
+    // Bounded per message: a whole frame leaves pending fragments intact, and an overflowing continuation
+    // drops its message and skips the rest.
     const Bytes big(aa::frame::kMaxMessage - 10, 0);
     CHECK(a.add(header(6, aa::frame::kFirst, 1, 9), big, m) == aa::MessageAssembler::kPending);
     CHECK(a.add(header(6, aa::frame::kMiddle, 1), Bytes(10, 0), m) == aa::MessageAssembler::kPending);
@@ -108,6 +108,28 @@ void reassembly() {
     CHECK(a.add(header(6, aa::frame::kFirst, 1, 9), big, m) == aa::MessageAssembler::kPending);
     CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes(11, 0), m) == aa::MessageAssembler::kOverflow);
     CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes(1, 0), m) == aa::MessageAssembler::kNoFirst);
+
+    CHECK(a.add(header(6, aa::frame::kFirst, 1, 9), big, m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kFirst, 11, 12), Bytes(11, 4), m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes({5}), m) == aa::MessageAssembler::kComplete);
+    Bytes expected(11, 4);
+    expected.push_back(5);
+    CHECK(m == expected);
+
+    // A whole frame larger than the limit is rejected without dropping fragments already in flight.
+    CHECK(a.add(header(6, aa::frame::kFirst, 1, 2), Bytes({1}), m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kWhole, 1), Bytes(aa::frame::kMaxMessage + 1, 0), m) ==
+          aa::MessageAssembler::kOverflow);
+    CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes({2}), m) == aa::MessageAssembler::kComplete);
+    CHECK(m == Bytes({1, 2}));
+
+    // An oversized replacement FIRST loses its own message, not just the preceding fragments.
+    CHECK(a.add(header(6, aa::frame::kFirst, 1, 2), Bytes({1}), m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kFirst, 1, 2), Bytes(aa::frame::kMaxMessage + 1, 0), m) ==
+          aa::MessageAssembler::kOverflow);
+    CHECK(a.add(header(6, aa::frame::kMiddle, 1), Bytes({2}), m) == aa::MessageAssembler::kRestOfLost);
+    CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes({3}), m) == aa::MessageAssembler::kRestOfLost);
+    CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes({4}), m) == aa::MessageAssembler::kNoFirst);
     a.clear();
 }
 

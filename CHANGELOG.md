@@ -54,6 +54,9 @@ QEMU avec les bibliothèques de la voiture).
   arrivés incomplets, morceau illisible) n'était jamais accusé et gardait une de ces places pour de bon, et au dixième
   le flux s'arrêtait. Chaque message écarté est désormais accusé une fois, et le reste d'un message perdu en route est
   ignoré sans bruit jusqu'à son dernier morceau. Testé sur PC.
+- Réception Android Auto : la limite de taille d'un message est vérifiée sans risque de débordement sur ARM,
+  séparément pour chaque message. Un message trop grand est écarté et ses morceaux restants sont ignorés jusqu'à sa
+  fin ; un message entier ne perturbe pas les fragments en cours. Testé sur PC.
 - Image : si le décodeur vidéo de la voiture cessait de rendre ses tampons (après une erreur de décodage, son chien de
   garde ou un abandon), l'image d'Android Auto restait figée jusqu'à la fin de la séance, le téléphone continuant
   d'envoyer des images qui ne trouvaient plus de place. Quand aucun tampon n'est revenu depuis 3 s alors que l'image
