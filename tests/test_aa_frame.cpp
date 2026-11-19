@@ -91,12 +91,29 @@ void reassembly() {
     a.drop(6);
     CHECK(a.add(header(6, aa::frame::kLast, 10), Bytes({3}), m) == aa::MessageAssembler::kNoFirst);
 
-    // Bounded: past 8 MiB on one channel the fragments go, whatever the frame.
+    // Bounded at 8 MiB per reassembled message: a whole frame still passes through without touching pending fragments,
+    // a replacement FIRST still starts fresh, and a continuation that would pass 8 MiB drops the fragments.
     const Bytes big(aa::frame::kMaxMessage - 10, 0);
     CHECK(a.add(header(6, aa::frame::kFirst, 1, 9), big, m) == aa::MessageAssembler::kPending);
     CHECK(a.add(header(6, aa::frame::kMiddle, 1), Bytes(10, 0), m) == aa::MessageAssembler::kPending);
-    CHECK(a.add(header(6, aa::frame::kWhole, 1), Bytes(1, 0), m) == aa::MessageAssembler::kOverflow);
+    CHECK(a.add(header(6, aa::frame::kWhole, 1), Bytes({9}), m) == aa::MessageAssembler::kComplete);
+    CHECK(m == Bytes({9}));
+    CHECK(a.add(header(6, aa::frame::kMiddle, 1), Bytes(1, 0), m) == aa::MessageAssembler::kOverflow);
     CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes(1, 0), m) == aa::MessageAssembler::kNoFirst);
+
+    CHECK(a.add(header(6, aa::frame::kFirst, 1, 9), big, m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kFirst, 11, 12), Bytes(11, 4), m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes({5}), m) == aa::MessageAssembler::kComplete);
+    Bytes expected(11, 4);
+    expected.push_back(5);
+    CHECK(m == expected);
+
+    // A whole frame larger than the limit is rejected without dropping fragments already in flight.
+    CHECK(a.add(header(6, aa::frame::kFirst, 1, 2), Bytes({1}), m) == aa::MessageAssembler::kPending);
+    CHECK(a.add(header(6, aa::frame::kWhole, 1), Bytes(aa::frame::kMaxMessage + 1, 0), m) ==
+          aa::MessageAssembler::kOverflow);
+    CHECK(a.add(header(6, aa::frame::kLast, 1), Bytes({2}), m) == aa::MessageAssembler::kComplete);
+    CHECK(m == Bytes({1, 2}));
     a.clear();
 }
 

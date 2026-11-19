@@ -41,40 +41,45 @@ bool encodeFrame(uint8_t channel, uint8_t flags, const uint8_t* payload, size_t 
 MessageAssembler::Outcome MessageAssembler::add(const FrameHeader& header, const std::vector<uint8_t>& payload,
                                                 std::vector<uint8_t>& message) {
     const uint8_t position = header.position();
-    if (position == frame::kMiddle || position == frame::kLast) {
-        const auto it = pending_.find(header.channel);
-        if (it == pending_.end() || !it->second.sized) {
-            return kNoFirst;
+    if (position == frame::kWhole) {
+        if (payload.size() > frame::kMaxMessage) {
+            return kOverflow;
         }
+        message = payload;
+        return kComplete;
     }
-    Pending& pending = pending_[header.channel];
-    if (pending.data.size() + payload.size() > frame::kMaxMessage) {
-        pending_.erase(header.channel);
+    if (position == frame::kFirst) {
+        if (payload.size() > frame::kMaxMessage) {
+            pending_.erase(header.channel);
+            return kOverflow;
+        }
+        Pending& pending = pending_[header.channel];
+        pending.data = payload;
+        pending.sized = true;
+        pending.size = header.totalSize;
+        pending.onWire = header.length;
+        return kPending;
+    }
+    const auto it = pending_.find(header.channel);
+    if (it == pending_.end() || !it->second.sized) {
+        return kNoFirst;
+    }
+    Pending& pending = it->second;
+    if (payload.size() > frame::kMaxMessage - pending.data.size()) {
+        pending_.erase(it);
         return kOverflow;
     }
-    switch (position) {
-        case frame::kWhole:
-            message = payload;
-            return kComplete;
-        case frame::kFirst:
-            pending.data = payload;
-            pending.sized = true;
-            pending.size = header.totalSize;
-            pending.onWire = header.length;
-            return kPending;
-        case frame::kMiddle:
-            pending.data.insert(pending.data.end(), payload.begin(), payload.end());
-            pending.onWire += header.length;
-            return kPending;
-        default:
-            break;
+    if (position == frame::kMiddle) {
+        pending.data.insert(pending.data.end(), payload.begin(), payload.end());
+        pending.onWire += header.length;
+        return kPending;
     }
     // LAST closes the message started by FIRST.
     const uint32_t onWire = pending.onWire + header.length;
     const uint32_t size = pending.size;
     pending.data.insert(pending.data.end(), payload.begin(), payload.end());
     message.swap(pending.data);
-    pending_.erase(header.channel);
+    pending_.erase(it);
     // The announced size counts plain bytes and the length fields count TLS records, which are larger: only a
     // shortfall tells that this LAST closed an incomplete message.
     if (size != 0 && onWire < size) {
