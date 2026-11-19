@@ -62,6 +62,11 @@ inline bool refreshAdvertisement(AlpsSppLink& bt, SppSnapshotReader& reader, uns
         if (bt.linkUp()) {
             return true;  // connection won the race, do not disturb it
         }
+        if (result == 4) {
+            // Alps is busy connecting the phone or servicing other profiles during boot.
+            ELOG("Advertisement", "UUID refresh deferred: Alps busy (status 4); waiting for the next slot");
+            return true;
+        }
         ELOG("Advertisement", "UUID refresh not confirmed (%d): stopping so that Bluetooth is restored", result);
         return false;
     }
