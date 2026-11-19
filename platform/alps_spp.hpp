@@ -63,6 +63,8 @@ public:
     bool setDataInterface(uint8_t value, int timeoutMs);
     // Only this SPP instance (function=1); never disconnect all BMW profiles.
     bool requestSppDisconnect();
+    // Confirmation status from Alps, or -1 while unavailable. It carries no instance.
+    int sppDisconnectStatus();
 
     // Waits for the phone to open the link (DeviceConnectInd or first DataInd on our instance).
     // Returns a fd (read/write of a transparent byte stream), or -1 after timeoutMs.

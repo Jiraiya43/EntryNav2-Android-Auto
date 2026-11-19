@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // Exercise the actual supervisor recovery decisions with simulated Alps/ILM boundaries.
 // The real /proc reader and D-Bus encodings have separate process/integration tests.
+#include <unistd.h>
+static int supervisorTestSleep(useconds_t duration);
+#define usleep supervisorTestSleep
 #define main supervisor_entry_unused
 #include "../tools/aa_supervisor.cpp"
 #undef main
+#undef usleep
 #include <assert.h>
 
 #include "../platform/spp_advertisement.hpp"
@@ -18,7 +22,27 @@ unsigned configuration = 0, uuidWrites = 0, configWrites = 0, disconnects = 0;
 unsigned transientReads = 0, readerOpens = 0, readerCloses = 0;
 bool failUuid = false, failConfig = false, videoGone = true, liveLink = false, failRead = false;
 bool flipKnown = true;
+bool simulatePhoneRetry = false;
+unsigned busyDisconnects = 0;
+unsigned uuidRejections = 0;
+int lastDisconnectStatus = -1;
+unsigned sinceDisconnectUs = 0;
+
+void setSimulatedConnected(bool connected) {
+    simulated.state = connected ? 2 : 1;
+    simulated.transportState = connected ? 1 : 0;
+    simulated.connected = connected;
+}
 }  // namespace
+
+static int supervisorTestSleep(useconds_t duration) {
+    if (simulatePhoneRetry && disconnects && simulated.uuidPayload == aaPayload()) {
+        sinceDisconnectUs += duration;
+        setSimulatedConnected(sinceDisconnectUs < 25000 || sinceDisconnectUs >= 95000);
+    }
+    return usleep(duration);
+}
+
 namespace evo {
 unsigned hotspotRequests = 0;
 bool requestWlanAccessPoint(unsigned, WlanRequestResult*) {
@@ -84,6 +108,10 @@ bool AlpsSppLink::setDataInterface(uint8_t value, int) {
 int AlpsSppLink::registerUuidPayload(const std::vector<uint8_t>& payload, int) {
     assert(started == testSlot);
     ++uuidWrites;
+    if (uuidRejections) {
+        --uuidRejections;
+        return 4;
+    }
     if (failUuid) {
         return -1;
     }
@@ -93,11 +121,17 @@ int AlpsSppLink::registerUuidPayload(const std::vector<uint8_t>& payload, int) {
 bool AlpsSppLink::requestSppDisconnect() {
     assert(started == testSlot);
     ++disconnects;
-    simulated.state = 1;
-    simulated.transportState = 0;
-    simulated.connected = false;
+    if (busyDisconnects) {
+        --busyDisconnects;
+        lastDisconnectStatus = 5;
+        return true;
+    }
+    lastDisconnectStatus = 0;
+    sinceDisconnectUs = 0;
+    setSimulatedConnected(simulatePhoneRetry);
     return true;
 }
+int AlpsSppLink::sppDisconnectStatus() { return lastDisconnectStatus; }
 EvoIlm::EvoIlm() {}
 bool EvoIlm::validateTarget(uint32_t, uint32_t, uint32_t, uint32_t, bool) {
     return true;
@@ -288,10 +322,41 @@ static void slot5Cases(const std::vector<uint8_t>& bmw, const std::vector<uint8_
     assert(recover(b, reader));
     assert(disconnects == 1 && uuidWrites == 1 && configWrites == 1 && configuration == 0);
     assert(simulated.uuidPayload == generic && access(journal, F_OK) != 0);
+    // Match the F48 trace: the slot goes idle briefly, then the phone reopens RFCOMM.
+    assert(save(b));
+    simulated.uuidPayload = simulated.transportUuidPayload = aaPayload();
+    configuration = 1;
+    setSimulatedConnected(true);
+    simulatePhoneRetry = true;
+    assert(recover(b, reader));
+    simulatePhoneRetry = false;
+    assert(sinceDisconnectUs >= 25000 && sinceDisconnectUs < 95000);
+    assert(disconnects == 2 && uuidWrites == 2 && configWrites == 2 && configuration == 0);
+    assert(simulated.uuidPayload == generic && access(journal, F_OK) != 0);
+    // BMW stays busy beyond the original five-second deadline, then accepts the disconnect.
+    assert(save(b));
+    simulated.uuidPayload = simulated.transportUuidPayload = aaPayload();
+    setSimulatedConnected(true);
+    configuration = 1;
+    busyDisconnects = 6;
+    const uint32_t begin = evo::monoMs();
+    assert(recover(b, reader));
+    assert(evo::monoMs() - begin >= 6000);
+    assert(!busyDisconnects && disconnects == 9 && uuidWrites == 3 && configWrites == 3);
+    assert(simulated.uuidPayload == generic && access(journal, F_OK) != 0);
+    // Alps can leave the slot idle but initially reject a restore of the original UUID.
+    assert(save(b));
+    simulated.uuidPayload = simulated.transportUuidPayload = aaPayload();
+    setSimulatedConnected(false);
+    configuration = 1;
+    uuidRejections = 2;
+    assert(recover(b, reader));
+    assert(!uuidRejections && uuidWrites == 6 && configWrites == 4);
+    assert(simulated.uuidPayload == generic && access(journal, F_OK) != 0);
     // A start that stopped before registering: the interface is written back all the same.
     assert(save(b));
     configuration = 1;
-    assert(recover(b, reader) && configWrites == 2 && configuration == 0 && uuidWrites == 1);
+    assert(recover(b, reader) && configWrites == 5 && configuration == 0 && uuidWrites == 6);
     // An unconfirmed write keeps the journal.
     assert(save(b));
     failConfig = true;

@@ -165,15 +165,38 @@ bool recover(const Baseline& b, evo::SppSnapshotReader& reader) {
                 ELOG("Supervisor", "restore: Android Auto SPP disconnect request refused");
                 return false;
             }
-            uint32_t begin = evo::monoMs();
+            const uint32_t begin = evo::monoMs();
+            uint32_t lastRequest = begin;
+            uint32_t budgetMs = 5000;
             bool idle = false;
             do {
-                usleep(100000);
-                if (reader.read(b.instance, now) && now.idle()) {
-                    idle = true;
-                    break;
+                if (reader.read(b.instance, now)) {
+                    if (now.idle()) {
+                        idle = true;
+                        break;
+                    }
+                    if (now.uuidPayload != aa || now.transportUuidPayload != aa) {
+                        ELOG("Supervisor", "restore: SPP ownership changed while occupied: journal kept");
+                        return false;
+                    }
+                    // On EntryEvo status 5 is returned while the connection manager is busy. The confirmation
+                    // has no slot number, so it can justify a retry but never authorizes restoring a busy slot.
+                    const uint32_t checkedAt = evo::monoMs();
+                    if (bt.sppDisconnectStatus() == 5) {
+                        // This firmware may hold a competing operation for more than 20 seconds.
+                        budgetMs = 25000;
+                        if (checkedAt - lastRequest >= 1000) {
+                            ELOG("Supervisor", "restore: Alps busy; retrying the Android Auto SPP disconnect");
+                            if (!bt.requestSppDisconnect()) {
+                                return false;
+                            }
+                            lastRequest = checkedAt;
+                        }
+                    }
                 }
-            } while (evo::monoMs() - begin < 5000);
+                usleep(20000);
+            } while (evo::monoMs() - begin < budgetMs &&
+                     (bt.sppDisconnectStatus() != 0 || evo::monoMs() - lastRequest < 5000));
             if (!idle) {
                 ELOG("Supervisor", "restore: disconnection of our SPP not confirmed");
                 return false;
@@ -186,7 +209,26 @@ bool recover(const Baseline& b, evo::SppSnapshotReader& reader) {
         }
         // Pump fd may have seen data before DisconnectInd; close only our local bridge.
         bt.closeLink();
+        const uint32_t uuidStarted = evo::monoMs();
         int result = bt.registerUuidPayload(b.uuid, 3000);
+        while (result == 4 && evo::monoMs() - uuidStarted < 15000) {
+            // Alps can reject the first write just after disconnecting the DLC.
+            usleep(500000);
+            if (!reader.read(b.instance, now, true)) {
+                continue;
+            }
+            if (!now.idle() || (now.uuidPayload != aa && now.uuidPayload != b.uuid) ||
+                (now.transportUuidPayload != aa && now.transportUuidPayload != b.uuid)) {
+                ELOG("Supervisor", "restore: SPP busy or changed before retrying the UUID: journal kept");
+                return false;
+            }
+            if (now.uuidPayload == b.uuid && now.transportUuidPayload == b.uuid) {
+                result = 0;
+                break;
+            }
+            ELOG("Supervisor", "restore: retrying the original UUID after status 4");
+            result = bt.registerUuidPayload(b.uuid, 3000);
+        }
         if (result != 0) {
             ELOG("Supervisor", "restore: UUID restore not confirmed (result=%d)", result);
             return false;
