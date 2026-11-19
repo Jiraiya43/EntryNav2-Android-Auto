@@ -9,6 +9,7 @@
 #include "evo_knob.hpp"
 #include "evo_touch.hpp"
 #include "media_recall.hpp"
+#include "touch_fixture.hpp"
 #define CHECK(x)                                                 \
     do {                                                         \
         if (!(x)) {                                              \
@@ -44,15 +45,25 @@ static size_t ipUdp(uint8_t* p, const uint8_t* payload, size_t n, uint16_t sport
     return total;
 }
 
+static size_t touchDatagram(const unsigned char* frame, size_t first, size_t records, unsigned char* out) {
+    namespace pdu = aa::touchpdu;
+    const size_t bytes = pdu::kRecord * records;
+    const size_t size = pdu::kHeader + bytes;
+    memcpy(out, frame, pdu::kHeader);
+    out[7] = static_cast<unsigned char>(size - 8);
+    memcpy(out + pdu::kHeader, frame + pdu::kHeader + pdu::kRecord * first, bytes);
+    return size;
+}
+
 static int frame(evo::TouchTracker& t, int x, int y, int state, unsigned char seq, aa::TouchEventOut* ev) {
-    unsigned char f[112];
+    unsigned char f[touch_fixture::kFrameBytes];
     aa::TouchContact c;
     c.id = 0;
     c.state = state;
     c.x = x;
     c.y = y;
     c.size = 10;
-    aa::buildTouchFrame(f, &c, 1, 0, seq);
+    touch_fixture::buildTouchFrame(f, c, seq);
     return t.feed(f, sizeof(f), ev, 16);
 }
 
@@ -65,14 +76,14 @@ int main() {
     CHECK(!evo::parseInputMode("Forward", mode));
 
     // IPv4/UDP view as delivered by AF_PACKET SOCK_DGRAM (network header first).
-    uint8_t pdu[112];
+    uint8_t pdu[touch_fixture::kFrameBytes];
     aa::TouchContact c0;
     c0.id = 0;
     c0.state = 1;
     c0.x = 640;
     c0.y = 240;
     c0.size = 9;
-    aa::buildTouchFrame(pdu, &c0, 1, 0, 0);
+    touch_fixture::buildTouchFrame(pdu, c0, 0);
     uint8_t pkt[256];
     evo::UdpView u;
     size_t n = ipUdp(pkt, pdu, sizeof(pdu), 30501, 30567);
@@ -114,9 +125,9 @@ int main() {
     CHECK(f45.activeCount() == 1);                                                                 // still down
     CHECK(frame(f45, 380, 205, 0x7, 36, ev) == 1 && ev[0].action == 1 && f45.activeCount() == 0);  // 01 11: up
     {
-        unsigned char raw[112];
+        unsigned char raw[touch_fixture::kFrameBytes];
         aa::TouchContact c = {2, 0xE, 640, 240, 9};  // id 2, bits 6-7 = 11, state 2
-        aa::buildTouchFrame(raw, &c, 1, 0, 0);
+        touch_fixture::buildTouchFrame(raw, c, 0);
         aa::TouchReassembler r;
         aa::TouchMsg msg[aa::kTouchMaxMsgs];
         aa::TouchContact got[2];
@@ -148,19 +159,18 @@ int main() {
           early.activeCount() == 0);
     // The same message split over three datagrams.
     evo::TouchTracker s;
-    unsigned char whole[112], parts[3 * 112];
-    int sizes[3];
-    const int per[3] = {2, 5, 5};
+    unsigned char whole[touch_fixture::kFrameBytes], part[touch_fixture::kFrameBytes];
     aa::TouchContact c1;
     c1.id = 1;
     c1.state = 1;
     c1.x = 300;
     c1.y = 100;
     c1.size = 5;
-    aa::buildTouchFrame(whole, &c1, 1, 0, 0);
-    CHECK(aa::splitTouchFrame(whole, per, 3, parts, sizes) == 3);
-    CHECK(s.feed(parts, sizes[0], ev, 16) == 0 && s.feed(parts + 112, sizes[1], ev, 16) == 0);
-    CHECK(s.feed(parts + 224, sizes[2], ev, 16) == 1 && ev[0].action == 0 && ev[0].p[0].id == 1 && ev[0].p[0].x == 300);
+    touch_fixture::buildTouchFrame(whole, c1, 0);
+    CHECK(s.feed(part, touchDatagram(whole, 0, 2, part), ev, 16) == 0);
+    CHECK(s.feed(part, touchDatagram(whole, 2, 5, part), ev, 16) == 0);
+    CHECK(s.feed(part, touchDatagram(whole, 7, 5, part), ev, 16) == 1 && ev[0].action == 0 && ev[0].p[0].id == 1 &&
+          ev[0].p[0].x == 300);
     aa::TouchContact last[5];
     CHECK(s.lastContacts(last, 5) == 1 && last[0].y == 100 && s.messages() == 1);
 
