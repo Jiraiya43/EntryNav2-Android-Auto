@@ -28,6 +28,8 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Corrigé
 
+- Son : les demandes de focus audio du téléphone sont décodées comme des messages protobuf, même si leurs champs
+  arrivent dans un autre ordre ou si leur valeur occupe plusieurs octets. Testé sur PC.
 - Sans-fil : à l'arrêt, le Bluetooth pouvait ne pas être rendu quand le téléphone cherchait encore la voiture, et
   les Démarrer suivants étaient alors refusés en moins d'une seconde. Tant que l'enregistrement Android Auto reste
   sur son emplacement Bluetooth, le téléphone peut s'y reconnecter avant que le superviseur, qui regardait

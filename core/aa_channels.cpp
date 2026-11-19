@@ -183,10 +183,10 @@ void AASession::onDiscovery() {
 // Asked 1 GAIN, 2 GAIN_TRANSIENT, 3 GAIN_NAVI (guidance prompts) or 4 RELEASE: RELEASE gets LOSS, the rest GAIN.
 // Answering RELEASE with NONE left the phone without a clean end of each guidance prompt.
 void AASession::onAudioFocus(const Message& message) {
-    // The byte after the field key, as read since the first car tests.
-    const uint32_t asked = message.size() >= 4 ? message[3] : 0;
+    const uint32_t asked = bodyField(message, 1);
     const uint32_t granted = asked == focus::kAudioRelease ? focus::kAudioLoss : focus::kAudioGain;
-    printf("[AASession] >>> AudioFocusRequest (request=%u): AudioFocusResponse(state=%u)\n", asked, granted);
+    printf("[AASession] >>> AudioFocusRequest (request=%d): AudioFocusResponse(state=%u)\n", signedOrMinusOne(asked),
+           granted);
     sendSealed(channel::kControl, message::audioFocusResponse(granted));
 }
 
