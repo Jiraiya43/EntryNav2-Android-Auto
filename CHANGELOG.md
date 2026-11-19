@@ -60,6 +60,8 @@ QEMU avec les bibliothèques de la voiture).
   est à l'écran, le service le note une fois et met fin à la séance comme à une coupure : le téléphone revient sur un
   décodeur neuf (sans fil : son lien Bluetooth est fermé pour repartir ; USB : il est redemandé). Les images suivantes
   n'attendent plus 20 ms chacune un tampon qui ne viendra pas. Testé sur PC.
+- Image : une demande de focus de la voiture arrivée avant la mise en place de la vidéo est désormais envoyée dès que
+  la vidéo est prête, au lieu d'attendre un autre événement et de risquer d'écraser un état plus récent. Testé sur PC.
 - Micro de l'Assistant : un micro qui ne donnait plus de son bloquait la lecture, et avec elle l'arrêt d'Android Auto
   (Arrêter ou fin du service). Un micro qui retombait en panne aussitôt réparé était aussi fermé puis rouvert sans
   pause, en boucle, tant que l'Assistant écoutait. Le micro est désormais lu sans blocage, par tranches de 100 ms ;

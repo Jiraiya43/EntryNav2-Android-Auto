@@ -672,7 +672,7 @@ void fullSession(std::vector<std::string>& log) {
     phone.send(2, kSealed, bytes({0x80, 0x07, 0x10, 0x02}));
     phone.settle();
 
-    log.push_back("-- input bindings; the next drain also sends the focus kept from before the video setup");
+    log.push_back("-- input bindings");
     phone.send(3, kSealed, bytes({0x80, 0x02, 0x0a, 0x01, 0x03}));
     phone.send(5, kSealed, bytes({0x80, 0x02}));
     phone.send(7, kSealed, bytes({0x80, 0x02, 0x0a, 0x03, 0x03, 0x04, 0x13}));
@@ -1338,6 +1338,61 @@ bool streamVideo(long count) {
            frames.received == static_cast<size_t>(count);
 }
 
+// A video focus posted before the phone sets up channel 6 must be flushed right after video setup without waiting for
+// an unrelated car input to wake the inbox, and must not linger to overwrite a later focus state.
+std::string deferredFocusOnSetup() {
+    {
+        std::vector<std::string> log;
+        Link link;
+        Phone phone(link.phoneFd, log);
+        phone.handshake();
+        phone.discover();
+        link.session.postVideoFocus(false);
+        phone.settle();
+        log.clear();
+        phone.send(6, kSealed, bytes({0x80, 0x00, 0x08, 0x03}));
+        phone.settle();
+        const std::string trail = focusTrail(log, 0);
+        phone.leave();
+        if (!waitEnded(link.session)) {
+            return "deferred UNFOCUSED: session did not end cleanly";
+        }
+        if (trail != "12u") {
+            return format("deferred UNFOCUSED: focus trail='%s', want '12u'", trail.c_str());
+        }
+    }
+    {
+        std::vector<std::string> log;
+        Link link;
+        Phone phone(link.phoneFd, log);
+        phone.handshake();
+        phone.discover();
+        link.session.postVideoFocus(false);
+        link.session.postVideoFocus(true);
+        phone.settle();
+        log.clear();
+        phone.send(6, kSealed, bytes({0x80, 0x00, 0x08, 0x03}));
+        phone.settle();
+        const std::string setupTrail = focusTrail(log, 0);
+        // Bind input and send a key afterwards: no stale focus may surface on the next inbox drain.
+        phone.send(7, kSealed, bytes({0x80, 0x02, 0x0a, 0x01, 0x03}));
+        phone.settle();
+        log.clear();
+        link.session.postKeyEvent(kKeyHome, true);
+        phone.settle();
+        const std::string laterTrail = focusTrail(log, 0);
+        phone.leave();
+        if (!waitEnded(link.session)) {
+            return "deferred FOCUSED: session did not end cleanly";
+        }
+        if (setupTrail != "1" || !laterTrail.empty()) {
+            return format("deferred FOCUSED: setup='%s' later='%s', want '1' and ''", setupTrail.c_str(),
+                          laterTrail.c_str());
+        }
+    }
+    return std::string();
+}
+
 void timedOut(int) {
     static const char msg[] = "FAIL test-session-phone: no progress\n";
     ssize_t w = write(2, msg, sizeof(msg) - 1);
@@ -1416,6 +1471,8 @@ int main(int argc, char** argv) {
     takeEvents();
     const std::string givenUp = writing ? std::string() : carGivesUp();
     takeEvents();
+    const std::string deferredFocus = writing ? std::string() : deferredFocusOnSetup();
+    takeEvents();
     const bool oversized = writing || streamVideo(2);
     fflush(stdout);
     dup2(console, 1);
@@ -1486,5 +1543,10 @@ int main(int argc, char** argv) {
         return 1;
     }
     puts("PASS session, oversized fragmented video followed by small video");
+    if (!deferredFocus.empty()) {
+        printf("FAIL session, deferred video focus: %s\n", deferredFocus.c_str());
+        return 1;
+    }
+    puts("PASS session, deferred video focus: flushed on video setup without needing a later wake");
     return 0;
 }

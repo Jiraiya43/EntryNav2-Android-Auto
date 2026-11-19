@@ -543,6 +543,13 @@ AASession::Received AASession::receive(uint8_t& channel, Message& wire, Message&
 
 // ---- car input ----------------------------------------------------------------------------------------------------
 
+void AASession::sendCarFocus(FocusRequest focus) {
+    const bool projected = focus == kFocusProjected;
+    const bool sent = sendVideoFocus(projected, true);
+    printf("[AASession] video focus -> phone: %s (unrequested) %s\n",
+           projected ? "FOCUSED/projected" : "UNFOCUSED/native", sent ? "sent" : "SEND FAILED");
+}
+
 // Everything the car posted since the last turn, in a fixed order: location, microphone, night mode, video focus,
 // keys, touches.
 void AASession::sendCarInput() {
@@ -565,13 +572,10 @@ void AASession::sendCarInput() {
         printf("[AASession] NIGHT_MODE event: SEND FAILED\n");
     }
     if (batch.focus != kFocusNone && !videoReady_) {
-        // Before the phone set the video up, a focus would mean nothing to it; the setup itself answers FOCUSED.
+        // Before the phone set the video up, a focus would mean nothing to it; onSetup() flushes it once ready.
         inbox_.deferFocus(batch.focus);
     } else if (batch.focus != kFocusNone) {
-        const bool projected = batch.focus == kFocusProjected;
-        const bool sent = sendVideoFocus(projected, true);
-        printf("[AASession] video focus -> phone: %s (unrequested) %s\n",
-               projected ? "FOCUSED/projected" : "UNFOCUSED/native", sent ? "sent" : "SEND FAILED");
+        sendCarFocus(batch.focus);
     }
     if (batch.keyframe) {
         askKeyframe();

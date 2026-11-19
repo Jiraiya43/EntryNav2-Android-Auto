@@ -126,6 +126,7 @@ private:
 
     // Car input (aa_session.cpp).
     void sendCarInput();
+    void sendCarFocus(FocusRequest focus);
     bool sendLocation();
     bool sendSensorEvent(uint32_t type);
     bool sendVideoFocus(bool projected, bool unrequested);
