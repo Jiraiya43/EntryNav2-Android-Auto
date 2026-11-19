@@ -1,69 +1,72 @@
-# Feuille de route
+# Roadmap
 
-Un point n'est coché qu'avec une preuve en voiture : un test sur PC ne suffit pas.
+An item is checked off only once it has been verified in a car. Testing on a PC is not enough.
 
-## 0.10 : première version publique
+## 0.10: First public release
 
-- [x] Contrôle de compatibilité sans rien modifier (`aa-supervisor --compat`)
-- [x] Procédure d'installation manuelle, répétée avec la BusyBox de la voiture
-- [ ] Procédure suivie de bout en bout sur la voiture de référence
-- [x] Essai de la 0.10.0 en profil maintenance sur la voiture de référence (10 novembre 2026)
-  - [ ] Le contrôle répond « Compatible », démarrage à blanc compris
-  - [x] Android Auto venu tout seul (démarrage automatique, téléphone reconnecté) reste à l'écran, molette sans effet
-    sur l'iDrive
-  - [ ] Media, Android Auto, Ouvrir : l'iDrive reste sur sa page vide, y compris après un mode de conduite puis RETOUR
-  - [ ] Volume : pastille avec le niveau, Android Auto opaque
-  - [ ] Wi-Fi coupé : Android Auto se ferme en 5 secondes environ
-  - [ ] Arrêter et Démarrer
-  - [ ] Molette (un cran par pas), touches, tactile, modes de conduite, caméra, Assistant
-  - [ ] GPS de la voiture dans Waze, flèches sur la tête haute
-- [ ] Sans journaux (fichier `maintenance` absent) : tout marche pareil
+- [x] Read-only compatibility check (`aa-supervisor --compat`)
+- [x] Manual installation procedure rehearsed with the car's BusyBox
+- [ ] Follow the procedure end to end on the reference car
+- [x] Test 0.10.0 in maintenance mode on the reference car (10 November 2026)
+  - [ ] The check reports “Compatible,” including the dry-run startup
+  - [x] Android Auto stays on screen after starting automatically when the phone reconnects, and the rotary controller
+    doesn't affect iDrive
+  - [ ] Media → Android Auto → *Ouvrir* (Open): iDrive stays on its blank page, even after selecting a driving mode and
+    pressing *RETOUR* (Back)
+  - [ ] Volume: the pill shows the volume level and Android Auto stays opaque
+  - [ ] Android Auto closes about 5 seconds after Wi-Fi is turned off
+  - [ ] *Arrêter* (Stop) and *Démarrer* (Start)
+  - [ ] Rotary controller (one step per detent), buttons, touchscreen, driving modes, camera, and Assistant
+  - [ ] Car GPS in Waze and arrows on the head-up display
+- [ ] Everything works the same with logging off (no `maintenance` file)
 
-## 0.12 : câble USB
+## 0.12: USB cable
 
-- [x] Android Auto démarre par câble USB sur la voiture de référence, le sans-fil marche toujours (11 novembre 2026)
-- [ ] Trajet de 20 à 30 minutes par câble, musique en Bluetooth
-- [ ] Câble débranché puis rebranché en cours de route
-- [ ] *Arrêter* puis *Démarrer* sans débrancher, puis retour au sans-fil
-- [x] Câble essayé sur une autre voiture : X3 G01 ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)),
+- [x] Android Auto starts over USB on the reference car, and wireless still works (11 November 2026)
+- [ ] Drive for 20 to 30 minutes with USB connected and music playing over Bluetooth
+- [ ] Unplug and reconnect the cable during the drive
+- [ ] Stop and start without unplugging, then switch back to wireless
+- [x] USB cable tested on other cars: X3 G01 ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)),
   i3 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)), G21
   ([#26](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/26))
 
-## 1.0 : une autre voiture
+## 1.0: Another car
 
-- [x] Rapport de compatibilité d'une deuxième voiture, sans rien installer : X3 G01 de 2020
+- [x] Compatibility report from a second car without installing anything: 2020 X3 G01
   ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17))
-- [ ] Première installation sur une autre voiture, puis désinstallation vérifiée
-- [ ] Tableau des logiciels essayés rempli ([compatibilité](docs/COMPATIBILITE.md))
-- [x] Ancienne molette (contrôleurs C10/C20) essayée sur une vraie voiture : i3
-  ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19), 11 novembre 2026)
+- [ ] First installation on another car, followed by a verified uninstall
+- [ ] Complete the table of tested software versions ([compatibility](docs/COMPATIBILITE.md))
+- [x] Older rotary controller (C10/C20) tested in a real car: i3
+  ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19), 11 November 2026)
 
-## Limites connues
+<a name="limites-connues"></a>
 
-| Limite | Cause | Piste |
+## Known limitations
+
+| Limitation | Cause | Possible solution |
 |---|---|---|
-| Le son passe par le Bluetooth de la voiture : qualité limitée, débuts de messages vocaux coupés | pas de son par le Wi-Fi | son par le Wi-Fi |
-| Aide au stationnement ouverte sans marche arrière : Android Auto reste en retrait jusqu'à « Ouvrir » | l'écran affiché par l'iDrive n'est pas connu | lire l'état du PDC |
-| Pendant un appel, la molette agit aussi sur l'écran d'appel de l'iDrive | idem | lire l'écran affiché par l'iDrive |
-| Tête haute : la flèche ne revient pas après l'affichage d'une limitation de vitesse, et reste masquée au-delà de 1,6 km | comportement du compteur | à étudier |
-| Le texte de sortie de rond-point du compteur est en français | texte fixe | suivre la langue de l'iDrive |
-| Une seule identité de voiture pour tous : un téléphone utilisé dans deux voitures équipées les confond | `vehicleId` fixe | identifiant propre à chaque installation |
+| Audio uses the car's Bluetooth connection: quality is limited and the start of voice prompts can be cut off | No audio over Wi-Fi | Stream audio over Wi-Fi |
+| When parking assistance opens without shifting into reverse, Android Auto stays in the background until *Ouvrir* (Open) is selected | The app doesn't know which screen iDrive is displaying | Read the PDC state |
+| During a call, the rotary controller also affects the iDrive call screen | The app doesn't know which screen iDrive is displaying | Read which screen iDrive is displaying |
+| On the head-up display, the arrow doesn't return after a speed limit is shown and stays hidden beyond 1.6 km | Instrument cluster behavior | Investigate |
+| Roundabout exit text on the instrument cluster is in French | Hard-coded text | Follow the iDrive language |
+| All installations share one vehicle identity, so a phone used in two equipped cars can't tell them apart | Fixed `vehicleId` | Give each installation its own ID |
 
-## Après 1.0
+## After 1.0
 
-| Sujet | État |
+| Topic | Status |
 |---|---|
-| Son par le Wi-Fi au lieu du Bluetooth | en pause |
-| Écran affiché par l'iDrive lu directement (alertes, PDC, appels) | à étudier |
-| Boussole envoyée au téléphone (carte orientée à l'arrêt) | idée |
-| Touche favori du tableau de bord qui ouvre Android Auto | idée |
-| Pochette de l'album sur l'iDrive | idée |
-| Autres tailles d'écran | taille lue sur la voiture ; à l'essai sur un i3 en 800x480 ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) |
-| Autre structure de la bibliothèque Bluetooth | refusée pour l'instant, il manque le rapport et la bibliothèque |
-| Message à l'écran si Android Auto ne démarre pas en production | idée |
-| Mise à jour sans refaire tout le parcours | idée |
+| Audio over Wi-Fi instead of Bluetooth | On hold |
+| Read directly which screen iDrive is displaying (alerts, PDC, calls) | To investigate |
+| Send compass heading to the phone so the map stays oriented while stopped | Idea |
+| Open Android Auto with a dashboard favorites button | Idea |
+| Album art on iDrive | Idea |
+| Other screen sizes | The size is read from the car; testing is underway on an i3 with an 800x480 display ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)) |
+| Support a different Bluetooth library layout | Declined for now: the report and library are missing |
+| Show an on-screen message if Android Auto fails to start in production mode | Idea |
+| Update without repeating the full installation procedure | Idea |
 
-## Hors périmètre
+## Out of scope
 
-- NBT Evo, ID7 et MGU : autres systèmes, ce programme ne peut pas y tourner.
-- Marques autres que BMW.
+- NBT Evo, ID7, and MGU: this program cannot run on those systems.
+- Makes other than BMW.
