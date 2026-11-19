@@ -1,0 +1,424 @@
+# Changelog
+
+> [!IMPORTANT]
+> This is a translation of the authoritative [French changelog](CHANGELOG.md), based on
+> [`64b48c9794822e4a72940131cf356189de9cddcd`](https://github.com/Jiraiya43/EntryNav2-Android-Auto/blob/64b48c9794822e4a72940131cf356189de9cddcd/CHANGELOG.md).
+> It may become outdated; consult the French changelog for the source of truth.
+
+All notable changes to this project. Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+versions follow [SemVer](https://semver.org/).
+
+Each version states whether it was **tried in a car** or only **tested on a PC** (PC tests and ARM programs under
+QEMU with the car's libraries).
+
+## [Unreleased]
+
+### Changed
+
+- Android Auto reception: reuse buffers throughout each connection without changing protocol limits. Reassembled
+  message buffers larger than 1 MiB are released after use. Tested on PC.
+
+## [0.13.0-rc.5] - 2026-11-19 · PC
+
+Release candidate: no black screen when changing driving mode if iDrive is not set to show the mode window,
+USB-specific compatibility check, BMW Apps link in the wireless log. Tested on PC and under QEMU,
+**not yet tried in a car**.
+
+### Added
+
+- Wireless log: each `[WifiLink]` line says whether a phone holds the Bluetooth link for BMW Apps (My BMW,
+  AAIdrive, the phone's *Apps* option in the car), which shares a chip with Wi-Fi. With *Apps* enabled, wireless
+  Android Auto started poorly on an F40 ([#71](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/71)):
+  the logs will show whether this link is active during slowdowns. Read-only, only when logging is enabled.
+  Tested on PC.
+
+### Fixed
+
+- Compatibility check: a failed Bluetooth check (`alps`, `uuid`, `spp`) reported `@block` as if it prevented all
+  installation, although only wireless uses it. Its detail now says so (`wireless only`), and with the
+  `/var/local/data/AA/usb` file it reports `@info`. An `@info|usb|` line shows that USB mode is selected
+  ([#106](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/106): 2017 F20 using USB, Bluetooth library
+  from a different build). Tested on PC.
+- Driving mode changes: Android Auto disappeared for 3.5 s to show the mode window even when the mode display was
+  disabled in iDrive, causing a black screen at every change
+  ([discussion #28](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/28)). The app now reads this
+  iDrive setting, and Android Auto stays on screen when it is off. If the setting cannot be read, behavior is
+  unchanged. Read from the reference car's system and tested on PC, not yet tried in a car.
+
+## [0.13.0-rc.4] - 2026-11-18 · PC
+
+Release candidate: volume overlay during a call, updated compatibility check for 800x480 screens. Tested on PC and
+under QEMU, **not yet tried in a car**; outside calls, nothing changes on screen.
+
+### Fixed
+
+- Service log: `[SDR] main VideoConfig` always showed 0 for the left margin; it now shows the value sent to the
+  phone (40 on a MINI). The phone already received the correct value.
+- Compatibility check: an 800x480 screen is no longer flagged with `@warn|screen|` as never tried in a car. It has
+  worked on an i3, an F20, an X1 F48 and a MINI F57; the warning remains for other sizes.
+- Volume overlay during a call: it did not appear. During a call, the controller and steering wheel buttons adjust
+  call volume, which iDrive reports on a different scale (25 to 100 on a MINI F56), and the service ignored it.
+  It now shows the overlay after a button press or on a change, never merely when a call arrives
+  ([#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88)). Tested on PC using that car's log,
+  not yet tried in a car.
+
+## [0.13.0-rc.3] - 2026-11-16 · PC
+
+Release candidate: Android Auto moves to the background while parking assistance is opened with its button. Tested
+on PC and under QEMU, **not yet tried in a car**; nothing changes while parking assistance is off.
+
+### Added
+
+- Parking assistance opened with its button without selecting reverse: Android Auto stayed over the camera. The
+  iDrive app monitors `sensors.PDCStatus`: when parking assistance turns on, Android Auto moves to the background as
+  it does in reverse and returns when it ends. As parking assistance stays on for a while after reversing, choosing
+  Android Auto during that time (Open, the entry button, double MEDIA) keeps it on screen until the next status
+  change ([#26](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/26)).
+- App log: the screen displayed by iDrive (`hmi.graphicalContext`) at each change, to identify camera and panorama
+  screen numbers for each car.
+
+## [0.13.0-rc.2] - 2026-11-16 · PC
+
+Release candidate: two fixes for 0.13.0-rc.1, MINI touch input and Start being rejected after the clock moves
+backwards. Tested on PC and under QEMU, **not yet tried in a car**; a BMW receives the same car description and
+touch input as before.
+
+### Fixed
+
+- MINI: touch input landed 40 pixels to the right of the finger since 0.13.0-rc.1. The edges hidden by the circle are
+  margins for the phone, whose display starts 40 columns further in; it reads touch in its own pixels, so each point
+  is now given in that coordinate system ([#78](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/78),
+  [#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88)). Nothing changes on a BMW.
+- Start rejected ("pressed again within 3 s") after stopping, until the unit's clock, set back by a few hours after
+  startup, caught up with the previous start time. The iDrive app's delays (Start debounce, service shutdown,
+  automatic start 30 s after iDrive, guard reset) now use the unit's monotonic clock, unaffected by clock changes;
+  previously automatic start could also wait that long
+  ([#86](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/86)).
+
+## [0.13.0-rc.1] - 2026-11-15 · PC
+
+Release candidate: MAP opens Android Auto navigation, MINIs are recognized (brand and round screen), volume and
+mute behave like iDrive, plus the fixes from 0.12.1-rc.1 through rc.4. Tested on PC and under QEMU,
+**not yet tried in a car**; a BMW receives the same car description as before.
+
+### Added
+
+- MAP opens Android Auto navigation when it is on screen, like NAV, instead of returning the screen to the BMW map;
+  this is how iDrive handles CarPlay. Only MENU and OPTION leave Android Auto
+  ([#1](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/1)).
+- MINI: the brand coded in iDrive is read at startup; a MINI identifies itself to the phone as "MINI" rather than
+  "BMW". Its screen is framed by a circle that hides the edges: the phone keeps its buttons out of 40 columns on
+  each side of a 1280-wide screen, 25 on an 800-wide screen
+  ([#56](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/56),
+  [#64](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/64),
+  [#78](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/78)).
+- Mute on the volume overlay: pressing the volume button toggles mute in iDrive; one volume step clears it. The
+  overlay shows a crossed-out speaker.
+- Corrupted picture after a lost video frame: the session asks the phone for a full frame, not during the first
+  5 seconds of video and at most once every 10 s.
+
+### Fixed
+
+- Volume overlay opening by itself on connection with an empty bar: the car also sends another source's level
+  (with a minimum above 0), and sends the same level repeatedly. Only controller volume opens the overlay, on a
+  change or just after a volume button press, like the iDrive bar
+  ([#56](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/56)).
+- Broken encrypted stream: after 16 consecutive frames fail to decrypt, the session ends rather than keeping a
+  frozen picture until the silence timeout.
+- `[WifiLink]` log: no more false "signal 0 dBm" (the chip did not measure the level) or transmit rate to the
+  phone, which the driver does not know (it reported 1 Mbit/s everywhere).
+
+## [0.12.1-rc.4] - 2026-11-14 · PC
+
+Release candidate to try double-pressing MEDIA after another button on the older controller (the F20 in #55), on
+top of 0.12.1-rc.3. Tested on PC and under QEMU.
+
+### Fixed
+
+- Double-pressing MEDIA had no effect on the older controller after another button (MENU, for example): another
+  button made the service forget MEDIA's state, and the older controller, which sends only one message per press,
+  restored it only on the next press, losing that press for the gesture. Another button now cancels the gesture
+  without forgetting the state, and each press on the older controller is treated as preceded by a release. Found
+  and analyzed on an F20 ([#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)). Tested on PC
+  and under QEMU.
+
+## [0.12.1-rc.3] - 2026-11-14 · PC
+
+Release candidate to try the MEDIA button on the F20 in #55 (controller coded 0x5141), on top of 0.12.1-rc.2.
+Tested on PC and under QEMU; nothing changes on a G-type controller.
+
+### Fixed
+
+- MEDIA on an F20 with the small ZBE3 controller still had no effect in 0.12.1-rc.1: this car is coded with the
+  0x5141 variant, and iDrive translates its media button to code 15, which had no Android Auto key. Code 15 comes
+  only from this button: it is now MEDIA, like code 5 on other small F controllers (opens Android Auto music,
+  used for the double press). Reported with the coding read from the car
+  ([#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)). Tested on PC and under QEMU.
+
+## [0.12.1-rc.2] - 2026-11-14 · PC
+
+Release candidate to try finger swipes on an F45 (reading finger state like iDrive), on top of 0.12.1-rc.1. Tested
+on PC and under QEMU; nothing changes on the reference G20. When installed over a version older than 0.12.1-rc.1,
+it requires a head unit restart.
+
+### Fixed
+
+- Swipes received as taps on an F45: scrolling a list or moving the map was impossible; Android Auto opened the
+  touched item ([discussion #30](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/30)). The service
+  read finger state from 4 bits; iDrive reads it from 2 bits (press, move, release) and stores the adjacent 2 bits
+  separately. On a screen that sets those adjacent bits, movements were discarded and the finger appeared to lift
+  after about 100 ms. The service now splits the byte like iDrive. Nothing changes on the reference G20, whose screen
+  leaves those bits at 0. Tested on PC and under QEMU; not yet tried in a car.
+
+## [0.12.1-rc.1] - 2026-11-14 · PC
+
+Release candidate to try buttons interpreted according to car coding on F-series controllers (F20, F45), especially
+small 5-button controllers. The 6-line *Help* page was seen in the reference G20; the buttons interpreted according
+to coding have only been tested on PC and under QEMU. It changes the iDrive app: when installed over a previous
+version, it requires a head unit restart.
+
+### Fixed
+
+- Older controller buttons interpreted incorrectly on small F-series controllers: on an F20 (5-button ZBE3), MEDIA
+  was read as COM and COM as MAP, and double-pressing MEDIA did not work
+  ([#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)). iDrive chooses each button's key based on
+  the car's coding (G- or F-type controller): the iDrive app now reads the same coding at startup and writes it for
+  the service (`/tmp/entry-aad-controller`), which translates buttons like iDrive. The media button on a small F
+  controller opens Android Auto music and is used for the double press; NAV on an F controller opens its navigation.
+  Without this file (older app), the previous table remains. Nothing changes on a G-type controller. Tested on PC
+  and under QEMU; not yet tried in a car.
+- *Help* page: in the car it displays only 6 lines of about 36 characters and does not scroll (its lines cannot be
+  selected). The credit, in positions 8 to 10, remained invisible, and several lines were cut off. The page now fits
+  in 6 short lines: the credit first ("Free: github.com/Jiraiya43", the profile leading to the repository), then NAV,
+  MEDIA, COM, MENU and BACK, and the phone paired for audio.
+
+## [0.12.0] - 2026-11-13 · car
+
+First stable release of the 0.12 series: 0.12.0-rc.12, tried in the reference G20, plus two lines on the iDrive
+*Help* page. The code of the three programs is that of rc.12; only the version number announced to the phone changes.
+The modified *Help* page has only been seen on PC. It changes the iDrive app: when installed over a previous version,
+it requires a head unit restart.
+
+### Added
+
+- *Help* page in the iDrive Android Auto menu: two lines at the bottom say that the software is free and not for sale,
+  with the repository address (`github.com/Jiraiya43/EntryNav2-Android-Auto`). They remain visible in any redistributed
+  copy of the archive. Text in English, French and German.
+
+## [0.12.0-rc.12] - 2026-11-13 · car
+
+Release candidate, **tried in the reference G20** (software 202111011321), wirelessly, with an identical test kit:
+automatic start on every startup, Android Auto on Bluetooth slot 5, double MEDIA press, BACK, MAP and MENU.
+Versions 0.12.0-rc.7 through rc.11 were used only for test kits and were not published. The archive is now named
+`entrynav2-android-auto-<version>-armhf.tar`. It changes the iDrive app: when installed over a previous version,
+it requires a head unit restart.
+
+### Added
+
+- Return to an Android Auto session connected in the background with two short MEDIA presses, at most 500 ms between
+  releases. The controller reader already in the service detects the gesture; the iDrive app checks the session,
+  shutdown, calls and reverse again before opening the picture through the *Open* button's path. A single press
+  keeps its usual effect; on screen, MEDIA keeps its Android Auto controls. No new process, MOST provider or modified
+  BMW file. Proposed by [@wowDaiver](https://github.com/wowDaiver)
+  ([#40](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/40)). Tried in the reference G20 (CCS35up,
+  wireless) and an X3 G01 (USB cable); not yet on the older controller.
+
+### Changed
+
+- The project is now called **EntryNav2 (EntryEvo) Android Auto**, and its repository
+  `Jiraiya43/EntryNav2-Android-Auto`. The old address `Jiraiya43/entry-aad` redirects to the new one, including
+  published release downloads. Names on the car do not change: programs, directories, iDrive app and settings stay
+  the same, and an existing installation updates as before.
+- Bluetooth: Android Auto now takes the free serial slot 5 in the car's Bluetooth stack instead of slot 0 for BMW
+  Apps, where My BMW connects. While Android Auto was running, My BMW could no longer find the car, and the BMW
+  service for that slot treated each link as its own; one user saw wireless slowdowns disappear after blocking My BMW
+  ([#44](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/44)). If slot 5 is not free, Android Auto stays
+  on slot 0 as before; the slot is returned on shutdown. Tried in the reference G20: Android Auto starts and stays
+  connected on slot 5, while slot 0 remains available to My BMW. The effect on slowdowns remains to be confirmed by
+  those who experienced them.
+
+### Fixed
+
+- Android Auto moving to the background about 1.5 seconds after pressing BACK when it had been opened with NAV,
+  MEDIA or COM (for example BACK in its map). iDrive also opens its own screen underneath, and BACK returns it there;
+  the iDrive app mistook this change for a key leaving Android Auto. BACK and a left tilt are now handled like NAV,
+  MEDIA and COM: Android Auto keeps the screen and iDrive is returned to the blank page. MENU, MAP and OPTION still
+  leave Android Auto, even immediately after BACK. Seen in an F30's logs
+  ([#43](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/43)). Tried in the reference G20 (BACK and left
+  tilt in Android Auto, MAP and MENU leaving it); the exact F30 case, BACK after NAV, remains to be confirmed on an F30.
+- Android Auto session disconnected 5 seconds after MENU or MAP when no music is playing: some phones send nothing
+  while iDrive has the screen, and the service thought they had gone away. After 2 seconds without a message, the
+  head unit now sends the phone a ping itself, then one per second. A phone that responds keeps its session; one
+  that does not still loses it after 5 seconds, as before. Found by [@wowDaiver](https://github.com/wowDaiver) on an
+  X3 G01 over USB ([#40](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/40)). Tried in the reference G20
+  without visible change; its phone sends its own pings, so the silent-phone case was verified only on PC and under
+  QEMU.
+- Missing arrows on the G01 / EntryNav2 002.146.002 cluster: the cluster rejected the second route model in the
+  captured journey with `0x26`, then the service cleared guidance. Creating
+  `/var/local/data/AA/kombi-single-maneuver` and restarting Android Auto selects a graph limited to the next
+  maneuver; without this file, the original graph remains unchanged. No new network calls: a subset of the existing
+  guidance methods is sent. Tried in a car on November 12, 2026, based on 0.12.0-rc.2: arrows confirmed with Google
+  Maps and Yandex Maps, startup and cleanup acknowledged. The current port is verified on PC; long journeys,
+  successive maneuvers and lanes remain to be validated while driving.
+- Controller still operating iDrive under Android Auto when the latter returned over an iDrive screen (double MEDIA
+  press, automatic start): iDrive then rejected the blank page and Android Auto stayed on screen without it. After
+  the first rejection, the app opens its own blank window and requests the blank page underneath, as when iDrive
+  rejects its menu at startup. Tried in the reference G20: double MEDIA on the Media screen and automatic start;
+  the blank page is obtained and the controller operates only Android Auto.
+
+## [0.12.0-rc.6] - 2026-11-12 · car
+
+Release candidate, **tried in a BMW G20** wirelessly: iDrive accepts the new app, and Android Auto comes on screen
+by itself and stays there. At that startup, iDrive accepted the first request: going through the app window when it
+refuses has only run in PC tests, like the screen adaptation and older controller, which were separately confirmed
+on a BMW i3. It changes the iDrive app: when installed over a previous version, it requires a head unit restart.
+
+### Added
+
+- Screens other than 1280x480: the service reads the screen size from the car and asks the phone for a suitable
+  picture (800x480, 1280x720 or 1920x1080), without configuration. The compatibility check no longer blocks on
+  size: it reports it (`@ok|video|800x480`) and warns if it has not been tried (`@warn|screen|`). On a 1280x480
+  screen, what is sent to the phone is identical byte for byte.
+  [Details](docs/COMPATIBILITE.md#autres-tailles-décran) ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)).
+  Tried in an i3 with an 800x480 screen, by cable; other sizes are tested on PC.
+- Logs: every Bluetooth connection the car opens, accepts or loses now says whether the device is the Android Auto
+  phone or another device (no address is logged), and every disconnection gives the reason from the car's Bluetooth
+  stack (`reason=`). The head unit's Bluetooth and Wi-Fi share a chip: these lines show what Bluetooth is doing while
+  Android Auto uses Wi-Fi.
+- Service: the Android Auto Bluetooth link returning during a session is now listened to. On this unit the phone
+  reopens it about every 12 seconds; the service still never writes to it first, so as not to restart the current
+  session, but it answers a ping and logs what the phone sends.
+- Logs: every 10 seconds of a wireless or wired session, the phone's longest silence
+  (`[Session] in 10 s: the phone's longest silence ... ms`). A projecting phone sends something every second:
+  several seconds of silence indicate a stalled connection, which nearby `[WifiLink]` and Bluetooth lines help explain.
+
+### Fixed
+
+- Android Auto appearing by itself when the car was unlocked, then disappearing after 4 seconds: it had to be
+  reopened manually. iDrive does not execute an app's screen requests while one of its own windows is on top, and
+  with the car unlocked but not started, that can last until a button is pressed. Since 0.9.4 the app then removed
+  Android Auto. Now the service keeps it in the background on connection while the app puts iDrive on its page. If
+  iDrive refuses, the app opens its own blank window, which iDrive allows an app to do to come to the front, requests
+  its page underneath, closes the window, and Android Auto appears: 2 seconds in all. If even that is refused, Android
+  Auto still appears and stays on screen, and the app requests its page again every second; until then the controller
+  also operates the hidden iDrive screen underneath. Changes the iDrive app: restart the unit after installation.
+- Android Auto refusing to start for an entire journey, with `UDP 127.0.0.1:52790 already taken` in the service log.
+  The iDrive app and service communicated over a local network port in the range the unit randomly assigns to its
+  own programs: on some startups another program received that port, and the service wrongly believed another service
+  was already running. They now communicate over an abstract Unix socket, without a port that another program could
+  receive by chance. Present since 0.10.0, seen once on the reference car. Changes the iDrive app: restart the unit
+  after installation. Tried in a car.
+- Unresponsive controller on a car with the older controller (BMW i3): the service could decode its messages (C10,
+  C20) but never requested them, so the car did not send them. It now requests them when the controller does not
+  respond using the G20 protocol within 2 seconds. A responding car, like the G20, receives nothing extra, and only
+  one protocol is kept per car. Reported by kedzior12
+  ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)), who tried it on an i3: rotation, press and
+  tilt reach Android Auto.
+
+## [0.12.0-rc.2] - 2026-11-11 · PC
+
+Release candidate, **tested on PC only**: to be tried in a car. It changes the iDrive app: when installed over
+0.12.0-rc.1, it requires a head unit restart.
+
+### Added
+
+- iDrive menu: the **USB cable instead of wireless** checkbox selects the mode without a PC or SSH. It creates or
+  removes the `usb` file; if Android Auto is running, it stops and restarts in the new mode. The mode is never
+  inferred from what is plugged in: a passenger charging a phone changes nothing. A help line reminds users that audio
+  remains on Bluetooth. [Details](docs/USB.md). Tested on PC.
+- Logs: Wi-Fi quality with the phone, a `[WifiLink]` line at connection and every 10 seconds thereafter (frequency,
+  signal, rates, retransmitted and lost frames, round-trip time). Read-only, only when logging is enabled, nothing
+  in USB mode. [Reading these lines](docs/MAINTENANCE.md#qualité-du-wi-fi). Tested on PC.
+
+### Changed
+
+- Installation: the version number is now written only twice (the `scp` command and the `V=` line), instead of
+  repeated in every command ([#19](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/19)).
+- Roadmap: USB cable is no longer "out of scope"; its remaining tests are listed, and the first compatibility report
+  from another car is recorded ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)).
+
+## [0.12.0-rc.1] - 2026-11-11 · car
+
+Release candidate, **tried in a BMW G20**: Android Auto starts wirelessly and by USB cable. Still to confirm by cable:
+reliability on a long journey, unplugging while on the road, and other phones and cars. The 0.11.0-rc.1 changes are
+included; 0.11.0 will not be released separately.
+
+### Added
+
+- Experimental, optional Android Auto over USB: with `/var/local/data/AA/usb`, the service waits for an Android
+  phone on the car's USB ports instead of preparing Bluetooth and Wi-Fi. Without this file, nothing changes: Android
+  Auto remains wireless. Audio stays on the car's Bluetooth. [Enabling and limitations](docs/USB.md). Idea, first car
+  tests and observations on BMW's USB service: [@wowDaiver](https://github.com/wowDaiver)
+  ([#18](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/18)). Tried in a car.
+- New writes to a device in the car: accessory mode requests (AOA 51, 52, 53) and a USB reset, sent only to a
+  connected Android phone and only in USB mode. No USB interface is taken from a BMW driver or program.
+
+## [0.11.0-rc.1] - 2026-11-10 · PC
+
+Release candidate, **tested on PC only**: to be tried in a car before 0.11.0. When installed over 0.10.0, it requires
+a head unit restart.
+
+### Fixed
+
+- iDrive blank page: its delays (1, 3, 10 and 15 s) no longer depend on the car's clock, which GPS can reset while
+  driving ([#2](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/2)). Tested on PC.
+- Reverse: the blank page is no longer requested over the reversing camera when the camera takes over before Android
+  Auto moves aside ([#3](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/3)). Tested on PC.
+
+### Changed
+
+- Without a `vehicle` file, the phone sees a BMW "iDrive" instead of an "M340i", the test car's model
+  ([#8](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/8)). The `vehicle` file supplies the actual model.
+  Tested on PC.
+- The `evo-trial` supervisor is now called `aa-supervisor`
+  ([#7](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/7)): its program is `/opt/aa/aa-supervisor`,
+  and the service's `--trial-seconds` option becomes `--limit-seconds`. Installation step 3 removes the old program.
+  Tested on PC.
+- The service announces the project version (`VERSION` file) to the phone as the head unit's software version,
+  instead of the fixed value `1.3.33` ([#9](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/9)).
+  Tested on PC.
+- Origins of external data (Android Auto certificate, Google's DHU description, waiting images, car captures) recorded
+  in the files and licence. The programs are unchanged.
+
+## [0.10.0] - 2026-11-10 · car
+
+First public release. Tried in a 2019 BMW G20, iDrive software `202111011321`.
+
+### Added
+
+- **Wireless Android Auto** in iDrive: the phone pairs over Bluetooth, then joins the car's Wi-Fi.
+- **iDrive app**: an *Android Auto* entry in the Media menu, with Start, Stop, automatic start and help.
+  Automatically started Android Auto stays on screen, with the controller having no effect on iDrive.
+- **Original controls**: controller, buttons (NAV and MEDIA open Android Auto apps), touch, steering wheel buttons,
+  voice button for the Assistant, car microphone.
+- **Car GPS** sent to the phone, day and night, driving modes, reversing camera, volume overlay.
+- **Guidance on the cluster and head-up display**: arrow, distance, street, roundabout exit.
+- **Compatibility check** without modifying anything (`evo-trial --compat`) and **installation procedure** over SSH
+  ([docs/INSTALLATION.md](docs/INSTALLATION.md)), with `entry-aad-X.Y.Z-armhf.tar` archive and checksums.
+- **Safeguards**: the app moves aside if iDrive crashes several times after loading it; Bluetooth is returned to
+  iDrive on shutdown.
+- **Tests**: every byte sent to the phone and cluster is compared with a fixed capture, on PC and under QEMU.
+
+### Limitations
+
+- Tried in only one car. The installation procedure was rehearsed with the car's BusyBox under QEMU, but has not yet
+  been followed in a car.
+- See the [known limitations](ROADMAP.md#limites-connues).
+
+[Unreleased]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.13.0-rc.5...HEAD
+[0.13.0-rc.5]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.5
+[0.13.0-rc.4]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.4
+[0.13.0-rc.3]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.3
+[0.13.0-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.2
+[0.13.0-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.1
+[0.12.1-rc.4]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.4
+[0.12.1-rc.3]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.3
+[0.12.1-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.2
+[0.12.1-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.1-rc.1
+[0.12.0]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0
+[0.12.0-rc.12]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.12
+[0.12.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.6
+[0.12.0-rc.2]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.2
+[0.12.0-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.12.0-rc.1
+[0.11.0-rc.1]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.11.0-rc.1
+[0.10.0]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.10.0

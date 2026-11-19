@@ -44,7 +44,8 @@ English · [Français](README.fr.md)
 | Other cars | reported working by their owners: G20, G21, X3 G01, F20, F21, F30, F40, F45, X1 F48, i3, MINI F54, F56, F57 ([list](docs/COMPATIBILITE.md#voitures-essayées)); a compatibility check is built in |
 
 Every change is tested on a PC, and the ARM programs run under QEMU against the car's own libraries. Only a car test
-counts as proof: [CHANGELOG.md](CHANGELOG.md) says for each version whether it was tried in a car or only tested on a PC.
+counts as proof: [CHANGELOG.en.md](CHANGELOG.en.md) says for each version whether it was tried in a car or only tested
+on a PC. The [French changelog](CHANGELOG.md) is the authoritative version.
 
 ## Requirements
 
