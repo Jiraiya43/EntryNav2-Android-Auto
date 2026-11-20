@@ -30,6 +30,8 @@ HoldMachine::HoldMachine(HoldIo& io)
       unfocusedPolls_(0),
       leftSeen_(0),
       menuHoldMs_(-1000),
+      takeovers_(0),
+      takeoverSince_(0),
       waiting_(false),
       unheld_(false),
       popupOpen_(false),
@@ -183,6 +185,37 @@ void HoldMachine::requestShow() {
 bool HoldMachine::appKeyRecent() {
     long age = 0;
     return io_.appKeyAge(&age) && age <= kAppKeyS;
+}
+
+// A key left to iDrive (MENU, OPTION, ...) was pressed lately. Without one, iDrive left the blank state by itself.
+bool HoldMachine::hardKeyRecent() {
+    long age = 0;
+    return io_.hardKeyAge(&age) && age <= kHardKeyS;
+}
+
+// iDrive took the screen without a key: ask for the blank state again, a bounded number of times per window, so a
+// radio that keeps retuning cannot start a fight; past it the caller steps aside as for a key.
+bool HoldMachine::winBackTakeover(long now) {
+    if (hardKeyRecent()) {
+        return false;
+    }
+    if (!takeoverSince_ || now - takeoverSince_ > kTakeoverWindowS) {
+        takeoverSince_ = now;
+        takeovers_ = 0;
+    }
+    if (takeovers_ >= kTakeoverMax) {
+        say("hold: iDrive took the screen without a key %d times in %d s: not won back again", takeovers_,
+            kTakeoverWindowS);
+        return false;
+    }
+    ++takeovers_;
+    holdTries_ = 0;
+    menuRouteTries_ = 0;
+    popupTried_ = false;
+    holdGaveUp_ = false;
+    say("hold: iDrive left state %u without a key: won back, %d of %d", kAaState, takeovers_, kTakeoverMax);
+    fireHold("iDrive took the screen without a key", now);
+    return true;
 }
 
 bool HoldMachine::keepForAppKey(const char* why, long now) {
@@ -573,6 +606,9 @@ void HoldMachine::poll(const ServiceState& service, long now) {
         return;
     }
     leftSeen_ = 0;
+    if (winBackTakeover(now)) {
+        return;
+    }
     hideSent_ = true;
     holding_ = false;
     io_.send("hide");

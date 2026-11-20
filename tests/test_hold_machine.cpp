@@ -41,7 +41,7 @@ int g_failures = 0;
 
 class Recorder : public HoldIo {
 public:
-    Recorder() : appKey(false), appKeyAt(0), now(nullptr), reads(0) {}
+    Recorder() : appKey(false), appKeyAt(0), hardKey(true), hardKeyAt(0), now(nullptr), reads(0) {}
     void triggerEvent(unsigned event) override {
         char text[16];
         snprintf(text, sizeof(text), "event %u", event);
@@ -65,12 +65,22 @@ public:
         appKey = false;
         out.push_back("app key removed");
     }
+    // By default a key was just pressed: a screen change is a hard key, as before. A test clears it for "no key".
+    bool hardKeyAge(long* seconds) override {
+        if (!hardKey) {
+            return false;
+        }
+        *seconds = hardKeyAt ? *now - hardKeyAt : 0;
+        return true;
+    }
 
     std::vector<std::string> out;
     std::vector<std::string> logs;
     ServiceState service;
     bool appKey;
     long appKeyAt;    // when the service wrote the file, on the car's clock below
+    bool hardKey;     // the service wrote the hard key file
+    long hardKeyAt;   // when; 0: just now
     const long* now;  // that clock
     int reads;
 };
@@ -850,6 +860,85 @@ void hardKeys() {
     }
 }
 
+// iDrive leaves the blank state with no key left to iDrive (the radio taking the screen on an FM retune): won back.
+void takenWithoutKey() {
+    {  // no key file: event 52 on the second poll, no "hide"; the blank state back ends it
+        Car c;
+        heldOnBlank(c);
+        c.io.hardKey = false;
+        c.blankLeft();
+        CHECK_OUT(c, "");
+        c.poll();
+        CHECK_OUT(c, "");
+        c.poll();
+        CHECK_OUT(c, "event 52");
+        CHECK(c.logged("without a key"));
+        CHECK(c.hold.holding());
+        c.blankShown();
+        c.polls(3);
+        CHECK_OUT(c, "");
+    }
+    {  // a key file older than 6 s does not explain it either
+        Car c;
+        heldOnBlank(c);
+        c.io.hardKeyAt = c.now - 7;
+        c.blankLeft();
+        c.polls(2);
+        CHECK_OUT(c, "event 52");
+    }
+    {  // a key 3 s before: a hard key, Android Auto steps aside as before
+        Car c;
+        heldOnBlank(c);
+        c.io.hardKeyAt = c.now - 3;
+        c.blankLeft();
+        c.polls(2);
+        CHECK_OUT(c, "hide");
+    }
+    {  // the radio keeps retuning: 5 won back in the window, then the step aside; a new window starts over
+        Car c;
+        heldOnBlank(c);
+        c.io.hardKey = false;
+        for (int i = 0; i < 5; ++i) {
+            c.blankLeft();
+            c.polls(2);
+            CHECK_OUT(c, "event 52");
+            c.blankShown();
+            c.polls(2);
+            CHECK_OUT(c, "");
+        }
+        c.blankLeft();
+        c.polls(2);
+        CHECK_OUT(c, "hide");
+        CHECK(c.logged("not won back again"));
+    }
+    {  // the window is over: the count starts again
+        Car c;
+        heldOnBlank(c);
+        c.io.hardKey = false;
+        for (int i = 0; i < 5; ++i) {
+            c.blankLeft();
+            c.polls(2);
+            CHECK_OUT(c, "event 52");
+            c.blankShown();
+            c.polls(1);
+            CHECK_OUT(c, "");
+        }
+        c.now += 125;
+        c.blankLeft();
+        c.polls(2);
+        CHECK_OUT(c, "event 52");
+    }
+    {  // in reverse nothing is won back
+        Car c;
+        heldOnBlank(c);
+        c.io.hardKey = false;
+        c.gear(evo::app::kReverseGear);
+        c.blankLeft();
+        c.polls(3);
+        CHECK_OUT(c, "");
+    }
+}
+
 void stepsAsideByItself() {
     {  // the phone's exit icon: iDrive main menu
         Car c;
@@ -1041,6 +1130,7 @@ int main() {
     calls();
     appKeys();
     hardKeys();
+    takenWithoutKey();
     stepsAsideByItself();
     backToBlankWhileMinimized();
     startWhileRunning();

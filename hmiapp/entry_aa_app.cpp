@@ -82,6 +82,14 @@ public:
         *seconds = static_cast<long>(time(nullptr) - st.st_mtime);
         return true;
     }
+    bool hardKeyAge(long* seconds) override {
+        struct stat st;
+        if (stat(contract::kHardKeyFile, &st) != 0) {
+            return false;
+        }
+        *seconds = static_cast<long>(time(nullptr) - st.st_mtime);
+        return true;
+    }
     void removeAppKey() override { unlink(contract::kAppKeyFile); }
 };
 AppHoldIo g_holdIo;

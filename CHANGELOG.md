@@ -8,6 +8,16 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- iDrive : quand l'iDrive quittait l'état vide d'Android Auto sans qu'aucune touche soit pressée (sur une X1 F48 en
+  mouvement, la radio FM reprend l'écran toute seule), l'appli le prenait pour une touche physique et effaçait
+  l'image jusqu'à ce que le conducteur la rouvre. Le service écrit désormais `/tmp/entry-aad-hardkey` pour toute touche
+  laissée à l'iDrive ; sans touche dans les 6 s, l'appli redemande l'état vide (au plus 5 fois par 2 minutes, puis
+  l'image s'efface comme avant). Marche arrière, appel, park assist et touches MENU, OPTION et COM ne changent pas.
+  Testé sur PC. Essayé en voiture (X1 F48) sur un seul cas, repris en 1,4 s ; plusieurs prises d'écran de suite et
+  les touches que le service ne voit pas (bouton source du volant, voix) ne sont pas essayées.
+
 ## [0.13.0-rc.7] - 2026-11-20 · PC
 
 Version candidate : après une coupure du sans-fil, Android Auto revient tout seul quand le téléphone garde son lien

@@ -41,6 +41,7 @@ constexpr char kServiceStop[] = "/tmp/entry-aa-service/STOP";  // created by the
 constexpr char kServiceLog[] = "/tmp/entry-aa-service.log";
 constexpr char kStateFile[] = "/tmp/entry-aad-state";             // "state pid overlay", written by the service
 constexpr char kAppKeyFile[] = "/tmp/entry-aad-appkey";           // NAV/MEDIA/COM/BACK kept Android Auto up
+constexpr char kHardKeyFile[] = "/tmp/entry-aad-hardkey";         // a hard key went to iDrive: its mtime is when
 constexpr char kDayNightFile[] = "/tmp/entry-aad-daynight";       // day or night, written by the app
 constexpr char kControllerFile[] = "/tmp/entry-aad-controller";   // the car's key coding, written by the app
 constexpr char kBrandFile[] = "/tmp/entry-aad-brand";             // "BMW" or "MINI", as iDrive is coded
