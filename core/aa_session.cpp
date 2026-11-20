@@ -22,8 +22,8 @@ namespace {
 
 // Silence from the phone after which it is gone: a wireless phone can vanish without closing the socket, and its last
 // picture would stay on screen. Measured on the clock (tests/test_session_silence): car input wakes the thread about
-// 10 times a second. 5 s, so that a short Wi-Fi gap does not end the session.
-const uint64_t kSilenceMs = 5000;
+// 10 times a second. 10 s, so that a Wi-Fi gap does not end the session (F48: gaps of 5 s seen, the phone came back).
+const uint64_t kSilenceMs = 10000;
 // A phone does not always speak by itself. Some ping every second; others stop once iDrive has the screen and no
 // music plays (X3 G01 over USB: the session ended 5 s after MENU or MAP, PR #40). So after kPingAfterMs of silence,
 // once TLS is up, the head unit asks with a ping of its own, then again every kPingEveryMs. The answer is data like
