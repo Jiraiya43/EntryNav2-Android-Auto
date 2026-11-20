@@ -49,8 +49,6 @@ const size_t kHeader = 16;
 const size_t kRecord = 8;
 const int kStreamRecord = 4;  // the stream starts in the data of the message's record 4
 const int kContactBytes = 6;
-const int kFrameRecords = 12;  // in a whole message
-const size_t kFrameBytes = kHeader + kRecord * kFrameRecords;
 inline bool isIdent(const unsigned char* p) {
     return p[0] == 0xB0 && p[1] == 0x04 && p[2] == 0x80 && p[3] == 0x02;
 }
@@ -165,63 +163,6 @@ private:
     unsigned char lastSeq_;
     unsigned dropped_;
 };
-
-// Tests: one whole PDU (112 bytes, 12 records) carrying these contacts. counter is the stream's first byte, seq0 the
-// first record's sequence number.
-inline void buildTouchFrame(unsigned char* f, const TouchContact* c, int nc, unsigned char counter,
-                            unsigned char seq0 = 0) {
-    for (size_t i = 0; i < touchpdu::kFrameBytes; ++i) {
-        f[i] = 0;
-    }
-    const unsigned char ident[] = {0xB0, 0x04, 0x80, 0x02};
-    for (int i = 0; i < 4; ++i) {
-        f[i] = ident[i];
-    }
-    f[7] = static_cast<unsigned char>(touchpdu::kFrameBytes - 8);
-    for (int r = 0; r < touchpdu::kFrameRecords; ++r) {
-        unsigned char* record = f + touchpdu::kHeader + touchpdu::kRecord * r;
-        record[1] = r == 0 ? 0xC5 : (r == touchpdu::kFrameRecords - 1 ? 0xC3 : 0xC1);
-        record[2] = 0x40;
-        record[3] = static_cast<unsigned char>(seq0 + r);
-    }
-    unsigned char stream[32] = {0};
-    stream[0] = counter;
-    stream[1] = static_cast<unsigned char>(nc);
-    for (int k = 0; k < nc && k < kTouchMaxContacts; ++k) {
-        unsigned char* at = stream + 2 + touchpdu::kContactBytes * k;
-        at[0] = static_cast<unsigned char>(c[k].x >> 8);
-        at[1] = static_cast<unsigned char>(c[k].x & 255);
-        at[2] = static_cast<unsigned char>(c[k].y >> 8);
-        at[3] = static_cast<unsigned char>(c[k].y & 255);
-        at[4] = static_cast<unsigned char>(c[k].size);
-        at[5] = static_cast<unsigned char>((c[k].state << 4) | (c[k].id & 0x0F));
-    }
-    for (int i = 0; i < 32; ++i) {
-        f[touchpdu::kHeader + touchpdu::kRecord * (touchpdu::kStreamRecord + i / 4) + 4 + i % 4] = stream[i];
-    }
-}
-
-// Tests: a whole PDU (as built above) cut into datagrams of recsPer[k] records, as the 1440x540 head units send it.
-// Datagram k goes to dg + 112 * k, its size to sizes[k]. Returns the datagram count.
-inline int splitTouchFrame(const unsigned char* f, const int* recsPer, int parts, unsigned char* dg, int* sizes) {
-    int first = 0, k = 0;
-    for (; k < parts && first < touchpdu::kFrameRecords; ++k) {
-        const int records = first + recsPer[k] > touchpdu::kFrameRecords ? touchpdu::kFrameRecords - first : recsPer[k];
-        unsigned char* d = dg + touchpdu::kFrameBytes * k;
-        for (size_t i = 0; i < touchpdu::kHeader; ++i) {
-            d[i] = f[i];
-        }
-        const int size = static_cast<int>(touchpdu::kHeader + touchpdu::kRecord * records);
-        d[4] = d[5] = d[6] = 0;
-        d[7] = static_cast<unsigned char>(size - 8);
-        for (int i = 0; i < static_cast<int>(touchpdu::kRecord) * records; ++i) {
-            d[touchpdu::kHeader + i] = f[touchpdu::kHeader + touchpdu::kRecord * first + i];
-        }
-        sizes[k] = size;
-        first += records;
-    }
-    return k;
-}
 
 }  // namespace aa
 

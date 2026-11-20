@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "evo_touch.hpp"
+#include "touch_fixture.hpp"
 #define CHECK(x)                                                 \
     do {                                                         \
         if (!(x)) {                                              \
@@ -66,14 +67,14 @@ static int controller() {  // the touch controller: fixed source port like 30501
     return s;
 }
 static void sendTouch(int ctl, int x, int y, int state, unsigned char seq) {
-    unsigned char f[112];
+    unsigned char f[touch_fixture::kFrameBytes];
     aa::TouchContact c;
     c.id = 0;
     c.state = state;
     c.x = x;
     c.y = y;
     c.size = 8;
-    aa::buildTouchFrame(f, &c, 1, 0, seq);
+    touch_fixture::buildTouchFrame(f, c, seq);
     sockaddr_in to;
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
