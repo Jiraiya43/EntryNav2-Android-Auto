@@ -56,6 +56,7 @@ ph ch=4 fl=0b 8001 08a102
 ph ch=0 fl=03 000b 08847f
 hu ch=6 fl=0b 8003 0802100a1800
 hu ch=6 fl=0b 8008 08011000
+hu ch=6 fl=0b 8008 08021001
 hu ch=8 fl=0b 8003 0802100a1800
 hu ch=2 fl=0b 8003 0802100a1800
 hu ch=3 fl=0b 8003 0802100a1800
@@ -94,7 +95,7 @@ ph ch=0 fl=03 000b 08867f
 hu ch=6 fl=0b 8008 08021000
 hu ch=6 fl=0b 8008 08011000 (x2)
 hu ch=0 fl=03 000c 08867f
--- input bindings; the next drain also sends the focus kept from before the video setup
+-- input bindings
 ph ch=3 fl=0b 8002 0a0103
 ph ch=5 fl=0b 8002 -
 ph ch=7 fl=0b 8002 0a03030413
@@ -104,7 +105,6 @@ hu ch=5 fl=0b 8003 0800
 hu ch=7 fl=0b 8003 0800
 hu ch=0 fl=03 000c 08877f
 ph ch=0 fl=03 000b 08887f
-hu ch=6 fl=0b 8008 08021001
 hu ch=7 fl=0b 8001 08<time>220a0a080803100118002000
 hu ch=0 fl=03 000c 08887f
 ph ch=0 fl=03 000b 08897f
