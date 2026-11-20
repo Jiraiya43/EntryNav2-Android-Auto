@@ -231,6 +231,13 @@ void ServiceApp::audioButton(void* user) {
 // sometimes not). If iDrive stays on the blank Android Auto page the iDrive app opens its main menu. The Android
 // Auto row brings the phone back.
 void ServiceApp::hardKey(const char* name, void* user) {
+    // Any key left to iDrive: the iDrive app tells a key from iDrive taking the screen by itself (radio, FM retune).
+    const std::string tmp = std::string(contract::kHardKeyFile) + ".tmp";
+    if (FILE* f = fopen(tmp.c_str(), "w")) {
+        fprintf(f, "hardkey %s\n", name);
+        fclose(f);
+        rename(tmp.c_str(), contract::kHardKeyFile);
+    }
     // OPTION opens the Android Auto menu of the iDrive app (Stop, start automatically): see the app's hold logic.
     // NAV, MAP and MEDIA always go to Android Auto (appKey); COM reaches here only during a call.
     static const char* const leave[] = {"MENU", "COM", "OPTIONS"};

@@ -35,6 +35,9 @@
 //   event 52 every two polls without focus.
 // - Hard key (MENU, MEDIA, NAV, COM, MAP, OPTION): iDrive left the blank state. Confirmed on a second poll within 3 s,
 //   Android Auto steps aside ("hide"), the way MENU leaves native CarPlay; the Android Auto entry brings it back.
+// - Not a key: iDrive left the blank state and the service saw no key left to iDrive within 6 s (the radio taking the
+//   screen on an FM retune, seen on an F48 once the car moves): event 52 again, like a key that keeps Android Auto,
+//   at most 5 times per 120 s; after that the "hard key" step aside below.
 // - NAV, MEDIA or COM opened an Android Auto app, or BACK / tilt left went to it (the service wrote its app key file
 //   within the last 2 s): iDrive switched to its own screen underneath, or went back to the one NAV / MEDIA / COM
 //   opened, event 52 at once so the knob does not act on that hidden screen.
@@ -84,6 +87,7 @@ public:
     virtual ServiceState readService() = 0;
     virtual bool appKeyAge(long* seconds) = 0;  // how long ago the file was written; false: no app key file
     virtual void removeAppKey() = 0;
+    virtual bool hardKeyAge(long* seconds) = 0;  // the same for a key left to iDrive (MENU, OPTION, ...)
 
 protected:
     // Never deleted through this interface: no virtual destructor, so the app's instance has nothing to run at exit
@@ -97,9 +101,12 @@ public:
     static const int kMenuRouteTries = 3;    // events 51 to reach it through our menu
     static const int kDriveModeQuietS = 15;  // after a driving mode change, its display's focus loss is not fought
     static const int kAppKeyS = 2;           // an app key file this recent means NAV / MEDIA / COM was just pressed
-    static const int kCallEndS = 10;         // a call that ended this recently takes iDrive back to the blank state
-    static const int kCameraWaitS = 15;      // fall back if iDrive never restores focus to our blank state
-    static const long kMenuRefireMs = 300;   // our menu's focus fires event 52 at most this often
+    static const int kHardKeyS = 6;     // a key left to iDrive this recently explains iDrive leaving the blank state
+    static const int kTakeoverMax = 5;  // iDrive takings of the screen without a key won back per window
+    static const int kTakeoverWindowS = 120;
+    static const int kCallEndS = 10;        // a call that ended this recently takes iDrive back to the blank state
+    static const int kCameraWaitS = 15;     // fall back if iDrive never restores focus to our blank state
+    static const long kMenuRefireMs = 300;  // our menu's focus fires event 52 at most this often
 
     explicit HoldMachine(HoldIo& io);
 
@@ -139,6 +146,8 @@ private:
     void fireHold(const char* why, long now);
     void holdViaMenu(const char* why, long now);
     bool appKeyRecent();
+    bool hardKeyRecent();
+    bool winBackTakeover(long now);
     bool keepForAppKey(const char* why, long now);
     void flushGear(const char* why);
     void updatePopupPeek(bool covered, long now);
@@ -169,6 +178,8 @@ private:
     int unfocusedPolls_;  // polls with the blank state shown but unfocused
     long leftSeen_;       // first poll that saw iDrive away from the blank state (hard key), 0: none
     long menuHoldMs_;     // last event 52 fired by our menu's focus
+    int takeovers_;       // screens iDrive took without a key, won back in this window
+    long takeoverSince_;  // start of that window
 
     // Android Auto aside until iDrive opens our menu
     bool waiting_;
