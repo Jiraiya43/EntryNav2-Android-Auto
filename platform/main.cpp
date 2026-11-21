@@ -8,6 +8,8 @@
 // the USB half of a wired one in usb_loop.
 // clang-format off
 #include "alps_spp.hpp"
+#include "audio_route.hpp"
+#include "evo_audio.hpp"
 #include "car_brand.hpp"
 #include "evo_ap.hpp"
 #include "evo_video.hpp"
@@ -158,6 +160,10 @@ aa::CarBrand readCarBrand() {
 }  // namespace
 
 int main(int argc, char** argv) {
+    // The sound route helper, run by the service itself (audio_route.hpp): nothing else of the service starts.
+    if (argc == 4 && !strcmp(argv[1], "--audio-route")) {
+        return evo::audioRouteMain(argv[2], argv[3]);
+    }
     bool run = false, monitor = false, introspect = false, configure = false, video = true, service = false;
     bool usb = false;
     const char* usbPort = nullptr;
@@ -293,6 +299,13 @@ int main(int argc, char** argv) {
     evo::EvoKnob knob;
     evo::EvoControl control;
     const bool logsKept = access(evo::contract::kMaintenance, F_OK) == 0;
+    // Sound over Wi-Fi only with its settings file, and only if the car's sound library loads: else the phone is told
+    // about no media sink and its sound stays on the car's Bluetooth.
+    evo::AudioSettings audioSettings;
+    if (evo::loadAudioSettings(evo::contract::kAudioWifi, audioSettings) && app.audio.start(audioSettings)) {
+        app.session.setAudioCallbacks(evo::EvoAudio::onData, evo::EvoAudio::onStream, &app.audio);
+        ELOG("Main", "sound over Wi-Fi: music and announcements played by this service");
+    }
     if (usb) {
         ELOG("Main", "USB cable: no Bluetooth change, no Wi-Fi, no TCP server; media over the BMW Bluetooth source");
     } else {

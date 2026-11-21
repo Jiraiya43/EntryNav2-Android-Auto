@@ -8,6 +8,12 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Ajouté
+
+- Audio Android Auto sur Wi-Fi en option (fichier `/var/local/data/AA/audio-wifi`), adapté du travail de CallMeLewis
+  dans AA-EntryNav. Les annonces de guidage peuvent être entendues sur la radio. À l'arrêt de la musique Android Auto,
+  la source iDrive précédente est rétablie si le conducteur n'en a pas sélectionné une autre. Essayé sur BMW X1 F48.
+
 ## [0.13.0-rc.7] - 2026-11-20 · PC
 
 Version candidate : après une coupure du sans-fil, Android Auto revient tout seul quand le téléphone garde son lien

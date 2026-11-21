@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 /* PC-only stand-in for the HU's libvmostclient.so.1 (tests/test_evo_wlan.cpp). Records every message sent into
  * $FAKE_VMOST_LOG and answers like wland: WLANState3 Get -> Status($FAKE_WLAN_STATE); SelectWLANState3
- * StartResultAck -> ResultAck(handle) then Status(1). $FAKE_WLAN_SILENT=1: no answer at all. */
+ * StartResultAck -> ResultAck(handle) then Status(1). $FAKE_WLAN_SILENT=1: no answer at all.
+ * ConnectionMaster route requests (tests/test_audio_route.cpp): see $FAKE_ROUTE_REFUSALS below. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +32,7 @@ struct queued {
 };
 static struct queued g_q[16];
 static int g_nq;
+static int g_refused; /* route requests refused since the last connect */
 
 static void enqueue(uint8_t fb, uint8_t in, uint16_t fkt, uint32_t op, const uint8_t* d, uint16_t len) {
     if (g_nq >= 16) {
@@ -51,6 +53,7 @@ int vmostConnect(cb_t cb, void* user, int flags) {
     g_cb = cb;
     g_user = user;
     g_nq = 0;
+    g_refused = 0;
     return pipe(g_pipe);
 }
 int vmostFblockShadowRegister(uint8_t fb, uint8_t in) {
@@ -96,7 +99,15 @@ int vmostMostMsgSend(void* msg) {
     if (getenv("FAKE_WLAN_SILENT")) {
         return 0;
     }
-    if (m->fblock == 0xA0 && m->inst == 1 && m->fkt == 0xC10 && m->op == 1) {
+    if (m->fblock == 0x03 && m->inst == 0 && (m->fkt == 0x053 || m->fkt == 0x054) && m->op == 6 && m->len == 4) {
+        /* ConnectionMaster: ErrorAck (op 9) to the first $FAKE_ROUTE_REFUSALS requests, then ResultAck (op 0xD). */
+        const char* r = getenv("FAKE_ROUTE_REFUSALS");
+        const int ok = g_refused >= (r ? atoi(r) : 0);
+        if (!ok) {
+            ++g_refused;
+        }
+        enqueue(0x03, 0, m->fkt, ok ? 0xD : 0x9, m->data, 2);
+    } else if (m->fblock == 0xA0 && m->inst == 1 && m->fkt == 0xC10 && m->op == 1) {
         const char* s = getenv("FAKE_WLAN_STATE");
         uint8_t st = (uint8_t)(s ? atoi(s) : 0);
         enqueue(0xA0, 1, 0xC10, 0xC, &st, 1);

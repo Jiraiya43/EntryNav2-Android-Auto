@@ -42,6 +42,7 @@ USB_OBJ = $(USB_SRC:.cpp=.o)
 DAEMON_SRC = platform/alps_spp.cpp platform/alps_spp_codec.cpp platform/evo_ap.cpp \
              platform/evo_ap_config.cpp platform/evo_spp_snapshot.cpp platform/evo_touch.cpp platform/evo_knob.cpp \
              platform/vmost_client.cpp platform/evo_control.cpp platform/evo_sdr_sensors.cpp platform/evo_mic.cpp \
+             platform/evo_alsa_out.cpp platform/evo_audio.cpp platform/audio_route.cpp \
              $(KOMBI_SRC) platform/evo_bmw_guidance.cpp platform/evo_pill.cpp \
              platform/peek_timing.cpp platform/wireless_loop.cpp platform/service_app.cpp platform/main.cpp \
              platform/wifi_link.cpp $(USB_SRC)
@@ -54,7 +55,7 @@ CAPTURE_OBJ = tools/evo_capture.o
 ARM_OBJ = $(sort $(DAEMON_OBJ) $(PLATFORM_OBJ) $(SUPERVISOR_OBJ) $(CHECK_OBJ) $(CAPTURE_OBJ))
 # The service's modules tests/test_wireless_lifecycle.cpp links around its fake Alps link and handshake.
 LIFECYCLE_OBJ = $(PLATFORM_OBJ) platform/evo_touch.o platform/evo_knob.o platform/vmost_client.o platform/evo_control.o \
-                platform/evo_mic.o platform/evo_pill.o $(KOMBI_OBJ) platform/evo_bmw_guidance.o platform/peek_timing.o \
+                platform/evo_mic.o platform/evo_alsa_out.o platform/evo_audio.o platform/audio_route.o platform/evo_pill.o $(KOMBI_OBJ) platform/evo_bmw_guidance.o platform/peek_timing.o \
                 platform/wifi_link.o $(USB_OBJ)
 
 VIDEO_LIBS = -l:libxsvideo.so.4 -l:libdrm_omap.so.1 -l:libdrm.so.2 -lpthread -lrt
@@ -169,6 +170,17 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	gcc -std=c99 -Wall -Wextra -Werror -shared -fPIC tests/fake_vmostclient.c -o tests/fake-vmostclient.so
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_evo_wlan.cpp platform/evo_wlan.cpp platform/vmost_client.cpp -ldl -o tests/test-evo-wlan
 	./tests/test-evo-wlan $(CURDIR)/tests/fake-vmostclient.so
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_audio_route.cpp platform/audio_route.cpp platform/vmost_client.cpp \
+	    platform/evo_process.cpp -ldl -lpthread -o tests/test-audio-route
+	./tests/test-audio-route $(CURDIR)/tests/fake-vmostclient.so
+	gcc -std=c99 -Wall -Wextra -Werror -shared -fPIC tests/fake_asound.c -o tests/fake-asound.so
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_evo_audio.cpp platform/evo_audio.cpp platform/evo_alsa_out.cpp \
+	    platform/audio_route.cpp platform/vmost_client.cpp platform/evo_process.cpp -ldl -lpthread -o tests/test-evo-audio
+	./tests/test-evo-audio $(CURDIR)/tests/fake-asound.so
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_audio_mixer.cpp -o tests/test-audio-mixer
+	./tests/test-audio-mixer
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_prompt_path.cpp -o tests/test-prompt-path
+	./tests/test-prompt-path
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_spawn_attr.cpp -o tests/test-spawn-attr
 	./tests/test-spawn-attr
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_popup_peek.cpp -o tests/test-popup-peek

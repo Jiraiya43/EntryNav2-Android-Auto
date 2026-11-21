@@ -52,6 +52,7 @@ ServiceApp::~ServiceApp() {
     mic.stop();
     kombi.stop();
     session.stop();
+    audio.stop();  // after the session, whose thread hands it the phone's sound
     video.stop();
     bt.stop();
     pthread_mutex_destroy(&mu);
@@ -411,6 +412,7 @@ void ServiceApp::ended(void* user) {
     ServiceApp* a = static_cast<ServiceApp*>(user);
     // No stop()/join here: this callback runs on the AA session thread.
     a->mic.request(false);
+    a->audio.sessionEnded();
     a->kombi.onSessionEnded();
     const bool goodbye = a->session.phoneSaidGoodbye();
     pthread_mutex_lock(&a->mu);

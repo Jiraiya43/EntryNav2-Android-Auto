@@ -32,6 +32,10 @@ using CodecConfigCallback = void (*)(const uint8_t*, size_t, void*);
 using VideoFocusCallback = void (*)(bool, uint32_t, void*);
 // The phone opens (Assistant, voice search) or closes the car microphone.
 using MicRequestCallback = void (*)(bool, void*);
+// Sound of an audio sink (channel 8 speech, 9 media): channel, s16le PCM, size, phone timestamp. Only with sound over Wi-Fi.
+using AudioDataCallback = void (*)(uint8_t, const uint8_t*, size_t, uint64_t, void*);
+// An audio sink starts (true, with the index of its configuration) or stops (false).
+using AudioStreamCallback = void (*)(uint8_t, bool, uint32_t, void*);
 // Navigation status (channel 10, ids from 0x8000): the message id, then its body.
 using NavStatusCallback = void (*)(uint16_t, const uint8_t*, size_t, void*);
 
@@ -60,6 +64,9 @@ public:
     void setVideoFocusCallback(VideoFocusCallback cb, void* user_data = nullptr);
     void setMicRequestCallback(MicRequestCallback cb, void* user_data = nullptr);
     void setNavStatusCallback(NavStatusCallback cb, void* user_data = nullptr);
+    // With a data callback the car announces the media and guidance sinks and plays their sound (sound over Wi-Fi);
+    // without, the sound goes to the car's Bluetooth.
+    void setAudioCallbacks(AudioDataCallback data, AudioStreamCallback stream, void* user_data = nullptr);
     void setTouchForwarding(bool on) { inbox_.setTouchForwarding(on); }  // on by default; keys go either way
     // The file holding the car's model and year (SdrIdentity::loadVehicleFile), read at each service discovery; kept
     // as given, so it must outlive the session. None by default: the default model and year.
@@ -131,6 +138,7 @@ private:
     void onTlsHandshake(const Message& message);
     void onDiscovery();
     void onAudioFocus(const Message& message);
+    void onAudioStop(uint8_t channel);
     void onNavigationFocus(const Message& message);
     void onByeBye(const Message& message);
     void onPing(const Message& message);
@@ -157,6 +165,8 @@ private:
     Callback<VideoFocusCallback> focus_;
     Callback<MicRequestCallback> microphone_;
     Callback<NavStatusCallback> navigation_;
+    Callback<AudioDataCallback> audio_;
+    Callback<AudioStreamCallback> audioStream_;
     const char* vehicleFile_;
     const char* softwareVersion_;
     const char* carMake_;

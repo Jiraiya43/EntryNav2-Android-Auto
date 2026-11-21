@@ -54,10 +54,11 @@ void setDiscoveryTrim(DiscoveryTrim trim);
 // and year (SdrIdentity::loadVehicleFile), given by the platform; null keeps the default ones. softwareVersion: the
 // version of the program, announced as the head unit's software version; null keeps "0.0.0". display: the panel
 // and the canvas chosen for it; the reference car's when not given. make: the car's and the head unit's maker as
-// iDrive is coded ("MINI"); null keeps "BMW".
+// iDrive is coded ("MINI"); null keeps "BMW". wifiAudio: keep the media and guidance sinks, the car plays their
+// sound; else media goes over Bluetooth.
 std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile,
                                               const char* softwareVersion, const DisplayPlan& display = DisplayPlan(),
-                                              const char* make = nullptr);
+                                              const char* make = nullptr, bool wifiAudio = false);
 
 }  // namespace aa
 

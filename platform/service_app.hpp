@@ -21,6 +21,7 @@
 #include "alps_spp.hpp"
 #include "evo_control.hpp"
 #include "evo_knob.hpp"
+#include "evo_audio.hpp"
 #include "evo_mic.hpp"
 #include "evo_pill.hpp"
 #include "evo_video.hpp"
@@ -105,6 +106,7 @@ public:
     AlpsSppLink bt;
     EvoVideo video;
     aa::AASession session;
+    EvoAudio audio;            // sound over Wi-Fi, when its settings file exists (stopped after the session)
     EvoMic mic;                // car mic for the Assistant (stopped before the session it posts to)
     evo::kombi::Arrows kombi;  // AA turn-by-turn -> HUD/cluster arrows, SOME/IP 0xB006 to the KOMBI
     aa::TcpServer server;

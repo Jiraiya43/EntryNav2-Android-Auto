@@ -12,6 +12,7 @@ Le service ne lit aucun réglage dans son environnement : ses valeurs sont fixes
 |---|---|
 | `vehicle` | Modèle et année annoncés au téléphone : `model=…` et `year=…`, une ligne chacun. Sans ce fichier : « iDrive », 2019. La marque (BMW ou MINI) vient du codage de l'iDrive |
 | `usb` | Présent : Android Auto par câble USB au lieu du sans-fil (case *Câble USB au lieu du sans-fil* du menu). Vide, ou le nom de la seule prise à surveiller : voir [USB](USB.md) |
+| `audio-wifi` | Présent : la musique et le guidage d'Android Auto passent par la sortie audio de l'unité. Vide pour les réglages par défaut. Lors de l'arrêt de la musique, la source iDrive précédente est rétablie si aucune autre source n'est active |
 | `autostart` | Présent : Android Auto démarre avec l'iDrive (case *Démarrage automatique* du menu) |
 | `entry-direct` | Présent : la ligne *Android Auto* de l'iDrive ouvre directement Android Auto, au lieu de son menu |
 | `kombi-off` | Présent : rien n'est envoyé au compteur ni à la tête haute |

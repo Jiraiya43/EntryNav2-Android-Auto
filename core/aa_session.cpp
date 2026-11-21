@@ -101,6 +101,13 @@ void AASession::setCodecConfigCallback(CodecConfigCallback cb, void* user_data) 
     codec_.user = user_data;
 }
 
+void AASession::setAudioCallbacks(AudioDataCallback data, AudioStreamCallback stream, void* user_data) {
+    audio_.fn = data;
+    audio_.user = user_data;
+    audioStream_.fn = stream;
+    audioStream_.user = user_data;
+}
+
 void AASession::setVideoFocusCallback(VideoFocusCallback cb, void* user_data) {
     focus_.fn = cb;
     focus_.user = user_data;

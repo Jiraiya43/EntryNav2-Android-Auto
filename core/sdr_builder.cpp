@@ -320,7 +320,7 @@ void setDiscoveryTrim(DiscoveryTrim trim) {
 
 std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLen, const char* vehicleFile,
                                               const char* softwareVersion, const DisplayPlan& display,
-                                              const char* make) {
+                                              const char* make, bool wifiAudio) {
     SdrIdentity identity;
     if (vehicleFile) {
         identity.loadVehicleFile(vehicleFile);
@@ -336,11 +336,18 @@ std::vector<uint8_t> buildCarServiceDiscovery(const uint8_t* base, size_t baseLe
            identity.carModel.c_str(), identity.carYear.c_str());
     tuneMainDisplay(sdr, display);
     declareTouchscreen(sdr, display);
-    removeMediaChannel(sdr);
+    if (wifiAudio) {
+        printf("[SDR] sound over Wi-Fi: media sink (channel %u) and guidance sink (channel %u) kept\n",
+               channel::kMediaAudio, channel::kGuidanceAudio);
+    } else {
+        removeMediaChannel(sdr);
+    }
     if (g_trim) {
         g_trim(sdr);
     }
-    retypeGuidanceSink(sdr);
+    if (!wifiAudio) {
+        retypeGuidanceSink(sdr);
+    }
     return sdr;
 }
 
