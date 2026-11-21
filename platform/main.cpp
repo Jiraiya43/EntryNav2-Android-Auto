@@ -301,6 +301,9 @@ int main(int argc, char** argv) {
             ELOG("Main", "car hotspot (wlan0) or its credentials unavailable");
             return 1;
         }
+        // Before the phone joins: it associates without U-APSD (evo_ap.hpp).
+        ELOG("Main", "U-APSD on the car's access point: %s",
+             evo::disableAccessPointUapsd() ? "off for phones that join from now on" : "hostapd refused, left on");
         app.server.setHotspotAddress(app.ap.ip);  // listening address and the subnet a phone must come from
         if (logsKept) {
             app.wifiLink.enable("wlan0");  // the Wi-Fi link's quality goes into them

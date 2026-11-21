@@ -11,5 +11,8 @@ namespace evo {
 bool parseHostapdConfig(const std::string& text, aa::ApInfo& out);
 // Read-only hostapd query (bounded child), then ap.conf; IP/MAC from wlan0 ioctls.
 bool loadAccessPoint(aa::ApInfo& out, std::string& source);
+// No U-APSD offered to phones that associate from now on: with it the car's WiLink 8 kept our ACKs back for seconds
+// (fw ps_poll_upsd_timeouts, 1700 in 12 min) and the phone stalled video and sound (21 November 2026).
+bool disableAccessPointUapsd();
 }  // namespace evo
 #endif

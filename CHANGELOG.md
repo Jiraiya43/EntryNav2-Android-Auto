@@ -8,6 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Sans-fil : désactive l'annonce U-APSD sur le point d'accès avant l'association du téléphone. Sur BMW X1 F48 avec
+  WiLink 8, les saccades audio et vidéo observées auparavant n'ont plus été constatées avec ce changement.
+
 ## [0.13.0-rc.7] - 2026-11-20 · PC
 
 Version candidate : après une coupure du sans-fil, Android Auto revient tout seul quand le téléphone garde son lien

@@ -28,6 +28,18 @@ static bool queryHostapd(std::string& out) {
     args.push_back("get_config");
     return runCommand(cli, args, out);
 }
+bool disableAccessPointUapsd() {
+    std::vector<std::string> args;
+    args.push_back("-p");
+    args.push_back("/var/run/hostapd");
+    args.push_back("-i");
+    args.push_back("wlan0");
+    args.push_back("set");
+    args.push_back("uapsd_advertisement_enabled");
+    args.push_back("0");
+    std::string out;
+    return runCommand("/usr/sbin/hostapd_cli", args, out) && out.find("OK") != std::string::npos;
+}
 static bool macAddress(const std::string& value) {
     if (value.size() != 17) {
         return false;
