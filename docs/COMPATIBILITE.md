@@ -42,6 +42,13 @@ sur l'i3 et sur une autre voiture avec un Galaxy S24 ([discussion #28](https://g
 
 Chaque nouvelle voiture s'ajoute ici, avec son rapport de compatibilité ([ticket « Compatibility report »](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/new/choose)).
 
+### Voiture signalée, compatibilité à confirmer
+
+Une BMW G30 est équipée d'une unité EntryNav2 (EntryEvo, version HMI `ID5_2403`, nom du logiciel `W2408C1R`).
+Son propriétaire signale que le son par USB ne fonctionne pas : avec ce projet, le son passe par le Bluetooth,
+même en mode USB. Le fonctionnement d'Android Auto et du son Bluetooth sur cette voiture reste à confirmer ; la
+version du projet, celle de `/etc/version` et la taille de l'écran ne sont pas indiquées.
+
 ## Ce que le contrôle vérifie
 
 Le contrôle est l'étape 2 de l'[installation](INSTALLATION.md#2-contrôler-la-voiture). Il ne modifie rien : les
