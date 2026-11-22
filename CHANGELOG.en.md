@@ -277,6 +277,9 @@ rebuilt only once). Tested on PC and under QEMU, **not yet tried in a car**.
 
 ### Added
 
+- Optional ARM SDK: build the programs without a copy of the car system using link-only stubs. The outputs remain
+  separate from releases; the programs still need the car's libraries to run. Tested on PC.
+
 - Logs without a PC or SSH. The Android Auto menu in iDrive has two more rows: *Keep logs*, which turns the logs on
   (the `maintenance` file), and *Copy logs to USB stick*, which copies them onto a USB stick plugged into the car, in
   an `EntryAA-logs/<date>` folder, with the head unit's software version. The row then says whether the copy worked,

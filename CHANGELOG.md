@@ -285,6 +285,10 @@ balise du point d'accès reconstruite une seule fois). Testée sur PC et sous QE
 
 ### Ajouté
 
+- SDK ARM facultatif : compilation des programmes sans copie du système de la voiture, avec des stubs utilisés
+  uniquement pour l'édition de liens. Les résultats restent séparés des versions publiées ; les programmes ont encore
+  besoin des bibliothèques de la voiture pour tourner. Testé sur PC.
+
 - Journaux sans PC ni SSH. Le menu Android Auto de l'iDrive a deux lignes de plus : *Garder les journaux*, qui active
   les journaux (le fichier `maintenance`), et *Copier les journaux sur clé USB*, qui les copie sur une clé USB
   branchée dans la voiture, dans un dossier `EntryAA-logs/<date>`, avec la version du logiciel de l'unité. La ligne
