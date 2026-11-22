@@ -41,7 +41,7 @@ Sans boîtier, sans câble obligatoire, sans remplacer aucun fichier BMW.
 |---|---|
 | Dernière version | [0.12.0](https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/latest), essayée en voiture (avant 1.0 : des défauts restent) |
 | Essayé en voiture | la voiture de référence, une BMW G20 de 2019 (logiciel iDrive `202111011321`) |
-| Autres voitures | signalées fonctionnelles par leurs propriétaires : G20, G21, X3 G01, F20, F21, F30, F40, F45, X1 F48, i3, MINI F54, F56, F57 ([liste](docs/COMPATIBILITE.md#voitures-essayées)) ; contrôle de compatibilité intégré |
+| Autres voitures | signalées fonctionnelles par leurs propriétaires : G20, G21, G30, X3 G01, F20, F21, F30, F40, F45, X1 F48, i3, MINI F54, F56, F57 ([liste](docs/COMPATIBILITE.md#voitures-essayées)) ; contrôle de compatibilité intégré |
 
 Chaque changement est testé sur PC, et les programmes ARM tournent sous QEMU avec les bibliothèques de la voiture. Seul
 un essai en voiture vaut preuve : le [CHANGELOG](CHANGELOG.md) dit pour chaque version si elle a été essayée en voiture

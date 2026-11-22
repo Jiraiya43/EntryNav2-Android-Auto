@@ -19,6 +19,7 @@ rapports de leurs propriétaires : elles disent ce qu'ils ont vu, avec la versio
 | G20 de 2019 (référence) | `202111011321` | 1280x480 | sans fil, USB | 0.12.0-rc.12 | celles du [README](../README.fr.md#ce-que-ça-fait), limites dans la [feuille de route](../ROADMAP.md#limites-connues) |
 | G20 de 2019 | `202207190806` | 1280x480 | sans fil | 0.12.0-rc.6 | marche ; lenteur au bout d'une minute avec un Galaxy Z Fold7, disparue en bloquant My BMW ([#44](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/44)) |
 | G21 320d de 2020 | `202402191339` | 1280x480 | sans fil | 0.12.0 | marche, guidage au compteur avec Waze ; lenteur en sans-fil avec un Galaxy S26 Ultra, partie avec une mise à jour d'Android Auto puis revenue ; caméra et vue panorama ouvertes par leur bouton restées sous Android Auto, à l'étude ([#26](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/26)) |
+| G30 | non indiqué (HMI `ID5_2403`, nom du logiciel `W2408C1R`) | non relevé | non indiquée | non indiquée | marche ; le son par USB ne fonctionne pas, ce projet utilise le Bluetooth pour le son |
 | X3 G01 de 2020 | `202003311616` | 1280x480 | sans fil, USB | 0.13.0-rc.1 | marche, double MEDIA ; flèches au compteur avec `kombi-single-maneuver` ; lenteur en sans-fil avec un Galaxy S24+ ([#17](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/17)) ; la touche favorite du son Bluetooth fait quitter Android Auto ([#87](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/87)) |
 | F20 118i LCI de 2017 | `201708081739` | non relevé (écran de 8,8 pouces monté après coup) | USB (unité sans Wi-Fi) | 0.13.0-rc.4 | marche : toucher, molette, son Bluetooth ; contrôle bloqué sur `alps` (bibliothèque Bluetooth d'une autre construction), sans effet en USB ; iDrive figé puis redémarré une fois au premier démarrage avec l'appli ([#106](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/106)) |
 | F20 118i LCI de 2018 | `202402191339` | 800x480 | USB ; sans fil aussi, sans CarPlay activé ni antenne Wi-Fi, téléphone près de la console | 0.12.1-rc.4 | marche, ancien contrôleur ; pastille du volume vue après un redémarrage ; MEDIA, COM et double MEDIA ([#45](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/45), [#55](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/55)) |
@@ -41,13 +42,6 @@ Un adaptateur Android Auto sans fil branché sur la prise USB, en [mode USB](USB
 sur l'i3 et sur une autre voiture avec un Galaxy S24 ([discussion #28](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/28)).
 
 Chaque nouvelle voiture s'ajoute ici, avec son rapport de compatibilité ([ticket « Compatibility report »](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/new/choose)).
-
-### Voiture signalée, compatibilité à confirmer
-
-Une BMW G30 est équipée d'une unité EntryNav2 (EntryEvo, version HMI `ID5_2403`, nom du logiciel `W2408C1R`).
-Son propriétaire signale que le son par USB ne fonctionne pas : avec ce projet, le son passe par le Bluetooth,
-même en mode USB. Le fonctionnement d'Android Auto et du son Bluetooth sur cette voiture reste à confirmer ; la
-version du projet, celle de `/etc/version` et la taille de l'écran ne sont pas indiquées.
 
 ## Ce que le contrôle vérifie
 
