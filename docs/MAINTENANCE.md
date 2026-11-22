@@ -17,7 +17,7 @@ Le service ne lit aucun réglage dans son environnement : ses valeurs sont fixes
 | `kombi-off` | Présent : rien n'est envoyé au compteur ni à la tête haute |
 | `kombi-single-maneuver` | Présent au démarrage : graphe limité à la prochaine manœuvre, pour un compteur qui refuse le trajet complet (voir ci-dessous). Sans ce fichier : graphe historique |
 | `gps-telephone` | Présent : le téléphone garde son propre GPS, celui de la voiture n'est pas transmis |
-| `maintenance` | Présent : l'appli et le service gardent leurs journaux |
+| `maintenance` | Présent : l'appli et le service gardent leurs journaux (case *Garder les journaux* du menu, voir [Journaux](#journaux)) |
 
 Exemple, couper le guidage sur le compteur, puis le rétablir :
 
@@ -65,19 +65,40 @@ pas encore en voiture. NAV et le bouton natif CarLife ne font pas partie de ce r
 Sans le fichier `maintenance`, rien n'est journalisé, ni sur la mémoire flash ni en mémoire vive. Pour chercher une
 panne : activer les journaux, reproduire, les récupérer, puis les couper.
 
+### Sans PC, depuis le menu Android Auto de l'iDrive
+
+1. Cocher *Garder les journaux*, qui crée le fichier `maintenance`. Le journal de l'appli commence aussitôt, celui du
+   service au prochain *Démarrer* (ou au prochain démarrage de l'iDrive).
+2. Reproduire la panne. Les journaux restent après le sommeil de la voiture.
+3. Brancher une clé USB (FAT32, exFAT ou NTFS), puis choisir *Copier les journaux sur clé USB*. La ligne dit ce qui
+   s'est passé : *Copie des journaux...*, puis *Journaux copiés sur la clé USB*, *Aucune clé USB trouvée*, *Aucun
+   journal : cochez Garder* ou *Copie impossible* (clé pleine, protégée ou retirée). Les journaux sont dans le dossier
+   `EntryAA-logs/<date>` de la clé, avec la version du logiciel de l'unité et un `info.txt` qui les liste. Rien n'est
+   effacé ni changé sur l'unité.
+4. Décocher *Garder les journaux*. Les journaux déjà écrits restent sur l'unité, pour une copie plus tard.
+
+Les journaux ne contiennent ni mot de passe ni adresse Wi-Fi ou Bluetooth ; ils peuvent contenir le nom Bluetooth du
+téléphone.
+
+### En SSH
+
 ```sh
 touch /var/local/data/AA/maintenance
 ```
 
 | Journal | Emplacement | Taille |
 |---|---|---|
-| Appli de l'iDrive | `/var/local/data/AA/app.log`, et `app.old.log` après rotation | 512 Ko au plus |
-| Service Android Auto | `/tmp/entry-aa-service.log` | en mémoire, perdu au redémarrage |
+| Appli de l'iDrive | `/var/local/data/AA/app.log`, et `app.old.log` après rotation | 512 Ko au plus chacun |
+| Service Android Auto | `/var/local/data/AA/service.log`, et `service.old.log` ; `/tmp/entry-aa-service.log` est un lien vers lui | 512 Ko au plus chacun, gardé après le sommeil de la voiture |
+
+Le journal du service est sur la partition de données, comme celui de l'appli : le superviseur le surveille toutes les
+5 s, et au-delà de 512 Ko il le recopie dans `service.old.log` puis le vide. Si la partition refuse de l'ouvrir, il
+va en mémoire vive dans `/tmp/entry-aa-service.log`, comme avant (perdu au sommeil de la voiture).
 
 Depuis le PC :
 
 ```sh
-scp root@169.254.1.0:/var/local/data/AA/app.log root@169.254.1.0:/tmp/entry-aa-service.log .
+scp 'root@169.254.1.0:/var/local/data/AA/*.log' .
 ```
 
 ### Qualité du Wi-Fi
@@ -107,6 +128,20 @@ Apps est lu dans la mémoire de la pile Bluetooth BMW, comme au démarrage, sans
 Auto occupe lui-même l'emplacement des BMW Apps (`takes SPP 0` dans le journal du superviseur). Par câble USB, il n'y a
 pas de ligne `[WifiLink]`.
 
+Avant chaque échange Wi-Fi avec le téléphone, le service demande au point d'accès de la voiture de ne plus proposer
+U-APSD, une économie d'énergie du téléphone, et écrit une ligne `car access point:` (journal du service, toujours) :
+
+| Fin de la ligne | Sens |
+|---|---|
+| `beacon rebuilt` | Fait : le téléphone rejoint le Wi-Fi sans U-APSD |
+| `beacon already rebuilt for this hostapd start` | Déjà fait depuis le dernier démarrage du point d'accès : le réglage seul, sans reconstruire la balise une seconde fois |
+| `a station is associated` | Un appareil était déjà sur le Wi-Fi de la voiture (téléphone revenu, iPhone en CarPlay) : personne n'est déconnecté, et cet appareil garde U-APSD jusqu'à sa prochaine connexion |
+| `RELOAD refused` | hostapd a pris le réglage mais pas la reconstruction de sa balise : le téléphone peut encore demander U-APSD |
+| `left on` | hostapd a refusé le réglage ou n'a pas répondu : rien n'a changé |
+
+Le réglage est fait dans la mémoire de hostapd, jamais dans un fichier de la voiture : un redémarrage de l'unité, ou
+de hostapd par le système, remet celui de BMW.
+
 ### Silences du téléphone et espacement des images
 
 Journaux activés, le service écrit aussi une ligne `[Session]` toutes les 10 secondes d'une session, sans fil ou USB :
@@ -128,7 +163,7 @@ Journaux activés, le service écrit aussi une ligne `[Session]` toutes les 10 s
 Pour revenir à zéro journal :
 
 ```sh
-rm -f /var/local/data/AA/maintenance /var/local/data/AA/app.log /var/local/data/AA/app.old.log /tmp/entry-aa-service.log
+cd /var/local/data/AA && rm -f maintenance app.log app.old.log service.log service.old.log /tmp/entry-aa-service.log
 ```
 
 ## Garde-fou

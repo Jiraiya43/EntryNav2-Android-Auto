@@ -8,6 +8,48 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+## [0.13.0-rc.9] - 2026-11-22 · PC
+
+Version candidate : des journaux sans PC (gardés après le sommeil de la voiture, copiés sur clé USB depuis le menu
+de l'iDrive) et un sans-fil qui revient vite après une coupure (lien Bluetooth coupé par la pile de la voiture,
+balise du point d'accès reconstruite une seule fois). Testée sur PC et sous QEMU, **pas encore essayée en voiture**.
+
+### Ajouté
+
+- Journaux sans PC ni SSH. Le menu Android Auto de l'iDrive a deux lignes de plus : *Garder les journaux*, qui active
+  les journaux (le fichier `maintenance`), et *Copier les journaux sur clé USB*, qui les copie sur une clé USB
+  branchée dans la voiture, dans un dossier `EntryAA-logs/<date>`, avec la version du logiciel de l'unité. La ligne
+  dit ensuite si la copie a marché, s'il n'y a pas de clé ou pas de journal. Rien n'est effacé ni changé sur l'unité
+  ([maintenance](docs/MAINTENANCE.md#journaux)). Testé sur PC.
+
+### Corrigé
+
+- Journal du service perdu au sommeil de la voiture : il était en mémoire vive (`/tmp`), et celui d'un trajet avait
+  disparu avant qu'on puisse le récupérer
+  ([#101](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/101),
+  [#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88)). Avec les journaux activés, il est maintenant
+  sur la partition de données, comme celui de l'appli : 512 Ko au plus, plus les 512 Ko d'avant dans
+  `service.old.log`, surveillé toutes les 5 s pour ne jamais remplir la partition. `/tmp/entry-aa-service.log` reste
+  un lien vers lui. Si la partition refuse de l'ouvrir, il retourne en mémoire vive comme avant. Testé sur PC.
+- Sans-fil : après une coupure, le téléphone mettait 3 à 7 s à revenir au lieu de 2 s avec la 0.13.0-rc.8
+  ([discussion #30](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/30), F45). Pendant qu'il rejoint
+  le Wi-Fi, le téléphone rouvre son lien Bluetooth toutes les 400 ms environ, et le service faisait reconstruire la
+  balise du point d'accès à chaque fois (jusqu'à 6 fois en 4 s), au risque de le déconnecter en pleine connexion. La
+  balise n'est plus reconstruite qu'une fois par démarrage du point d'accès ; le réglage, lui, est toujours refait.
+  Testé sur PC.
+- Sans-fil : la relance du téléphone après une coupure (0.13.0-rc.7) ne coupait le lien Bluetooth que de notre côté.
+  Le téléphone ne voyait rien et continuait d'attendre : revenu en 70 s, ou pas du tout, sur la MINI F56 de
+  [#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88). Le service demande maintenant à la pile
+  Bluetooth de la voiture de couper ce lien, comme le fait Arrêter : le téléphone le voit se fermer, le rouvre et
+  reçoit une nouvelle demande, comme après Arrêter puis Démarrer, où il revenait en 2 s. Testé sur PC.
+
+## [0.13.0-rc.8] - 2026-11-22 · PC
+
+Version candidate : un sans-fil plus solide (plus d'U-APSD proposé au téléphone, séance relancée après un envoi raté
+ou un chiffrement cassé, Bluetooth rendu à l'arrêt), une image qui ne fige plus après des messages perdus ou un
+décodeur bloqué, le côté du conducteur lu dans le codage de la voiture, plus d'écran vide après la marche arrière.
+Testée sur PC et sous QEMU, **pas encore essayée en voiture**.
+
 ### Ajouté
 
 - Côté du conducteur lu dans le codage de la voiture : l'appli iDrive demande à l'iDrive si la voiture est codée
@@ -76,9 +118,9 @@ QEMU avec les bibliothèques de la voiture).
 - Description de la voiture : le téléphone recevait toujours celle du modèle de Google (le Desktop Head Unit), soit
   une conduite à gauche, l'essence plus l'électrique et une prise de recharge Tesla Supercharger. Une voiture à volant
   à droite était donc annoncée à gauche, et Android Auto disposait son écran pour le mauvais côté. Le fichier
-  `vehicle` accepte maintenant `side=left` ou `side=right` et `fuel=petrol` ou `fuel=diesel` (sans eux : conduite à
-  gauche, essence) ; le téléphone reçoit le côté du conducteur, un seul carburant et aucune prise de recharge
-  ([installation](docs/INSTALLATION.md)). Testé sur PC.
+  `vehicle` accepte maintenant `side=left` ou `side=right` et `fuel=petrol` ou `fuel=diesel` (sans eux : le côté codé
+  dans la voiture, voir « Ajouté », et l'essence) ; le téléphone reçoit le côté du conducteur, un seul carburant et
+  aucune prise de recharge ([installation](docs/INSTALLATION.md)). Testé sur PC.
 - Toucher : quand l'image d'Android Auto s'effaçait (volume, fenêtre de l'iDrive, marche arrière, MENU) au moment où
   le doigt se levait, le téléphone pouvait garder ce doigt posé jusqu'au toucher suivant. Le relâché arrivé juste après
   le départ de l'image n'était pas envoyé, et le service oubliait ce doigt sans plus rien avoir à relâcher. Le relâché
@@ -100,6 +142,16 @@ QEMU avec les bibliothèques de la voiture).
   maintenant comme un choix d'Android Auto, qui reste affiché jusqu'au prochain changement de l'aide au
   stationnement. Le journal du service ne dit plus « picture back » en sortant de la marche arrière quand l'aide au
   stationnement cache encore l'image. Testé sur PC.
+- Sans-fil : image et son par à-coups avec certains téléphones
+  ([#138](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/138), X1 F48). Le Wi-Fi de la voiture propose
+  U-APSD, une économie d'énergie du téléphone, et la puce Wi-Fi retenait alors ses trames plusieurs secondes : sur la
+  X1 F48 de peppearci, son compteur d'attentes U-APSD dépassées montait à 1700 en 12 minutes, et les à-coups ont
+  disparu sans U-APSD. Avant chaque échange Wi-Fi avec le téléphone, le service règle maintenant hostapd pour ne
+  plus le proposer, puis lui fait reconstruire sa balise, d'après laquelle le téléphone demande U-APSD en se
+  connectant. Cette reconstruction déconnecte les appareils présents : elle n'est faite que si aucun n'est sur le
+  Wi-Fi de la voiture, un iPhone en CarPlay n'est donc jamais coupé. Le réglage reste en mémoire, aucun fichier de la
+  voiture ne change. Le journal du service dit ce qui a été fait (ligne `car access point:`,
+  [maintenance](docs/MAINTENANCE.md)). Testé sur PC.
 
 ## [0.13.0-rc.7] - 2026-11-20 · PC
 
@@ -535,7 +587,9 @@ Première version publique. Essayée sur une BMW G20 de 2019, logiciel iDrive `2
   encore suivie sur une voiture.
 - Voir les [limites connues](ROADMAP.md#limites-connues).
 
-[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.13.0-rc.7...HEAD
+[Non publié]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.13.0-rc.9...HEAD
+[0.13.0-rc.9]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.9
+[0.13.0-rc.8]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.8
 [0.13.0-rc.7]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.7
 [0.13.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.6
 [0.13.0-rc.5]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.5

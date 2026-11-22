@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > This is a translation of the authoritative [French changelog](CHANGELOG.md), based on
-> [`64b48c9794822e4a72940131cf356189de9cddcd`](https://github.com/Jiraiya43/EntryNav2-Android-Auto/blob/64b48c9794822e4a72940131cf356189de9cddcd/CHANGELOG.md).
+> [`v0.13.0-rc.9`](https://github.com/Jiraiya43/EntryNav2-Android-Auto/blob/v0.13.0-rc.9/CHANGELOG.md).
 > It may become outdated; consult the French changelog for the source of truth.
 
 All notable changes to this project. Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -13,10 +13,180 @@ QEMU with the car's libraries).
 
 ## [Unreleased]
 
+## [0.13.0-rc.9] - 2026-11-22 · PC
+
+Release candidate: logs without a PC (kept after the car sleeps, copied to a USB stick from the iDrive menu) and
+wireless that comes back quickly after a drop (Bluetooth link dropped by the car's stack, access point beacon
+rebuilt only once). Tested on PC and under QEMU, **not yet tried in a car**.
+
+### Added
+
+- Logs without a PC or SSH. The Android Auto menu in iDrive has two more rows: *Keep logs*, which turns the logs on
+  (the `maintenance` file), and *Copy logs to USB stick*, which copies them onto a USB stick plugged into the car, in
+  an `EntryAA-logs/<date>` folder, with the head unit's software version. The row then says whether the copy worked,
+  or that there is no stick or no log. Nothing is deleted or changed on the head unit
+  ([maintenance](docs/MAINTENANCE.md#journaux)). Tested on PC.
+
+### Fixed
+
+- Service log lost when the car went to sleep: it lived in RAM (`/tmp`), and the log of a drive was gone before it
+  could be fetched ([#101](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/101),
+  [#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88)). With logs on, it now lives on the data
+  partition like the app's: 512 KB at most, plus the previous 512 KB in `service.old.log`, checked every 5 s so that
+  it never fills the partition. `/tmp/entry-aa-service.log` stays as a link to it. If the partition refuses to open
+  it, it goes back to RAM as before. Tested on PC.
+- Wireless: after a drop, the phone took 3 to 7 s to come back instead of 2 s with 0.13.0-rc.8
+  ([discussion #30](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/30), F45). While it joins the
+  Wi-Fi, the phone reopens its Bluetooth link about every 400 ms, and the service had the access point rebuild its
+  beacon each time (up to 6 times in 4 s), which can disconnect it mid-join. The beacon is now rebuilt once per
+  start of the access point; the setting itself is still made each time. Tested on PC.
+- Wireless: restarting the phone after a drop (0.13.0-rc.7) closed the Bluetooth link on our side only. The phone
+  saw nothing and kept waiting: back after 70 s, or not at all, on the MINI F56 of
+  [#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88). The service now asks the car's Bluetooth
+  stack to drop that link, as Stop does: the phone sees it close, opens it again and gets a new request, as after
+  Stop then Start, where it came back within 2 s. Tested on PC.
+
+## [0.13.0-rc.8] - 2026-11-22 · PC
+
+Release candidate: sturdier wireless (no U-APSD offered to the phone, session restarted after a failed send or a
+broken encryption, Bluetooth given back on stop), a picture that no longer freezes after lost messages or a stalled
+decoder, the driver's side read from the car's coding, no more blank screen after reversing. Tested on PC and under
+QEMU, **not yet tried in a car**.
+
+### Added
+
+- Driver's side read from the car's coding: the iDrive app asks iDrive whether the car is coded left-hand or
+  right-hand drive, as it already does for the brand and the keys, and the service tells the phone. A right-hand
+  drive car no longer needs a `side=right` line in the `vehicle` file; that line is still accepted and wins over the
+  coding. When the coding says nothing certain, left-hand drive as before. The app's log writes `driver side: left` or
+  `right`, the service's log the side it received. Tested on PC.
+
 ### Changed
 
+- Wireless: a picture that arrives less than 25 ms after the previous one waits for the rest of that delay before
+  going to the decoder. Over Wi-Fi, pictures can arrive in pairs, a few milliseconds apart: the screen only draws the
+  last one received at each refresh, the first of the pair is never shown, and the picture stutters although nothing is
+  lost on the network. The picture that follows a held one never waits: the added delay stays at 25 ms at most and does
+  not build up, and well-spaced pictures go through at once. USB mode is unchanged. The maintenance log line written
+  every 10 s counts the pictures that arrived too close to the previous one, those held and the longest wait, to see
+  whether our cars have this defect. Tested on PC.
+
+### Fixed
+
+- Wireless: on stop, Bluetooth could fail to be given back while the phone was still looking for the car, and the
+  following Starts were then refused in less than a second. While the Android Auto record stays on its Bluetooth slot,
+  the phone can reconnect to it before the supervisor, which looked at the slot every 100 ms, has seen it free, and the
+  car's Bluetooth stack refuses to change the record of a connected slot. This is the most likely explanation of
+  [#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88) (MINI F56, Galaxy Z Fold: two Starts refused
+  after Stop). The supervisor now looks at the slot every 10 ms, puts the original record back as soon as it is free,
+  and asks for the disconnection again when the phone came back first (4 times at most, 8 s at most). The earlier
+  checks remain, and an unconfirmed restore always keeps its log. Tested on PC.
+- Wireless: when Wi-Fi stalled for several seconds during a send from the car, the session went on over a broken
+  connection. The send given up after 5 s could leave a message cut in two, and everything the car sent afterwards was
+  unreadable for the phone, without the session ending. A failed send now ends the session like a drop: nothing more
+  goes out, and the phone is restarted as after a lost session. Tested on PC.
+- Wireless: an encrypted message damaged on the way left the session running on dead encryption. In TLS, a record that
+  fails its check is fatal: nothing decrypts afterwards, not even the good ones, and the session waited for 15 more
+  unreadable frames before ending. The first message the car sent next (often the ack of that picture) also went out
+  with OpenSSL's alert in its place. The session now ends at that frame without sending anything more, and the phone is
+  restarted as after a lost session. A record cut over two frames is still read normally, and 16 frames in a row that
+  bring no complete record still end the session. Tested on PC.
+- Picture (or guidance prompts) frozen for the rest of the session after a few lost messages. The phone only sends 10
+  messages ahead without an ack from the car; a message the car dropped (picture too short, fragments that arrived
+  incomplete, unreadable fragment) was never acked and kept one of those places for good, and at the tenth the stream
+  stopped. Each dropped message is now acked once, and the rest of a message lost on the way is ignored quietly up to
+  its last fragment. Tested on PC.
+- Picture: if the car's video decoder stopped giving back its buffers (after a decoding error, its watchdog or an
+  abort), the Android Auto picture stayed frozen until the end of the session, while the phone kept sending pictures
+  that found no room. When no buffer has come back for 3 s while the picture is on screen, the service notes it once
+  and ends the session like a drop: the phone comes back on a fresh decoder (wireless: its Bluetooth link is closed to
+  start again; USB: it is asked again). The following pictures no longer wait 20 ms each for a buffer that will not
+  come. Tested on PC.
+- Assistant microphone: a microphone that gave no more sound blocked reading, and with it stopping Android Auto (Stop
+  or end of the service). A microphone that failed again right after being repaired was also closed and reopened
+  without a pause, in a loop, as long as the Assistant listened. The microphone is now read without blocking, in
+  100 ms slices; 2 s without sound count as a failure, it is reopened after 1 s, and after 3 failures in a row without
+  any sound it waits for the phone's next request. Stopping stays immediate. Tested on PC.
+- Car GPS: a single speed of 70 m/s (252 km/h) or more is enough for Android Auto to ignore the speed of every
+  following position until the end of the session. The service accepted up to 150 m/s, and the speed computed between
+  two positions could exceed 70 m/s when a position arrived late. Every speed sent now stays below 70 m/s: a faster
+  position goes without its speed, and a computed speed that is too high is not sent, nor the bearing that goes with
+  it. Tested on PC.
+- Car description: the phone always received Google's model (the Desktop Head Unit), that is left-hand drive, petrol
+  plus electric and a Tesla Supercharger connector. A right-hand drive car was thus announced as left-hand drive, and
+  Android Auto laid its screen out for the wrong side. The `vehicle` file now accepts `side=left` or `side=right` and
+  `fuel=petrol` or `fuel=diesel` (without them: the side coded in the car, see "Added", and petrol); the phone receives
+  the driver's side, a single fuel and no charging connector ([installation](docs/INSTALLATION.md)). Tested on PC.
+- Touch: when the Android Auto picture went away (volume, iDrive window, reverse gear, MENU) as the finger lifted, the
+  phone could keep that finger down until the next touch. The release that arrived just after the picture left was not
+  sent, and the service forgot that finger with nothing left to release. The release of a finger the phone saw touch
+  down is now always sent to it; nothing else goes out once the picture is gone. Tested on PC.
+- Keys: COM pressed just before a call started stayed held on the phone until the picture went away. During a call,
+  COM is left to iDrive's call screen, and that rule also held back the release of a press already sent to Android
+  Auto. The release now always follows its press; a COM pressed during the call stays with iDrive, as before. Tested
+  on PC.
+- iDrive app: Android Auto could step aside without any key being pressed. When iDrive left the blank page for one
+  poll, came back to it, then left it again for one poll less than 3 s later, the app took those two departures for a
+  confirmed iDrive key (MENU, MEDIA…). The first departure is now forgotten as soon as the blank page comes back; a
+  real key is still confirmed at the next poll. Tested on PC.
+- iDrive app: blank screen after reversing
+  ([#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88), MINI F56). Park assist stays on for a while
+  after reversing, and Android Auto stayed hidden as long as it was. When BACK closed its view (or it closed by
+  itself), iDrive went back to Android Auto's blank page without its picture, until park assist ended or the driver
+  went through the menu. That return to the blank page, out of reverse, now counts as choosing Android Auto, which
+  stays on screen until park assist next changes. The service's log no longer says "picture back" when leaving
+  reverse while park assist still hides the picture. Tested on PC.
+- Wireless: picture and sound stuttering with some phones
+  ([#138](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/138), X1 F48). The car's Wi-Fi offers U-APSD, a
+  phone power-saving mode, and the Wi-Fi chip then held the phone's frames back for several seconds: on peppearci's
+  X1 F48, its counter of expired U-APSD waits reached 1700 in 12 minutes, and the stuttering was gone without U-APSD.
+  Before each Wi-Fi exchange with the phone, the service now sets hostapd to stop offering it, then has it rebuild its
+  beacon, from which the phone asks for U-APSD when it connects. That rebuild disconnects the devices present: it is
+  only done when none is on the car's Wi-Fi, so an iPhone on CarPlay is never cut off. The setting stays in memory, no
+  file of the car changes. The service's log says what was done (`car access point:` line,
+  [maintenance](docs/MAINTENANCE.md)). Tested on PC.
+
+## [0.13.0-rc.7] - 2026-11-20 · PC
+
+Release candidate: after a wireless drop, Android Auto comes back by itself when the phone keeps its Bluetooth link,
+instead of waiting for Stop then Start. Tested on PC and under QEMU, **not yet tried in a car**.
+
+### Fixed
+
+- Wireless: after a drop, Android Auto did not come back by itself when the phone kept its Bluetooth link open. The
+  service answered that link without ever asking the phone to come back, and Stop then Start was needed
+  ([#88](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/88): MINI F56, Galaxy Z Fold, back within 2 s
+  after the manual restart). A lost session (phone silent for 5 s, broken connection) now closes that link: the phone
+  opens it again and receives a new request, as after a restart. Leaving Android Auto on the phone is not a drop, and
+  USB mode is unchanged. Tested on PC.
+
+## [0.13.0-rc.6] - 2026-11-20 · PC
+
+Release candidate for the wireless slowness: the Android Auto connection gets the Wi-Fi "video" priority, like the
+car's CarPlay. Also: the camera after reversing, incomplete Android Auto messages. Tested on PC and under QEMU,
+**not yet tried in a car**.
+
+### Changed
+
+- Wireless: the Android Auto connection gets the Wi-Fi "video" priority, as the car's CarPlay does for its picture
+  (Apple's code in BMW's CarPlay: `IP_TOS` 0x80, Wi-Fi video category). What the car sends to the phone (picture acks,
+  touch, keys, TCP acks) then goes before ordinary traffic; until now, nothing was marked. A trial against the wireless
+  slowness ([discussion #30](https://github.com/Jiraiya43/EntryNav2-Android-Auto/discussions/30),
+  [#101](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/101),
+  [#129](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/129)): the effect remains to be measured in a car.
+  USB mode is unchanged. Tested on PC.
 - Android Auto reception: reuse buffers throughout each connection without changing protocol limits. Reassembled
   message buffers larger than 1 MiB are released after use. Tested on PC.
+
+### Fixed
+
+- Reverse gear: leaving reverse sometimes arrives before the camera closes, and Android Auto could come back too
+  early. The app now waits until iDrive comes back to one of the app's pages, or until the driver chooses Android Auto
+  (Open, entry), 15 s at most ([#114](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/114), adapted from
+  AramayisAntonyan's work). Tested on PC, not yet tried in a car.
+- Android Auto reception: a message fragment (MIDDLE or LAST) that arrives without its start is rejected, instead of
+  giving an extra picture or ack ([#115](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/115), adapted from
+  Sq00ky). Tested on PC.
 
 ## [0.13.0-rc.5] - 2026-11-19 · PC
 
@@ -405,7 +575,11 @@ First public release. Tried in a 2019 BMW G20, iDrive software `202111011321`.
   been followed in a car.
 - See the [known limitations](ROADMAP.md#limites-connues).
 
-[Unreleased]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.13.0-rc.5...HEAD
+[Unreleased]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/compare/v0.13.0-rc.9...HEAD
+[0.13.0-rc.9]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.9
+[0.13.0-rc.8]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.8
+[0.13.0-rc.7]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.7
+[0.13.0-rc.6]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.6
 [0.13.0-rc.5]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.5
 [0.13.0-rc.4]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.4
 [0.13.0-rc.3]: https://github.com/Jiraiya43/EntryNav2-Android-Auto/releases/tag/v0.13.0-rc.3

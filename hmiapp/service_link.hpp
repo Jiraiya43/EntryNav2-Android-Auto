@@ -30,6 +30,15 @@ bool stopInProgress();
 // it. A second one would refuse to start.
 bool supervisorRunning();
 
+// The logs onto a USB stick (platform/log_copy.hpp): `aa-supervisor --copy-logs` in a child process, so that a slow
+// stick never holds the app's thread. Starts one, unless one runs (false then, or when the start failed; logged).
+bool startLogCopy();
+bool logCopyRunning();
+// Once per status poll: -1 while none ended since the last call, else its exit code (LogCopyResult), or -2 when it
+// was stopped after kLogCopyLimitS or ended otherwise.
+int logCopyEnded(long now);
+const long kLogCopyLimitS = 60;
+
 }  // namespace app
 }  // namespace evo
 

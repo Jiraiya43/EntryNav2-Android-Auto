@@ -179,5 +179,20 @@ void toggleUsbCable() {
     alog("menu: USB cable %s -> %s", on ? "on" : "off", usbCableOn() ? "on" : "off");
 }
 
+bool keepLogsOn() {
+    return fileExists(contract::kMaintenance);
+}
+
+void toggleKeepLogs() {
+    const bool on = keepLogsOn();
+    if (on) {
+        alog("menu: keep logs off: the app's log stops here");  // the last line, written while still on
+    }
+    setSwitch("keep logs", contract::kMaintenance, !on, "");
+    if (!on) {
+        alog("menu: keep logs on: the service's log starts with its next start");
+    }
+}
+
 }  // namespace app
 }  // namespace evo

@@ -32,6 +32,8 @@ const unsigned kActStart = 21;
 const unsigned kActStop = 22;
 const unsigned kActAutostart = 24;
 const unsigned kActUsbCable = 26;
+const unsigned kActKeepLogs = 27;
+const unsigned kActCopyLogs = 28;
 
 // ---- the entry button ----------------------------------------------------------------------------------------------
 const unsigned kEntryTextModel = 3;
@@ -49,6 +51,14 @@ const unsigned kTextRowConnecting = 13;  // "Connecting to the phone..."
 const unsigned kTextRowOpen = 14;        // "Open Android Auto"
 const unsigned kAutostartModel = 34;
 const unsigned kUsbCableModel = 38;
+const unsigned kKeepLogsModel = 33;   // "Keep logs" checkbox
+const unsigned kCopyLogsModel = 42;   // the copy button's text, one of these:
+const unsigned kTextCopyLogs = 40;    // "Copy logs to USB stick"
+const unsigned kTextCopying = 41;     // "Copying logs..."
+const unsigned kTextCopied = 42;      // "Logs copied to the USB stick"
+const unsigned kTextNoStick = 43;     // "No USB stick found"
+const unsigned kTextNoLogs = 44;      // "No logs: tick Keep logs"
+const unsigned kTextCopyFailed = 45;  // "Copy failed"
 const unsigned kStartButton = 61;
 const unsigned kStopButton = 62;  // hidden while Android Auto is stopped
 // Component properties, as bmw::PluginApp::setProperty takes them.

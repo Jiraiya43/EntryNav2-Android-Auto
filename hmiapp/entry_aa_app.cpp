@@ -23,6 +23,7 @@
 //   car_signals    gear, phone calls, day/night and driving mode from the car's CDS
 //   hold_machine   iDrive kept on the blank state while Android Auto is on screen (pure, tested on the PC)
 //   pending_restart  the restart the USB checkbox asks for while Android Auto runs (pure, tested on the PC)
+// The menu also keeps the logs (maintenance profile) and copies them onto a USB stick (platform/log_copy.hpp).
 // Uninstall: delete the plugin folder and reboot.
 #include <dlfcn.h>
 #include <stdint.h>
@@ -31,6 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "../platform/log_copy.hpp"
 #include "../platform/media_recall.hpp"
 #include "../platform/service_contract.hpp"
 #include "app_guards.hpp"
@@ -149,6 +151,7 @@ bool g_settingsShown = false;
 void showSettings(bmw::PluginApp* app) {
     app->updateModel(kAutostartModel, autostartOn());
     app->updateModel(kUsbCableModel, usbCableOn());
+    app->updateModel(kKeepLogsModel, keepLogsOn());
     g_settingsShown = true;
 }
 PendingRestart g_restart;  // the USB checkbox changed while Android Auto ran
@@ -263,6 +266,67 @@ bool onUsbCableToggle(void*, const bmw::Parcel&) {
     return true;
 }
 
+// "Keep logs": the maintenance profile's file, so the logs need no SSH either.
+bool onKeepLogsToggle(void*, const bmw::Parcel&) {
+    if (!guardedByOverlay("keep logs")) {
+        toggleKeepLogs();
+    }
+    if (g_runApp) {
+        showSettings(g_runApp);
+    }
+    return true;
+}
+
+// "Copy logs to USB stick": the button's text says what happens, then what came of it, for kCopyResultS.
+const long kCopyResultS = 15;
+unsigned g_copyText = kTextCopyLogs;
+long g_copyShownAt = 0;
+
+void showCopyText(bmw::PluginApp* app, unsigned text) {
+    if (text != g_copyText) {
+        bmw::TextID id(text);
+        app->updateModel(kCopyLogsModel, id);
+        g_copyText = text;
+    }
+    g_copyShownAt = monoSeconds();
+}
+
+unsigned copyResultText(int code) {
+    if (code == static_cast<int>(LogCopyResult::kCopied)) {
+        return kTextCopied;
+    }
+    if (code == static_cast<int>(LogCopyResult::kNoStick)) {
+        return kTextNoStick;
+    }
+    if (code == static_cast<int>(LogCopyResult::kNothingToCopy)) {
+        return kTextNoLogs;
+    }
+    return kTextCopyFailed;
+}
+
+bool onCopyLogs(void*, const bmw::Parcel&) {
+    alog("menu: copy logs (raAction %u)", kActCopyLogs);
+    if (guardedByOverlay("copy logs") || logCopyRunning()) {
+        return true;
+    }
+    if (g_runApp && startLogCopy()) {
+        showCopyText(g_runApp, kTextCopying);
+    } else if (g_runApp) {
+        showCopyText(g_runApp, kTextCopyFailed);
+    }
+    return true;
+}
+
+void pollLogCopy(bmw::PluginApp* app) {
+    const int ended = logCopyEnded(monoSeconds());
+    if (ended != -1) {
+        showCopyText(app, copyResultText(ended));
+    } else if (g_copyText != kTextCopyLogs && g_copyText != kTextCopying &&
+               monoSeconds() - g_copyShownAt >= kCopyResultS) {
+        showCopyText(app, kTextCopyLogs);
+    }
+}
+
 // ---- the status poll: service state -> entry text, menu rows, hold, stop --------------------------------------------
 AppRunnable g_statusRunnable;
 unsigned g_shownText = kTextDefault;
@@ -329,6 +393,7 @@ void statusRun(void*) {
         g_shownRow = row;
     }
     g_hold.poll(d, monoSeconds());
+    pollLogCopy(app);
     postRunnable(app, g_statusRunnable, kStatusPollMs);
 }
 
@@ -349,6 +414,8 @@ bool appOnInit(bmw::PluginApp* self) {
     addAction(self, kActEntry, &onEntry);
     addAction(self, kActAutostart, &onAutostartToggle);
     addAction(self, kActUsbCable, &onUsbCableToggle);
+    addAction(self, kActKeepLogs, &onKeepLogsToggle);
+    addAction(self, kActCopyLogs, &onCopyLogs);
     addStateHandler(self, kMenuState, kHandlerFocus, &onMenuFocus);
     addStateHandler(self, kHelpState, kHandlerFocus, &onHelpFocus);
     addStateHandler(self, kAaState, kHandlerFocus, &onAaFocus);

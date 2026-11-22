@@ -30,6 +30,10 @@ void toggleAutostart();  // the menu's checkbox
 // port name someone may have written in it by hand.
 bool usbCableOn();
 void toggleUsbCable();
+// The "keep logs" box: the maintenance profile's file (log_profile.hpp). The app's log follows at once, the
+// service's from its next start. Unticking keeps the logs already written, for a copy to a USB stick.
+bool keepLogsOn();
+void toggleKeepLogs();
 
 }  // namespace app
 }  // namespace evo

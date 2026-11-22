@@ -19,9 +19,9 @@
 #include <unistd.h>
 
 #include "../platform/control_address.hpp"
+#include "../platform/kept_log.hpp"
 #include "../platform/service_contract.hpp"
 #include "app_log.hpp"
-#include "log_profile.hpp"
 #include "mono_clock.hpp"
 #include "spawn_attr.hpp"
 
@@ -37,6 +37,15 @@ pid_t g_launchPid = 0;
 pid_t g_stopPid = 0;
 long g_stopTime = 0;
 int g_stopStage = 0;
+
+// The supervisor's whole environment: where its libraries are and how to reach the compositor. No settings. The same
+// for --service and --copy-logs.
+const char* const kSupervisorEnv[] = {"PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin",
+                                      "LD_LIBRARY_PATH=/usr/local/lib:/opt/hmi/lib:/usr/lib:/lib",
+                                      "XDG_RUNTIME_DIR=/run/system/0",
+                                      "WAYLAND_DISPLAY=wayland-0",
+                                      "HOME=/tmp",
+                                      nullptr};
 
 bool pidAlive(int pid) {
     if (pid <= 0) {
@@ -91,21 +100,15 @@ void launchService() {
     }
     unlink(contract::kServiceStop);  // a STOP left from an earlier run would end the new one
 
-    // The service's whole environment: where its libraries are and how to reach the compositor. No settings.
-    static const char* const kServiceEnv[] = {"PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin",
-                                              "LD_LIBRARY_PATH=/usr/local/lib:/opt/hmi/lib:/usr/lib:/lib",
-                                              "XDG_RUNTIME_DIR=/run/system/0",
-                                              "WAYLAND_DISPLAY=wayland-0",
-                                              "HOME=/tmp",
-                                              nullptr};
-    char* const* envp = const_cast<char* const*>(kServiceEnv);
+    char* const* envp = const_cast<char* const*>(kSupervisorEnv);
 
     char* argv[] = {const_cast<char*>(contract::kSupervisor), const_cast<char*>("--service"), nullptr};
     int in = open("/dev/null", O_RDONLY | O_CLOEXEC);
-    int out = open(serviceLogPath(contract::kMaintenance, contract::kServiceLog),
-                   O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0644);
+    const char* logPath = "";
+    int out = openServiceLog(contract::kMaintenance, contract::kServiceLogKept, contract::kServiceLogKeptOld,
+                             contract::kServiceLog, &logPath);
     if (in < 0 || out < 0) {
-        alog("launch: cannot open /dev/null or %s (errno %d)", contract::kServiceLog, errno);
+        alog("launch: cannot open /dev/null or %s (errno %d)", logPath, errno);
         if (in >= 0) {
             close(in);
         }
@@ -149,8 +152,7 @@ void launchService() {
         return;
     }
     g_launchPid = pid;
-    alog("launch: started %s --service pid %d (log %s)", contract::kSupervisor, static_cast<int>(pid),
-         contract::kServiceLog);
+    alog("launch: started %s --service pid %d (log %s)", contract::kSupervisor, static_cast<int>(pid), logPath);
     pthread_t t;
     pthread_attr_t ta;
     pthread_attr_init(&ta);
@@ -258,6 +260,74 @@ bool supervisorRunning() {
     const bool held = flock(fd, LOCK_EX | LOCK_NB) != 0;
     close(fd);  // gives the lock back when it was free
     return held;
+}
+
+// ---- the logs onto a USB stick --------------------------------------------------------------------------------------
+namespace {
+pid_t g_copyPid = 0;
+long g_copyStart = 0;
+}  // namespace
+
+bool logCopyRunning() {
+    return g_copyPid > 0;
+}
+
+bool startLogCopy() {
+    if (g_copyPid > 0) {
+        return false;
+    }
+    char* argv[] = {const_cast<char*>(contract::kSupervisor), const_cast<char*>("--copy-logs"), nullptr};
+    const int null = open("/dev/null", O_RDWR | O_CLOEXEC);
+    if (null < 0) {
+        alog("copy logs: cannot open /dev/null (errno %d)", errno);
+        return false;
+    }
+    posix_spawn_file_actions_t fa;
+    posix_spawn_file_actions_init(&fa);
+    posix_spawn_file_actions_adddup2(&fa, null, 0);
+    posix_spawn_file_actions_adddup2(&fa, null, 1);
+    posix_spawn_file_actions_adddup2(&fa, null, 2);
+    posix_spawnattr_t at;
+    int rc = initServiceSpawnAttr(&at);
+    pid_t pid = -1;
+    if (rc == 0) {
+        rc = posix_spawn(&pid, contract::kSupervisor, &fa, &at, argv, const_cast<char* const*>(kSupervisorEnv));
+        posix_spawnattr_destroy(&at);
+    }
+    posix_spawn_file_actions_destroy(&fa);
+    close(null);
+    if (rc != 0) {
+        alog("copy logs: %s --copy-logs not started (%s)", contract::kSupervisor, strerror(rc));
+        return false;
+    }
+    g_copyPid = pid;
+    g_copyStart = monoSeconds();
+    alog("copy logs: %s --copy-logs pid %d", contract::kSupervisor, static_cast<int>(pid));
+    return true;
+}
+
+int logCopyEnded(long now) {
+    if (g_copyPid <= 0) {
+        return -1;
+    }
+    int status = 0;
+    pid_t r = waitpid(g_copyPid, &status, WNOHANG);
+    if (r == 0 && now - g_copyStart >= kLogCopyLimitS) {
+        alog("copy logs: still running after %ld s, stopped", kLogCopyLimitS);
+        kill(g_copyPid, SIGKILL);
+        do {
+            r = waitpid(g_copyPid, &status, 0);
+        } while (r < 0 && errno == EINTR);
+        g_copyPid = 0;
+        return -2;
+    }
+    if (r == 0 || (r < 0 && errno == EINTR)) {
+        return -1;
+    }
+    g_copyPid = 0;
+    const int code = r > 0 && WIFEXITED(status) ? WEXITSTATUS(status) : -2;
+    alog("copy logs: ended, %d", code);
+    return code;
 }
 
 }  // namespace app

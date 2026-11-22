@@ -48,7 +48,7 @@ DAEMON_SRC = platform/alps_spp.cpp platform/alps_spp_codec.cpp platform/evo_ap.c
 DAEMON_OBJ = $(CORE_OBJ) $(DAEMON_SRC:.cpp=.o)
 SUPERVISOR_OBJ = tools/aa_supervisor.o platform/evo_spp_snapshot.o platform/alps_spp.o platform/alps_spp_codec.o \
             platform/evo_ilm.o platform/evo_process.o platform/evo_ap.o platform/evo_ap_config.o platform/evo_wlan.o \
-            platform/vmost_client.o platform/usb_accessory.o
+            platform/vmost_client.o platform/usb_accessory.o platform/log_copy.o
 CHECK_OBJ = tools/evo_check.o platform/alps_spp.o platform/alps_spp_codec.o platform/evo_process.o
 CAPTURE_OBJ = tools/evo_capture.o
 ARM_OBJ = $(sort $(DAEMON_OBJ) $(PLATFORM_OBJ) $(SUPERVISOR_OBJ) $(CHECK_OBJ) $(CAPTURE_OBJ))
@@ -147,7 +147,7 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_spp_snapshot.cpp platform/evo_spp_snapshot.cpp -o tests/test-spp-snapshot
 	if [ -f "$(SPP_FIXTURE_LIB)" ]; then ENTRY_AAD_FIXTURE_LIB="$(SPP_FIXTURE_LIB)" ./tests/test-spp-snapshot; else echo "SKIP test-spp-snapshot: no copy of the car system"; fi
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_supervisor.cpp platform/alps_spp_codec.cpp platform/usb_accessory.cpp \
-	    -o tests/test-supervisor
+	    platform/log_copy.cpp -o tests/test-supervisor
 	./tests/test-supervisor
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_evo_ilm.cpp platform/evo_ilm.cpp platform/evo_process.cpp -o tests/test-evo-ilm
 	ENTRY_AAD_DIAGNOSTIC=./tests/evo-check-host ./tests/test-evo-ilm
@@ -183,6 +183,10 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	./tests/test-pending-restart
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_log_profile.cpp -o tests/test-log-profile
 	./tests/test-log-profile
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_kept_log.cpp -o tests/test-kept-log
+	./tests/test-kept-log
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_log_copy.cpp platform/log_copy.cpp -o tests/test-log-copy
+	./tests/test-log-copy
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_pb.cpp -o tests/test-pb
 	./tests/test-pb
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_volume_pill.cpp -o tests/test-volume-pill
@@ -300,7 +304,7 @@ test-supervisor-arm-build:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_spp_snapshot.cpp platform/evo_spp_snapshot.cpp -o tests/test-spp-snapshot-arm $(LDSHLIB)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_evo_elf.cpp -o tests/test-evo-elf-arm $(LDSHLIB)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_supervisor.cpp platform/alps_spp_codec.cpp platform/usb_accessory.cpp \
-	    -o tests/test-supervisor-arm $(LDSHLIB) -lrt
+	    platform/log_copy.cpp -o tests/test-supervisor-arm $(LDSHLIB) -lrt
 
 test-usb-arm-build: $(USB_OBJ) core/aa_frame.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) tests/test_usb_accessory.cpp platform/usb_accessory.o -o tests/test-usb-accessory-arm \

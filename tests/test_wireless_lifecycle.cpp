@@ -12,12 +12,13 @@
 #include <atomic>
 
 #include "alps_spp.hpp"
+#include "evo_ap.hpp"
 #include "evo_log.hpp"
 #include "service_app.hpp"
 #include "service_contract.hpp"
 #include "wireless_setup.hpp"
 
-static std::atomic<int> starts(0), waits(0), listens(0), serves(0);
+static std::atomic<int> starts(0), waits(0), listens(0), serves(0), prepared(0), sppDrops(0);
 static std::atomic<bool> fixtureLink(true), borrowed(false);
 static std::atomic<bool> phoneKeepsLink(false);  // the phone keeps its Bluetooth link after accepting the Wi-Fi
 static evo::ServiceApp* instance = 0;
@@ -45,12 +46,23 @@ void AlpsSppLink::closeLink() {
     fixtureLink = false;
     borrowed = false;
 }
+// Asked of the Bluetooth stack: only that makes the phone see its link close (closeLink() closes our end).
+bool AlpsSppLink::requestSppDisconnect() {
+    ++sppDrops;
+    return true;
+}
+// The access point is made ready (no U-APSD) once before every handshake, never during one.
+UapsdOffer withdrawAccessPointUapsd() {
+    ++prepared;
+    return UapsdOffer::kWithdrawn;
+}
 }  // namespace evo
 namespace aa {
 WirelessSetup::WirelessSetup(int fd, const ApInfo& ap, uint16_t port, int peekMs)
     : fd_(fd), ap_(ap), port_(port), peekMs_(peekMs), foreign_(false), spoke_(true), heard_(0) {}
 bool WirelessSetup::handshake(int) {
     assert(fd_ == 42 && peekMs_ == 300 && port_ == 50000);
+    assert(prepared == starts + 1);
     pthread_mutex_lock(&instance->mu);
     instance->tcpPreparing = true;
     pthread_mutex_unlock(&instance->mu);
@@ -300,9 +312,9 @@ int main() {
         fixtureLink = true;  // the phone opens the link
         awaitStarts(3);
         awaitServes();
-        assert(fixtureLink && app.lostSessions() == 0);
+        assert(fixtureLink && app.lostSessions() == 0 && sppDrops == 0);
         loseSession(app);
-        assert(app.lostSessions() == 1 && linkClosedWithin(2000));
+        assert(app.lostSessions() == 1 && linkClosedWithin(2000) && sppDrops == 1);
         fixtureLink = true;  // the phone opens it again at once
         awaitStarts(4);
         awaitServes();
@@ -310,7 +322,7 @@ int main() {
         app.projectionOverUsb = true;
         pthread_mutex_unlock(&app.mu);
         loseSession(app);
-        assert(app.lostSessions() == 1 && !linkClosedWithin(300) && starts == 4);
+        assert(app.lostSessions() == 1 && !linkClosedWithin(300) && starts == 4 && sppDrops == 1);
         pthread_mutex_lock(&app.mu);
         app.projectionOverUsb = false;
         pthread_mutex_unlock(&app.mu);

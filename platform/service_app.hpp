@@ -94,6 +94,7 @@ public:
     bool stopRequested() override;
     bool projectionBusy() override;
     void sppLinkOpened() override;
+    void prepareAccessPoint() override;
     void handshakeEnded(bool spoke, bool accepted) override;
     unsigned lostSessions() override;
 

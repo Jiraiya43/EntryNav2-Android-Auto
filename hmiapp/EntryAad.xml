@@ -11,6 +11,8 @@
       <raAction id="22"/>
       <raAction id="24"/>
       <raAction id="26"/>
+      <raAction id="27"/>
+      <raAction id="28"/>
       <hmiAction id="25" target="12"/>
     </actions>
     <models>
@@ -33,6 +35,13 @@
       <raBoolModel id="34"/>
       <raBoolModel id="38"/>
       <textIdModel id="39" textId="17">
+        <synonyms/>
+      </textIdModel>
+      <raBoolModel id="33"/>
+      <textIdModel id="41" textId="18">
+        <synonyms/>
+      </textIdModel>
+      <textIdModel id="42" textId="40">
         <synonyms/>
       </textIdModel>
       <textIdModel id="35" textId="15">
@@ -75,6 +84,8 @@
           <separator id="66"/>
           <checkbox action="24" id="64" model="34" text="Demarrage automatique" textModel="35"/>
           <checkbox action="26" id="68" model="38" text="Cable USB au lieu du sans-fil" textModel="39"/>
+          <checkbox action="27" id="69" model="33" text="Garder les journaux" textModel="41"/>
+          <button action="28" id="63" model="42" text="Copier les journaux sur cle USB"/>
           <separator id="67"/>
           <button action="25" id="65" model="36" text="Aide"/>
         </components>

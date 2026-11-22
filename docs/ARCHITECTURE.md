@@ -52,7 +52,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `main.cpp` | Ligne de commande du service et assemblage des modules |
 | `service_app` | Le service en marche : réactions à la session, à la vidéo, aux entrées et aux commandes de l'appli |
 | `peek_timing` | Quand effacer l'image d'Android Auto : volume, fenêtres de l'iDrive, mode de conduite, touches (testé sur PC) |
-| `wireless_loop` | Boucle d'attente du téléphone en Bluetooth, puis de sa connexion Wi-Fi ; ferme le lien Bluetooth gardé par le téléphone après une séance perdue, pour qu'il revienne |
+| `wireless_loop` | Boucle d'attente du téléphone en Bluetooth, puis de sa connexion Wi-Fi ; fait couper par la pile Bluetooth le lien gardé par le téléphone après une séance perdue, pour qu'il revienne |
 | `usb_loop`, `usb_accessory` | Mode USB : repère un téléphone Android sur les prises, le passe en mode accessoire |
 | `usb_bridge`, `usb_devfs` | Mode USB : pont entre le téléphone (usbfs du noyau) et la session, par un socket local |
 | `service_contract.hpp` | Chemins et nom du canal de commande partagés par l'appli iDrive, le superviseur et le service |
@@ -69,6 +69,9 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `evo_gps` | Lecture passive du GPS de la voiture |
 | `evo_mic` | Micro de la voiture pour l'Assistant, lu sans blocage ; réouvert au plus une fois par seconde après un échec |
 | `evo_wlan`, `evo_ap` | Wi-Fi de la voiture, allumé comme le fait CarPlay |
+| `kept_log.hpp` | Journal du service gardé sur la partition de données en profil maintenance, borné à 512 Ko plus l'ancien |
+| `log_copy` | Journaux copiés sur une clé USB depuis le menu de l'iDrive (`aa-supervisor --copy-logs`) |
+| `ap_uapsd.hpp` | Point d'accès de la voiture sans U-APSD pour le téléphone qui le rejoint (réglage en mémoire de hostapd, balise reconstruite seulement sans station connectée) |
 | `wifi_link` | Qualité de la liaison Wi-Fi avec le téléphone, lue dans le noyau pour les journaux, avec l'état du lien Bluetooth des BMW Apps (testé sur PC) |
 | `alps_spp`, `evo_spp_snapshot` | Pile Bluetooth de la voiture : commandes, et lecture de son état en mémoire |
 | `evo_elf.hpp` | Symboles exportés par une bibliothèque de la voiture, lus dans son fichier |
@@ -90,10 +93,10 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 | `bmw_framework` | Déclarations de l'interface BMW des applis, accroches de la table virtuelle |
 | `hold_machine` | Quand demander la page vide de l'iDrive sous Android Auto (classe pure, testée sur PC) |
 | `pending_restart.hpp` | Redémarrage d'Android Auto quand la case du câble USB change en marche (testé sur PC) |
-| `service_link` | Lancement du superviseur, commandes au service, arrêt |
+| `service_link` | Lancement du superviseur, commandes au service, arrêt, copie des journaux sur clé USB |
 | `car_signals` | Marche arrière, appels, jour et nuit, mode de conduite, lus dans l'iDrive |
 | `idrive_coding` | Codage de la voiture lu dans l'iDrive au démarrage de l'appli et écrit pour le service : touches du contrôleur, marque (BMW ou MINI) ; réglage de la fenêtre du mode de conduite, lu pour l'appli |
-| `app_guards` | Interrupteur, garde-fou contre les plantages, démarrage automatique |
+| `app_guards` | Interrupteur, garde-fou contre les plantages, démarrage automatique, cases du menu |
 | `app_log`, `log_profile.hpp` | Journal de l'appli, profil maintenance |
 | `popup_peek.hpp`, `cds_parse.hpp` | Fenêtres de l'iDrive par-dessus Android Auto, lecture des données de l'iDrive |
 | `mono_clock.hpp` | Temps écoulé depuis le démarrage de l'unité, pour les délais |
@@ -103,7 +106,7 @@ Le protocole Android Auto côté voiture, sans rien de propre à BMW.
 
 | Fichier | Rôle |
 |---|---|
-| `aa_supervisor.cpp` | Le superviseur `aa-supervisor` ; `--compat` répète le démarrage à blanc pour le contrôle de compatibilité |
+| `aa_supervisor.cpp` | Le superviseur `aa-supervisor` ; `--compat` répète le démarrage à blanc pour le contrôle de compatibilité ; `--copy-logs` copie les journaux sur une clé USB |
 | `package_release.py` | L'archive d'une version, à copier dans la voiture ([installation](INSTALLATION.md)) |
 | `verify_*.py`, `format_sources.py` | Contrôles du dépôt, des programmes ARM et du style |
 
