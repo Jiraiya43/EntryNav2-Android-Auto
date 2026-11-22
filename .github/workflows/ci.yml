@@ -72,5 +72,5 @@ jobs:
       - name: Check ARM ELF contracts
         run: |
           /usr/bin/python3 tools/verify_sdk.py
-          /usr/bin/python3 -m unittest discover -s tests -p test_sdk.py
+          /usr/bin/python3 -m unittest discover -s tests -p 'test_sdk*.py'
 

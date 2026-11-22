@@ -260,12 +260,15 @@ For an **opt-in build without a car system**, build the base image above, then:
 ```sh
 docker build -f toolchain/Dockerfile.sdk -t entrynav2-sdk:4.7 toolchain
 bash toolchain/tc.sh --sdk make -j4 all                # isolated outputs in artifacts/sdk/
-python3 tools/verify_sdk.py                            # needs pyelftools and readelf
+python3 tools/verify_sdk.py                            # static ELF and plugin descriptor checks
+python3 -m unittest discover -s tests -p test_sdk.py   # verifier tests; needs pyelftools
+python3 -m unittest discover -s tests -p test_sdk_artifact.py  # needs the SDK build
 ```
 
 The SDK uses open-source ARM libraries and link-only stubs; the output still needs the real car libraries to run.
-This build is not release-validated: the existing car-library QEMU checks and release workflow use the firmware build.
-SDK outputs cannot replace a car test.
+The checks need pyelftools and readelf and never execute these stubs. They cannot validate BMW vtables, callbacks or
+hardware behavior. This build is not release-validated: the existing car-library QEMU checks and release workflow use
+the firmware build. SDK outputs cannot replace a car test.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full test list and the project's rules.
 
