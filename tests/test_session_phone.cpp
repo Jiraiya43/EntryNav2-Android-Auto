@@ -1028,6 +1028,56 @@ void lifecycle(std::vector<std::string>& log) {
     ended(link, log);
 }
 
+// AudioFocusRequest must decode protobuf field 1 rather than reading message[3]: an earlier field, an absent field 1
+// whose sibling byte happens to be 4, or a multi-byte varint must still produce GAIN or LOSS accordingly.
+std::string audioFocusProtobuf() {
+    std::vector<std::string> log;
+    Link link;
+    Phone phone(link.phoneFd, log);
+    phone.handshake();
+    phone.discover();
+    struct Case {
+        const char* name;
+        Bytes payload;
+        const char* expected;
+    };
+    const Case cases[] = {
+        {"field 2 before RELEASE", bytes({0x00, 0x12, 0x10, 0x00, 0x08, 0x04}), "hu ch=0 fl=0b 0013 0803"},
+        {"field 2=4 before GAIN", bytes({0x00, 0x12, 0x10, 0x04, 0x08, 0x01}), "hu ch=0 fl=0b 0013 0801"},
+        {"only field 2=4", bytes({0x00, 0x12, 0x10, 0x04}), "hu ch=0 fl=0b 0013 0801"},
+        {"multi-byte varint RELEASE", bytes({0x00, 0x12, 0x08, 0x84, 0x00}), "hu ch=0 fl=0b 0013 0803"},
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        log.clear();
+        phone.send(0, kSealed, cases[i].payload);
+        phone.settle();
+        bool matched = false;
+        for (size_t k = 0; k < log.size(); ++k) {
+            if (log[k] == cases[i].expected) {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            std::string got = log.empty() ? std::string("<none>") : log[0];
+            for (size_t k = 0; k < log.size(); ++k) {
+                if (log[k].find("0013 ") != std::string::npos) {
+                    got = log[k];
+                    break;
+                }
+            }
+            phone.leave();
+            waitEnded(link.session);
+            return format("%s: got '%s', want '%s'", cases[i].name, got.c_str(), cases[i].expected);
+        }
+    }
+    phone.leave();
+    if (!waitEnded(link.session)) {
+        return "session did not end cleanly";
+    }
+    return std::string();
+}
+
 // A phone that stops speaking by itself (iDrive has the screen, no music) keeps its session as long as it answers the
 // head unit's pings; one that answers nothing loses it within the 5 s silence limit, pings or not. Run on the clock,
 // so it is checked here and kept out of the golden. An empty verdict: passed.
@@ -1338,56 +1388,6 @@ bool streamVideo(long count) {
            frames.received == static_cast<size_t>(count);
 }
 
-// AudioFocusRequest must decode protobuf field 1 rather than reading message[3]: an earlier field, an absent field 1
-// whose sibling byte happens to be 4, or a multi-byte varint must still produce GAIN or LOSS accordingly.
-std::string audioFocusProtobuf() {
-    std::vector<std::string> log;
-    Link link;
-    Phone phone(link.phoneFd, log);
-    phone.handshake();
-    phone.discover();
-    struct Case {
-        const char* name;
-        Bytes payload;
-        const char* expected;
-    };
-    const Case cases[] = {
-        {"field 2 before RELEASE", bytes({0x00, 0x12, 0x10, 0x00, 0x08, 0x04}), "hu ch=0 fl=0b 0013 0803"},
-        {"field 2=4 before GAIN", bytes({0x00, 0x12, 0x10, 0x04, 0x08, 0x01}), "hu ch=0 fl=0b 0013 0801"},
-        {"only field 2=4", bytes({0x00, 0x12, 0x10, 0x04}), "hu ch=0 fl=0b 0013 0801"},
-        {"multi-byte varint RELEASE", bytes({0x00, 0x12, 0x08, 0x84, 0x00}), "hu ch=0 fl=0b 0013 0803"},
-    };
-    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
-        log.clear();
-        phone.send(0, kSealed, cases[i].payload);
-        phone.settle();
-        bool matched = false;
-        for (size_t k = 0; k < log.size(); ++k) {
-            if (log[k] == cases[i].expected) {
-                matched = true;
-                break;
-            }
-        }
-        if (!matched) {
-            std::string got = log.empty() ? std::string("<none>") : log[0];
-            for (size_t k = 0; k < log.size(); ++k) {
-                if (log[k].find("0013 ") != std::string::npos) {
-                    got = log[k];
-                    break;
-                }
-            }
-            phone.leave();
-            waitEnded(link.session);
-            return format("%s: got '%s', want '%s'", cases[i].name, got.c_str(), cases[i].expected);
-        }
-    }
-    phone.leave();
-    if (!waitEnded(link.session)) {
-        return "session did not end cleanly";
-    }
-    return std::string();
-}
-
 void timedOut(int) {
     static const char msg[] = "FAIL test-session-phone: no progress\n";
     ssize_t w = write(2, msg, sizeof(msg) - 1);
@@ -1455,6 +1455,8 @@ int main(int argc, char** argv) {
             out.push_back("cb " + events[k]);
         }
     }
+    const std::string audioFocus = writing ? std::string() : audioFocusProtobuf();
+    takeEvents();
     const std::string quiet = writing ? std::string() : quietPhone();
     takeEvents();
     const std::string broken = writing ? std::string() : brokenStream();
@@ -1465,8 +1467,6 @@ int main(int argc, char** argv) {
     const std::string keyframe = writing ? std::string() : keyframeAfterLoss();
     takeEvents();
     const std::string givenUp = writing ? std::string() : carGivesUp();
-    takeEvents();
-    const std::string audioFocus = writing ? std::string() : audioFocusProtobuf();
     takeEvents();
     const bool oversized = writing || streamVideo(2);
     fflush(stdout);
@@ -1503,6 +1503,11 @@ int main(int argc, char** argv) {
         "PASS session with a fake phone: %u lines as the golden (TLS handshake, discovery, every channel, car input "
         "queues, odd fragments, cut frames, start/stop)\n",
         static_cast<unsigned>(out.size()));
+    if (!audioFocus.empty()) {
+        printf("FAIL session, audio focus protobuf: %s\n", audioFocus.c_str());
+        return 1;
+    }
+    puts("PASS session, audio focus protobuf: decodes field 1 across field order and varint width");
     if (!quiet.empty()) {
         printf("FAIL session, quiet phone: %s\n", quiet.c_str());
         return 1;
@@ -1538,10 +1543,5 @@ int main(int argc, char** argv) {
         return 1;
     }
     puts("PASS session, oversized fragmented video followed by small video");
-    if (!audioFocus.empty()) {
-        printf("FAIL session, audio focus protobuf: %s\n", audioFocus.c_str());
-        return 1;
-    }
-    puts("PASS session, audio focus protobuf: decodes field 1 across field order and varint width");
     return 0;
 }
