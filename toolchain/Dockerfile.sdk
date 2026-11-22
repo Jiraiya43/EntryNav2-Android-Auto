@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Jiraiya43
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Optional link-only SDK, built on the existing GCC 4.7 image. No head-unit files are used.
+ARG BASE_IMAGE=entrynav2-tc:4.7
+FROM ${BASE_IMAGE}
+
+RUN mkdir -p /tmp/sdk-debs /opt/sdk && cd /tmp/sdk-debs \
+ && apt-get download libssl1.0.0:armhf=1.0.1c-3ubuntu2 libdbus-1-3:armhf=1.6.4-1ubuntu4 \
+      libdrm2:armhf=2.4.39-0ubuntu1 libdrm-omap1:armhf=2.4.39-0ubuntu1 zlib1g:armhf=1:1.2.7.dfsg-13 \
+ && for d in *.deb; do dpkg -x "$d" /opt/sdk; done \
+ && for lib in libssl.so.1.0.0 libcrypto.so.1.0.0 libdbus-1.so.3 libz.so.1; do \
+      ln -s "arm-linux-gnueabihf/$lib" "/opt/sdk/lib/$lib"; done \
+ && for lib in libdrm.so.2 libdrm_omap.so.1; do \
+      ln -s "arm-linux-gnueabihf/$lib" "/opt/sdk/usr/lib/$lib"; done \
+ && rm -rf /tmp/sdk-debs
+
+COPY sdk.symbols make-sdk-stubs.sh /tmp/sdk-stubs/
+RUN sh /tmp/sdk-stubs/make-sdk-stubs.sh /tmp/sdk-stubs/sdk.symbols /opt/sdk/stubs \
+ && mkdir -p /opt/sdk/opt/hmi/lib \
+ && ln -s /opt/sdk/stubs/libxsvideo.so.4 /opt/sdk/usr/lib/libxsvideo.so.4 \
+ && ln -s /opt/sdk/stubs/libAppFramework.A.so /opt/sdk/opt/hmi/lib/libAppFramework.A.so \
+ && ln -s /opt/sdk/stubs/libCoreFramework.A.so /opt/sdk/opt/hmi/lib/libCoreFramework.A.so

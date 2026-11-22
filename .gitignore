@@ -53,6 +53,7 @@ __pycache__/
 !/tools/verify_binary.py
 !/tools/verify_core.py
 !/tools/verify_repo.py
+!/tools/verify_sdk.py
 !/tools/verify_wireless.py
 
 # The build image is rebuilt from the Dockerfile; its wrapper is ours to keep

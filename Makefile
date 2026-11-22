@@ -100,6 +100,17 @@ hmiapp/libEntryAad.so: $(HMI_OBJ)
 	$(CXX) $(CXXFLAGS) -fPIC -shared -Wl,-soname,libEntryAad.so $^ -o $@ \
 	    $(HARDEN_LDFLAGS) $(LDSHLIB) $(HMI_LIBDIRS) -l:libAppFramework.A.so -l:libCoreFramework.A.so -lpthread -lrt -ldl
 
+# SDK-only strict link: the HMI supplies clock_gettime through librt, so resolve it for this throwaway link.
+.PHONY: sdk-link-check
+sdk-link-check: hmiapp/libEntryAad.so
+	$(CXX) $(CXXFLAGS) -fPIC -shared -Wl,-z,defs $(HMI_OBJ) -o hmiapp/sdk-link-check.so \
+	    $(LDSHLIB) $(HMI_LIBDIRS) -l:libAppFramework.A.so -l:libCoreFramework.A.so -lpthread -ldl -lrt
+	arm-linux-gnueabihf-readelf --dyn-syms -W hmiapp/libEntryAad.so | \
+	    awk '$$7 == "UND" && $$5 == "GLOBAL" { sub(/@.*/, "", $$8); print $$8 }' | sort > hmiapp/sdk-imports.txt
+	arm-linux-gnueabihf-readelf --dyn-syms -W hmiapp/sdk-link-check.so | \
+	    awk '$$7 == "UND" && $$5 == "GLOBAL" { sub(/@.*/, "", $$8); print $$8 }' | sort > hmiapp/sdk-checked-imports.txt
+	diff -u hmiapp/sdk-imports.txt hmiapp/sdk-checked-imports.txt
+
 # Read-only diagnostics, run by hand on the car; neither is part of a release.
 dev-tools: evo-check evo-capture
 evo-check: $(CHECK_OBJ)
@@ -127,6 +138,7 @@ style:
 	$(RUFF) check .
 	$(SHELLCHECK) -s sh -S style .githooks/pre-push
 	$(SHELLCHECK) -S style toolchain/tc.sh
+	$(SHELLCHECK) -s sh -S style toolchain/make-sdk-stubs.sh
 check: style verify_core verify_repo test-host
 
 # ---- tests on the PC ------------------------------------------------------------------------------------------------

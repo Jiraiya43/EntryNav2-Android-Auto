@@ -2,8 +2,16 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Build image matching the EntryNav2 head unit: eglibc 2.15, GCC 4.7, armhf (VFPv3/NEON).
 # docker build -t entrynav2-tc:4.7 toolchain   (the name toolchain/tc.sh runs)
-FROM ubuntu:12.10
-RUN sed -i -e 's#http://[a-z.]*ubuntu.com#http://old-releases.ubuntu.com#g' /etc/apt/sources.list \
+# The 12.10 Docker Hub image uses the obsolete schema 1 format. Use the archived Ubuntu Core rootfs instead.
+FROM ubuntu:24.04 AS bootstrap
+ADD --checksum=sha256:1598091b2dcb731e5994a7f68c2762429e24c7f9c9147695a574f1d0e945f594 \
+    https://old-releases.ubuntu.com/releases/ubuntu-core/releases/quantal/release/ubuntu-core-12.10-core-amd64.tar.gz \
+    /tmp/quantal.tar.gz
+RUN mkdir /quantal && tar -xzf /tmp/quantal.tar.gz -C /quantal
+
+FROM scratch
+COPY --from=bootstrap /quantal/ /
+RUN echo 'deb http://old-releases.ubuntu.com/ubuntu quantal main universe' > /etc/apt/sources.list \
  && apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --force-yes \
       gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf \

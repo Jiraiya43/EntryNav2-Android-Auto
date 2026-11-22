@@ -1,0 +1,33 @@
+# Copyright (c) 2026 Jiraiya43
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Link-only exports: SONAME, ELF type, unversioned symbol. Functions must never execute.
+libxsvideo.so.4 FUNC xsv_close
+libxsvideo.so.4 FUNC xsv_configure_stream
+libxsvideo.so.4 FUNC xsv_decode_video_frame
+libxsvideo.so.4 FUNC xsv_enable_frame_events
+libxsvideo.so.4 FUNC xsv_open
+libxsvideo.so.4 FUNC xsv_receive_event
+libxsvideo.so.4 FUNC xsv_set_output_dimension
+libxsvideo.so.4 FUNC xsv_start
+libxsvideo.so.4 FUNC xsv_stop
+libxsvideo.so.4 FUNC xsv_update
+libAppFramework.A.so FUNC _ZN3bmw11BasicStringIcEC1EPKc
+libAppFramework.A.so FUNC _ZN3bmw11BasicStringIcED1Ev
+libAppFramework.A.so FUNC _ZN3bmw6ParcelD1Ev
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp10addHandlerEjjRKNS_8DelegateIbRKNS_6ParcelEvvvEE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp10addHandlerEjRKNS_8DelegateIbRKNS_6ParcelEvvvEE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp10onFinalizeEv
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp11setPropertyEjjRKNS_6ParcelE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp11updateModelEjb
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp11updateModelEjRKNS_6TextIDE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp11updateModelEjRKNS_7ImageIDE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp12triggerEventEj
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp12triggerEventEjRKNS_6ParcelE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp33cdsAddPropertyChangedEventHandlerERNS_11BasicStringIcEEjRKNS_8DelegateIbRKNS1_ItEEvvvEE
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp4postEPNS_8RunnableEj
+libAppFramework.A.so FUNC _ZN3bmw9PluginApp6onInitEv
+libAppFramework.A.so FUNC _ZN3bmw9PluginAppC1ERNS_11IDispatcherENS_11BasicStringIcEEjjNS_20RHMIInterfaceVersionERKNS_6BundleES8_
+libCoreFramework.A.so FUNC _ZN3bmw6ParcelC1Eb
+libCoreFramework.A.so FUNC _ZN3bmw6TextIDC1Ej
+libCoreFramework.A.so FUNC _ZN3bmw7ImageIDC1Ej
+libCoreFramework.A.so FUNC _ZNK3bmw6Parcel8readBoolERb
