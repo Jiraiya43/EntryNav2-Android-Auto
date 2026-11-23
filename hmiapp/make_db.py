@@ -27,6 +27,7 @@ LANGS = {
     "it": "Italiano",
     "pt": "Portugues",
     "ru": "Russian",
+    "pl": "Polish",
 }
 TEXTS = {
     1: "Android Auto",
@@ -99,6 +100,29 @@ LANG_TEXTS = {  # ASCII only
         23: "MENU: iDrive - BACK: zurueck",
         24: "Telefon gekoppelt, Ton per Bluetooth",
         26: "Kostenlos: github.com/Jiraiya43",
+    },
+    "pl": {
+        2: "Android Auto: laczenie...",
+        10: "Uruchom Android Auto",
+        11: "Zatrzymaj Android Auto",
+        13: "Laczenie z telefonem...",
+        14: "Otworz Android Auto",
+        15: "Automatyczne uruchamianie",
+        16: "Pomoc",
+        17: "Kabel USB zamiast WiFi",
+        18: "Zachowaj logi",
+        40: "Kopiuj logi na USB",
+        41: "Kopiowanie logow...",
+        42: "Logi skopiowane na USB",
+        43: "Nie znaleziono pamieci USB",
+        44: "Brak logow: zaznacz Zachowaj logi",
+        45: "Kopiowanie nieudane",
+        20: "NAV, MAP: nawigacja Android Auto",
+        21: "MEDIA: muzyka Android Auto",
+        22: "COM: telefon Android Auto",
+        23: "MENU: iDrive - BACK: wstecz",
+        24: "Telefon sparowany, dzwiek przez Bluetooth",
+        26: "Darmowe: github.com/Jiraiya43",
     },
 }
 LANG_TEXTS["fr-CA"] = LANG_TEXTS["fr-FR"]

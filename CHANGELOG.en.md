@@ -29,6 +29,8 @@ QEMU with the car's libraries).
   ([compatibility](docs/COMPATIBILITE.md#flèches-sur-le-compteur-des-série-f),
   [#79](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/79)). Tested on PC only, from the description of a
   6WA cluster (F52).
+- Polish translation of the Android Auto menu in iDrive, shown when iDrive is set to Polish (instead of English). As
+  in the other languages, the texts stay ASCII, without diacritics ("laczenie" for "łączenie"). Tested on PC.
 
 ### Fixed
 

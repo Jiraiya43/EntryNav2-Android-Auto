@@ -25,6 +25,9 @@ QEMU avec les bibliothèques de la voiture).
   ([compatibilité](docs/COMPATIBILITE.md#flèches-sur-le-compteur-des-série-f),
   [#79](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/79)). Testé sur PC seulement, d'après la description
   d'un compteur 6WA (F52).
+- Traduction polonaise du menu Android Auto de l'iDrive, affichée quand l'iDrive est en polonais (au lieu de
+  l'anglais). Comme les autres langues, les textes restent en ASCII, sans lettres accentuées (« laczenie » pour
+  « łączenie »). Testé sur PC.
 
 ### Corrigé
 
