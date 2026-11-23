@@ -27,7 +27,7 @@ LANGS = {
     "it": "Italiano",
     "pt": "Portugues",
     "ru": "Russian",
-    "pl": "Polish",
+    "pl": "Polski",
 }
 TEXTS = {
     1: "Android Auto",
@@ -121,7 +121,7 @@ LANG_TEXTS = {  # ASCII only
         21: "MEDIA: muzyka Android Auto",
         22: "COM: telefon Android Auto",
         23: "MENU: iDrive - BACK: wstecz",
-        24: "Telefon sparowany, dzwiek przez Bluetooth",
+        24: "Telefon sparowany, dzwiek przez BT",
         26: "Darmowe: github.com/Jiraiya43",
     },
 }
