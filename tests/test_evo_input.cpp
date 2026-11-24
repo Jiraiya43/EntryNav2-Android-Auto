@@ -136,6 +136,21 @@ int main() {
               aa::parseTouchStream(msg[0], got, 2, &declared) == 1 && declared == 1 && got[0].state == 2 &&
               got[0].id == 2 && got[0].x == 640 && got[0].y == 240);
     }
+    {
+        const aa::TouchContact contacts[] = {
+            {0, 1, 120, 240, 5}, {1, 2, 600, 300, 9}, {2, 1, 700, 310, 7}, {3, 2, 800, 320, 8}, {4, 3, 900, 330, 6},
+        };
+        unsigned char raw[touch_fixture::kFrameBytes];
+        aa::TouchReassembler r;
+        aa::TouchMsg msg[aa::kTouchMaxMsgs];
+        aa::TouchContact got[aa::kTouchMaxContacts];
+        int declared = 0;
+        touch_fixture::buildTouchFrame(raw, contacts, 5, 0);
+        CHECK(r.feed(raw, sizeof(raw), msg, aa::kTouchMaxMsgs) == 1 &&
+              aa::parseTouchStream(msg[0], got, aa::kTouchMaxContacts, &declared) == 5 && declared == 5 &&
+              got[1].id == 1 && got[1].x == 600 && got[1].y == 300 && got[4].id == 4 && got[4].x == 900 &&
+              got[4].y == 330 && got[4].state == 3 && got[4].size == 6);
+    }
     // A MINI: the phone's display starts 40 columns into the panel (its left margin) and is 1200x480. A finger is sent
     // in the phone's pixels: 40 less, kept inside its display. Before, it landed 40 pixels right of it (#78, #88).
     evo::TouchTracker mini;
