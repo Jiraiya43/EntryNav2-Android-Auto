@@ -9,6 +9,7 @@
 #include "evo_knob.hpp"
 #include "evo_touch.hpp"
 #include "media_recall.hpp"
+#include "touch_fixture.hpp"
 #define CHECK(x)                                                 \
     do {                                                         \
         if (!(x)) {                                              \
@@ -44,15 +45,25 @@ static size_t ipUdp(uint8_t* p, const uint8_t* payload, size_t n, uint16_t sport
     return total;
 }
 
+static size_t touchDatagram(const unsigned char* frame, size_t first, size_t records, unsigned char* out) {
+    namespace pdu = aa::touchpdu;
+    const size_t bytes = pdu::kRecord * records;
+    const size_t size = pdu::kHeader + bytes;
+    memcpy(out, frame, pdu::kHeader);
+    out[7] = static_cast<unsigned char>(size - 8);
+    memcpy(out + pdu::kHeader, frame + pdu::kHeader + pdu::kRecord * first, bytes);
+    return size;
+}
+
 static int frame(evo::TouchTracker& t, int x, int y, int state, unsigned char seq, aa::TouchEventOut* ev) {
-    unsigned char f[112];
+    unsigned char f[touch_fixture::kFrameBytes];
     aa::TouchContact c;
     c.id = 0;
     c.state = state;
     c.x = x;
     c.y = y;
     c.size = 10;
-    aa::buildTouchFrame(f, &c, 1, 0, seq);
+    touch_fixture::buildTouchFrame(f, c, seq);
     return t.feed(f, sizeof(f), ev, 16);
 }
 
@@ -65,14 +76,14 @@ int main() {
     CHECK(!evo::parseInputMode("Forward", mode));
 
     // IPv4/UDP view as delivered by AF_PACKET SOCK_DGRAM (network header first).
-    uint8_t pdu[112];
+    uint8_t pdu[touch_fixture::kFrameBytes];
     aa::TouchContact c0;
     c0.id = 0;
     c0.state = 1;
     c0.x = 640;
     c0.y = 240;
     c0.size = 9;
-    aa::buildTouchFrame(pdu, &c0, 1, 0, 0);
+    touch_fixture::buildTouchFrame(pdu, c0, 0);
     uint8_t pkt[256];
     evo::UdpView u;
     size_t n = ipUdp(pkt, pdu, sizeof(pdu), 30501, 30567);
@@ -114,9 +125,9 @@ int main() {
     CHECK(f45.activeCount() == 1);                                                                 // still down
     CHECK(frame(f45, 380, 205, 0x7, 36, ev) == 1 && ev[0].action == 1 && f45.activeCount() == 0);  // 01 11: up
     {
-        unsigned char raw[112];
+        unsigned char raw[touch_fixture::kFrameBytes];
         aa::TouchContact c = {2, 0xE, 640, 240, 9};  // id 2, bits 6-7 = 11, state 2
-        aa::buildTouchFrame(raw, &c, 1, 0, 0);
+        touch_fixture::buildTouchFrame(raw, c, 0);
         aa::TouchReassembler r;
         aa::TouchMsg msg[aa::kTouchMaxMsgs];
         aa::TouchContact got[2];
@@ -124,6 +135,21 @@ int main() {
         CHECK(r.feed(raw, sizeof(raw), msg, aa::kTouchMaxMsgs) == 1 &&
               aa::parseTouchStream(msg[0], got, 2, &declared) == 1 && declared == 1 && got[0].state == 2 &&
               got[0].id == 2 && got[0].x == 640 && got[0].y == 240);
+    }
+    {
+        const aa::TouchContact contacts[] = {
+            {0, 1, 120, 240, 5}, {1, 2, 600, 300, 9}, {2, 1, 700, 310, 7}, {3, 2, 800, 320, 8}, {4, 3, 900, 330, 6},
+        };
+        unsigned char raw[touch_fixture::kFrameBytes];
+        aa::TouchReassembler r;
+        aa::TouchMsg msg[aa::kTouchMaxMsgs];
+        aa::TouchContact got[aa::kTouchMaxContacts];
+        int declared = 0;
+        touch_fixture::buildTouchFrame(raw, contacts, 5, 0);
+        CHECK(r.feed(raw, sizeof(raw), msg, aa::kTouchMaxMsgs) == 1 &&
+              aa::parseTouchStream(msg[0], got, aa::kTouchMaxContacts, &declared) == 5 && declared == 5 &&
+              got[1].id == 1 && got[1].x == 600 && got[1].y == 300 && got[4].id == 4 && got[4].x == 900 &&
+              got[4].y == 330 && got[4].state == 3 && got[4].size == 6);
     }
     // A MINI: the phone's display starts 40 columns into the panel (its left margin) and is 1200x480. A finger is sent
     // in the phone's pixels: 40 less, kept inside its display. Before, it landed 40 pixels right of it (#78, #88).
@@ -173,19 +199,18 @@ int main() {
     }
     // The same message split over three datagrams.
     evo::TouchTracker s;
-    unsigned char whole[112], parts[3 * 112];
-    int sizes[3];
-    const int per[3] = {2, 5, 5};
+    unsigned char whole[touch_fixture::kFrameBytes], part[touch_fixture::kFrameBytes];
     aa::TouchContact c1;
     c1.id = 1;
     c1.state = 1;
     c1.x = 300;
     c1.y = 100;
     c1.size = 5;
-    aa::buildTouchFrame(whole, &c1, 1, 0, 0);
-    CHECK(aa::splitTouchFrame(whole, per, 3, parts, sizes) == 3);
-    CHECK(s.feed(parts, sizes[0], ev, 16) == 0 && s.feed(parts + 112, sizes[1], ev, 16) == 0);
-    CHECK(s.feed(parts + 224, sizes[2], ev, 16) == 1 && ev[0].action == 0 && ev[0].p[0].id == 1 && ev[0].p[0].x == 300);
+    touch_fixture::buildTouchFrame(whole, c1, 0);
+    CHECK(s.feed(part, touchDatagram(whole, 0, 2, part), ev, 16) == 0);
+    CHECK(s.feed(part, touchDatagram(whole, 2, 5, part), ev, 16) == 0);
+    CHECK(s.feed(part, touchDatagram(whole, 7, 5, part), ev, 16) == 1 && ev[0].action == 0 && ev[0].p[0].id == 1 &&
+          ev[0].p[0].x == 300);
     aa::TouchContact last[5];
     CHECK(s.lastContacts(last, 5) == 1 && last[0].y == 100 && s.messages() == 1);
 
