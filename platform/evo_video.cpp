@@ -23,6 +23,8 @@ EvoVideoConfig::EvoVideoConfig()
       height(720),
       displayWidth(1280),
       displayHeight(480),
+      sourceWidth(1280),
+      sourceHeight(480),
       fps(0),
       surfaceId(kAaSurfaceId),
       layerId(kAaLayerId),
@@ -59,12 +61,14 @@ EvoVideo::~EvoVideo() {
     pthread_mutex_destroy(&mu_);
 }
 
-void EvoVideoConfig::setDisplay(uint32_t canvasWidth, uint32_t canvasHeight, uint32_t panelWidth,
-                                uint32_t panelHeight) {
+void EvoVideoConfig::setDisplay(uint32_t canvasWidth, uint32_t canvasHeight, uint32_t panelWidth, uint32_t panelHeight,
+                                uint32_t shownWidth, uint32_t shownHeight) {
     width = canvasWidth;
     height = canvasHeight;
     displayWidth = panelWidth;
     displayHeight = panelHeight;
+    sourceWidth = shownWidth ? shownWidth : panelWidth;
+    sourceHeight = shownHeight ? shownHeight : panelHeight;
     if (canvasWidth > 1280 || canvasHeight > 720) {
         bufSize = 2u << 20;
     }
@@ -75,8 +79,9 @@ bool EvoVideo::init(const EvoVideoConfig& cfg) {
         return false;
     }
     if (!cfg.width || !cfg.height || cfg.width > 1920 || cfg.height > 1080 || !cfg.bufCount || cfg.bufCount > 16 ||
-        cfg.bufSize < 65536 || cfg.bufSize > (4u << 20) || cfg.displayWidth > cfg.width ||
-        cfg.displayHeight > cfg.height ||
+        cfg.bufSize < 65536 || cfg.bufSize > (4u << 20) || !cfg.sourceWidth || !cfg.sourceHeight ||
+        cfg.sourceWidth > cfg.width || cfg.sourceHeight > cfg.height || cfg.displayWidth > 1920 ||
+        cfg.displayHeight > 1080 ||
         !ilm_.validateTarget(cfg.surfaceId, cfg.layerId, cfg.displayWidth, cfg.displayHeight)) {
         ELOG("Video", "REFUSED: target not checked (inventory, free id, visible full-screen layer)");
         return false;
@@ -135,7 +140,12 @@ bool EvoVideo::start() {
         return false;
     }
     // Attach our surface hidden, cropped to the panel's area.
-    if (!ilm_.attachSurface(cfg_.surfaceId, cfg_.layerId, cfg_.displayWidth, cfg_.displayHeight)) {
+    if (cfg_.sourceWidth != cfg_.displayWidth || cfg_.sourceHeight != cfg_.displayHeight) {
+        ELOG("Video", "the top-left %ux%u of the stream is stretched to the %ux%u panel", cfg_.sourceWidth,
+             cfg_.sourceHeight, cfg_.displayWidth, cfg_.displayHeight);
+    }
+    if (!ilm_.attachSurface(cfg_.surfaceId, cfg_.layerId, cfg_.displayWidth, cfg_.displayHeight, cfg_.sourceWidth,
+                            cfg_.sourceHeight)) {
         stop();
         return false;
     }

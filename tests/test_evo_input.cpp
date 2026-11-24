@@ -134,6 +134,14 @@ int main() {
     CHECK(frame(mini, 20, 210, 2, 12, ev) == 1 && ev[0].p[0].x == 0);  // under the surround: the edge
     CHECK(frame(mini, 1270, 479, 2, 24, ev) == 1 && ev[0].p[0].x == 1199 && ev[0].p[0].y == 479);
     CHECK(frame(mini, 1270, 479, 3, 36, ev) == 1 && ev[0].action == 1 && mini.activeCount() == 0);
+    // A 1440x540 panel showing a 1280x480 picture stretched to it (wireless, #180): a finger is sent in the picture's
+    // pixels, the panel's last pixel is the picture's last one.
+    evo::TouchTracker stretched;
+    stretched.setScale(1280.0 / 1440.0, 1280.0 / 1440.0);
+    stretched.setLimits(1279, 479);
+    CHECK(frame(stretched, 720, 270, 1, 0, ev) == 1 && ev[0].action == 0 && ev[0].p[0].x == 640 && ev[0].p[0].y == 240);
+    CHECK(frame(stretched, 1439, 539, 2, 12, ev) == 1 && ev[0].p[0].x == 1279 && ev[0].p[0].y == 479);
+    CHECK(frame(stretched, 1439, 539, 3, 24, ev) == 1 && ev[0].action == 1 && stretched.activeCount() == 0);
     // Before the picture: a finger that touches down is ignored until it lifts, even once the picture is up.
     evo::TouchTracker early;
     early.setPictureStarted(false);

@@ -33,7 +33,8 @@ const uint32_t kAaSurfaceId = 0x7eaa0001, kPillSurfaceId = 0x7eaa0002, kAaLayerI
 
 struct EvoVideoConfig {
     uint32_t width, height;                // phone stream, its canvas: 1280x720
-    uint32_t displayWidth, displayHeight;  // shown part of it, the panel: 1280x480
+    uint32_t displayWidth, displayHeight;  // the panel: 1280x480
+    uint32_t sourceWidth, sourceHeight;    // shown part of the stream: the panel's size, or less when it is stretched
     uint32_t fps;                          // 0 = not imposed
     uint32_t surfaceId;                    // kAaSurfaceId
     uint32_t layerId;                      // kAaLayerId, already visible
@@ -42,7 +43,9 @@ struct EvoVideoConfig {
     bool holdCloseFrames;                  // the phone on Wi-Fi: frames that come in pairs are spread (FrameGap)
     EvoVideoConfig();                      // the reference car's values; frames never held (USB)
     // The stream and its shown part for a panel. A 1920x1080 stream gets larger buffers for its keyframes.
-    void setDisplay(uint32_t canvasWidth, uint32_t canvasHeight, uint32_t panelWidth, uint32_t panelHeight);
+    // shownWidth x shownHeight is the part of the stream put on the panel; 0: the panel's own size (no scaling).
+    void setDisplay(uint32_t canvasWidth, uint32_t canvasHeight, uint32_t panelWidth, uint32_t panelHeight,
+                    uint32_t shownWidth = 0, uint32_t shownHeight = 0);
 };
 
 // Frames that come too close together. Over Wi-Fi, frames can arrive in pairs a few milliseconds apart: the compositor

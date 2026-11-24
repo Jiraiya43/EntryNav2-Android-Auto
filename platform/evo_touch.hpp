@@ -55,7 +55,12 @@ public:
         maxX_ = maxX;
         maxY_ = maxY;
     }
-    // Added to every panel coordinate before the limits.
+    // Panel pixels to the phone's pixels, applied before the offset: 1 unless the picture is stretched.
+    void setScale(double sx, double sy) {
+        sx_ = sx;
+        sy_ = sy;
+    }
+    // Added to every scaled coordinate before the limits.
     void setOffset(double ox, double oy) {
         ox_ = ox;
         oy_ = oy;
@@ -101,7 +106,9 @@ public:
     ~EvoTouch();
     // Before start(): the phone's display (core/display_plan.hpp), which begins originX panel columns from the left
     // (its left margin) and is width x height; 1280x720 at 0 by default. Touches are sent in its pixels.
-    void setPhoneDisplay(uint32_t originX, uint32_t width, uint32_t height) {
+    // scale: panel pixels to the phone's pixels (DisplayPlan::touchScale), 1 when the picture is not stretched.
+    void setPhoneDisplay(uint32_t originX, uint32_t width, uint32_t height, double scale = 1.0) {
+        tracker_.setScale(scale, scale);
         tracker_.setOffset(-static_cast<double>(originX), 0.0);
         tracker_.setLimits(static_cast<int>(width) - 1, static_cast<int>(height) - 1);
     }

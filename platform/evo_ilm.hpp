@@ -38,7 +38,9 @@ public:
     // Attaches surfaceId to layerId hidden, with regions 0,0,w,h. The layer's list is kept and our surface goes above
     // the others: first when the compositor flips the order, last otherwise. Refuses before any "set" command when the
     // stacking direction cannot be established.
-    bool attachSurface(uint32_t surfaceId, uint32_t layerId, uint32_t w, uint32_t h);
+    // sourceW x sourceH: the part of the surface shown, stretched to w x h by the compositor; 0 = w x h, unscaled.
+    bool attachSurface(uint32_t surfaceId, uint32_t layerId, uint32_t w, uint32_t h, uint32_t sourceW = 0,
+                       uint32_t sourceH = 0);
     // Reads genivi-flip-renderorder in the compositor configuration. topFirst=true: the first entry of a render order
     // is on top. False when the file is unreadable or ambiguous.
     bool renderOrderTopFirst(bool& topFirst);

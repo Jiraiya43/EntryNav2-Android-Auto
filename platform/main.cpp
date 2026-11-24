@@ -299,13 +299,21 @@ int main(int argc, char** argv) {
     if (video) {
         evo::EvoIlm ilm;
         uint32_t panelWidth = 0, panelHeight = 0;
-        if (!ilm.screenSize(panelWidth, panelHeight) || !aa::planDisplay(panelWidth, panelHeight, display)) {
+        // Wireless: never the 1920x1080 canvas. A phone only sends it on a 5 GHz network and drops the session at
+        // the video setup otherwise; the car's access point is on 2.4 GHz. A larger panel gets 1280x720 stretched.
+        const uint32_t largestCanvas = usb ? 3 : 2;
+        if (!ilm.screenSize(panelWidth, panelHeight) ||
+            !aa::planDisplay(panelWidth, panelHeight, display, largestCanvas)) {
             ELOG("Main", "screen size unreadable or larger than 1920x1080 (%ux%u): no picture possible", panelWidth,
                  panelHeight);
             return 1;
         }
         ELOG("Main", "screen %ux%u: the phone is asked for %ux%u%s", display.width, display.height, display.canvasWidth,
              display.canvasHeight, display.reference() ? "" : " (a size not tried on the reference car)");
+        if (display.scaled()) {
+            ELOG("Main", "wireless: its top-left %ux%u is stretched to the panel, touches scaled by %.3f",
+                 display.shownWidth, display.shownHeight, display.touchScale());
+        }
     }
     const aa::CarBrand brand = readCarBrand();
     display.hiddenSide = aa::surroundSide(brand, display.width);
@@ -317,7 +325,8 @@ int main(int argc, char** argv) {
              display.leftInset());
     }
     evo::ServiceApp app(kAaPort, video, &quit);
-    app.videoConfig.setDisplay(display.canvasWidth, display.canvasHeight, display.width, display.height);
+    app.videoConfig.setDisplay(display.canvasWidth, display.canvasHeight, display.width, display.height,
+                               display.shownWidth, display.shownHeight);
     app.videoConfig.holdCloseFrames = !usb;  // pairs come from the Wi-Fi's bursts, not the cable
     app.session.setDisplay(display);
     app.session.setCarMake(aa::brandName(brand));
@@ -331,7 +340,7 @@ int main(int argc, char** argv) {
     app.session.setSoftwareVersion(ENTRY_AAD_VERSION);    // the file VERSION, given by the Makefile
     // Declared after app: destroyed (and joined) before the session their callbacks post to.
     evo::EvoTouch touch;
-    touch.setPhoneDisplay(display.leftInset(), display.phoneWidth(), display.phoneHeight());
+    touch.setPhoneDisplay(display.leftInset(), display.phoneWidth(), display.phoneHeight(), display.touchScale());
     evo::EvoKnob knob;
     evo::EvoControl control;
     const bool logsKept = access(evo::contract::kMaintenance, F_OK) == 0;

@@ -37,7 +37,7 @@ EvoIlm::EvoIlm() {}
 bool EvoIlm::validateTarget(uint32_t, uint32_t, uint32_t, uint32_t, bool) {
     return true;
 }
-bool EvoIlm::attachSurface(uint32_t, uint32_t, uint32_t, uint32_t h) {
+bool EvoIlm::attachSurface(uint32_t, uint32_t, uint32_t, uint32_t h, uint32_t, uint32_t) {
     height = h;
     opacity = 1.f;
     visible = false;
