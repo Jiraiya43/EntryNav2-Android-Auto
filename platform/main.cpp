@@ -299,8 +299,8 @@ int main(int argc, char** argv) {
     if (video) {
         evo::EvoIlm ilm;
         uint32_t panelWidth = 0, panelHeight = 0;
-        // Wireless: never the 1920x1080 canvas. A phone only sends it on a 5 GHz network and drops the session at
-        // the video setup otherwise; the car's access point is on 2.4 GHz. A larger panel gets 1280x720 stretched.
+        // Wireless: never the 1920x1080 canvas. Over the car's 2.4 GHz access point, a phone asked for it closed
+        // the session at the video setup, and 1280x720 works (#180). A larger panel gets 1280x720 stretched.
         const uint32_t largestCanvas = usb ? 3 : 2;
         if (!ilm.screenSize(panelWidth, panelHeight) ||
             !aa::planDisplay(panelWidth, panelHeight, display, largestCanvas)) {
@@ -316,7 +316,7 @@ int main(int argc, char** argv) {
         }
     }
     const aa::CarBrand brand = readCarBrand();
-    display.hiddenSide = aa::surroundSide(brand, display.width);
+    display.hiddenSide = aa::surroundSide(brand, display.shownWidth);
     if (display.hiddenSide) {
         ELOG("Main",
              "%s: the round surround hides %u columns on each side, the phone keeps its UI inside (%ux%u, touches "

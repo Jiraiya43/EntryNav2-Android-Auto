@@ -49,9 +49,10 @@ struct DisplayPlan {
 };
 
 // The plan for a panel; false for an empty panel or one larger than every canvas.
-// largestCanvas (1, 2 or 3) caps the canvas asked of the phone. A phone only sends 1920x1080 on a 5 GHz network, and
-// the car's access point is on 2.4 GHz: a wireless session passes 2. A panel that the largest canvas allowed does not
-// hold gets that canvas scaled to it, both axes equally: 1440x540 shows the top 1280x480 of 1280x720 at 1.125.
+// largestCanvas (1, 2 or 3) caps the canvas asked of the phone. Over the car's 2.4 GHz access point, a phone asked
+// for 1920x1080 closed the session at the video setup, and 1280x720 works (#180): a wireless session passes 2. A
+// panel that the largest canvas allowed does not hold gets that canvas scaled to it, both axes equally: 1440x540
+// shows the top 1280x480 of 1280x720 at 1.125.
 inline bool planDisplay(uint32_t panelWidth, uint32_t panelHeight, DisplayPlan& out, uint32_t largestCanvas = 3) {
     static const uint32_t kCanvas[3][2] = {{800, 480}, {1280, 720}, {1920, 1080}};
     if (!panelWidth || !panelHeight || panelWidth > kCanvas[2][0] || panelHeight > kCanvas[2][1]) {

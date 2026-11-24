@@ -338,8 +338,9 @@ int main() {
           refused.reference());  // a refused panel leaves the plan as it was
     // The reference car: the very bytes sent before the panel was read, whether the plan is given or not.
     CHECK(aa::buildCarServiceDiscovery(kDhuSdpProtobuf, kDhuSdpProtobufLen, nullptr, nullptr, same) == unversioned);
-    // Wireless: the 1280x720 canvas at most, a phone only sends 1920x1080 on a 5 GHz network (#180). A panel it does
-    // not hold shows its top part stretched, both axes equally; the phone is told what the reference car tells it.
+    // Wireless: the 1280x720 canvas at most; over the car's 2.4 GHz access point a phone asked for 1920x1080 closed
+    // the session at the video setup (#180). A panel that canvas does not hold shows its top part stretched, both
+    // axes equally; the phone is told what the reference car tells it.
     aa::DisplayPlan capped, capSame, capSmall, capFull;
     CHECK(aa::planDisplay(1440, 540, capped, 2) && capped.resolution == 2 && capped.canvasWidth == 1280 &&
           capped.canvasHeight == 720 && capped.width == 1440 && capped.height == 540 && capped.shownWidth == 1280 &&
