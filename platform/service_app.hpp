@@ -30,6 +30,7 @@
 #include "peek_timing.hpp"
 #include "tcp_server.hpp"
 #include "usb_loop.hpp"
+#include "video_pace.hpp"
 #include "volume_state.hpp"
 #include "wifi_link.hpp"
 #include "wireless_loop.hpp"
@@ -136,6 +137,7 @@ public:
     WifiLinkLog wifiLink;  // the Wi-Fi link's quality, logged while a wireless session runs
     unsigned sppLinks, tcpLinks, usbLinks;
     std::atomic<unsigned> videoFrames;  // counted on the session thread without mu
+    VideoPace videoPace;                // the [Video] line every 10 s of a session
     bool wppReply, wppAccepted;
     bool projectionOverUsb;  // the last session came over USB (its loss is not the wireless loop's business)
     unsigned lostWireless;   // wireless sessions ended without ByeBye

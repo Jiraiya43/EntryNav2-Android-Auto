@@ -10,6 +10,9 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Ajouté
 
+- Journaux conservés : pendant une séance, une ligne `[Video]` toutes les 10 s donne les images et les Ko de vidéo
+  reçus, le plus long écart entre deux images, la remise la plus lente au décodeur et les images perdues, pour voir si
+  la voiture retient la vidéo quand elle saccade. Testé sur PC.
 - Traduction polonaise du menu Android Auto de l'iDrive, affichée quand l'iDrive est en polonais (au lieu de
   l'anglais). Comme les autres langues, les textes restent en ASCII, sans lettres accentuées (« laczenie » pour
   « łączenie ») ([#176](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/176), essayée sur une F44 ; textes de la
