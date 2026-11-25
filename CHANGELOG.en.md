@@ -23,6 +23,9 @@ QEMU with the car's libraries).
 
 ### Fixed
 
+- Car shutdown: when the compositor closes the volume pill's connection, the service no longer makes any Wayland or
+  LayerManager call to tear it down. In the logs of an X1 F48 and of a G21, 12 of 13 `free(): invalid pointer` aborts
+  came within 0.3 s of that loss; that the teardown causes them is not proven. Tested on a PC.
 - Wireless on screens wider than 1280 pixels (10.25 inches, 1440x540): the service asked the phone for a 1920x1080
   picture, and the phone closed the session as soon as the video was set up, over the car's 2.4 GHz Wi-Fi. Over
   wireless it now asks for 1280x720 at most: on a wider screen, the top of the picture (1280x480) is stretched to the

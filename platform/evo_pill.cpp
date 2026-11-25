@@ -227,6 +227,17 @@ struct EvoPill::Wayland {
         flush(display);
         disconnect(display);  // the compositor drops whatever is left with the connection
         display = nullptr;
+        unmap();
+    }
+    // The compositor went away (the car shutting down): no Wayland call on the dead connection. In the logs of an X1
+    // F48 and of a G21, 12 of 13 "free(): invalid pointer" aborts came within 0.3 s of that loss; that the teardown
+    // there causes them is not proven.
+    // shortcut: the proxies and the display stay allocated until the process exits, which follows the car's shutdown.
+    void abandon() {
+        display = nullptr;
+        unmap();
+    }
+    void unmap() {
         if (pixels) {
             munmap(pixels, mapped);
             pixels = nullptr;
@@ -351,6 +362,7 @@ void EvoPill::run() {
     }
     ready_ = placed;
     bool visible = false;
+    bool lost = false;
     uint32_t hideAt = 0;
     const int fd = w.display ? w.getFd(w.display) : -1;
     while (running_ && placed) {
@@ -372,6 +384,7 @@ void EvoPill::run() {
         }
         if ((p[1].revents & (POLLERR | POLLHUP)) || ((p[1].revents & POLLIN) && w.dispatch(w.display) < 0)) {
             ELOG("VolumePill", "compositor disconnected: pill stopped, back to dimming");
+            lost = true;
             break;
         }
         pthread_mutex_lock(&mu_);
@@ -403,6 +416,10 @@ void EvoPill::run() {
         }
     }
     ready_ = false;
+    if (lost) {
+        w.abandon();  // no layer manager either: the compositor that knew the surface is gone
+        return;
+    }
     if (placed) {
         ilm.setSurfaceVisibility(surfaceId_, false);
         ilm.detachSurface(surfaceId_, layerId_);

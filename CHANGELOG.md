@@ -18,6 +18,10 @@ QEMU avec les bibliothèques de la voiture).
 
 ### Corrigé
 
+- Arrêt de la voiture : quand le compositeur ferme la connexion de la pastille de volume, le service ne fait plus
+  aucun appel Wayland ni LayerManager pour la défaire. Dans les journaux d'une X1 F48 et d'une G21, 12 des 13 arrêts
+  sur `free(): invalid pointer` suivaient cette perte de moins de 0,3 s ; que le démontage en soit la cause n'est pas
+  prouvé. Testé sur PC.
 - Sans-fil sur les écrans plus larges que 1280 pixels (10,25 pouces, 1440x540) : le service demandait au téléphone une
   image de 1920x1080, et le téléphone fermait la séance dès la mise en place de la vidéo, sur le Wi-Fi 2,4 GHz de la
   voiture. En sans-fil, il demande maintenant 1280x720 au plus : sur un écran plus large, le haut de l'image
