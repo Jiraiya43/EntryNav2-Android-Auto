@@ -41,6 +41,9 @@ names or Wi-Fi address in the logs. Installs from a USB stick since 0.13.0-rc.10
 
 ### Added
 
+- Logs kept: during a session, a `[Video]` line every 10 s gives the video frames and KB received, the longest gap
+  between two frames, the slowest hand-off to the decoder and the frames lost, to tell whether the car holds the video
+  back when it stutters. Tested on a PC.
 - Polish translation of the Android Auto menu in iDrive, shown when iDrive is set to Polish (instead of English). As
   in the other languages, the texts stay ASCII, without diacritics ("laczenie" for "łączenie")
   ([#176](https://github.com/Jiraiya43/EntryNav2-Android-Auto/pull/176), tried on an F44; texts of the USB stick

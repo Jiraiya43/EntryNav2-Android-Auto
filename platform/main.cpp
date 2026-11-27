@@ -512,6 +512,7 @@ int main(int argc, char** argv) {
                 paceMs = nowMs;
                 app.session.takeLongestSilenceMs();  // the start of the session is not a silence
                 app.video.takeFrameGaps();
+                app.videoPace.restart();
             } else if (nowMs - paceMs >= 10000) {
                 const evo::FrameGapStats gaps = app.video.takeFrameGaps();
                 ELOG("Session",
@@ -519,6 +520,12 @@ int main(int argc, char** argv) {
                      "one, %u held (longest %u ms)",
                      (nowMs - paceMs + 500) / 1000, app.session.takeLongestSilenceMs(), gaps.frames, gaps.early,
                      evo::kFrameGapMs, gaps.held, gaps.longestHoldMs);
+                const evo::VideoPaceTotals video = app.videoPace.take();
+                ELOG("Video",
+                     "in %u s: %u frames, %u KB, longest gap between frames %u ms, slowest hand-off to the decoder "
+                     "%u ms, %u lost",
+                     (nowMs - paceMs + 500) / 1000, video.frames, video.kbytes, video.gapMaxMs, video.feedMaxMs,
+                     video.lost);
                 paceMs = nowMs;
             }
         }

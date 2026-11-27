@@ -217,6 +217,8 @@ test-host: test-parsers test-spp-host test-kombi-host test-gps-host test-capture
 	./tests/test-update-install
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_update_flow.cpp -o tests/test-update-flow
 	./tests/test-update-flow
+	$(HOST_CXX) $(HOST_FLAGS) tests/test_video_pace.cpp -o tests/test-video-pace
+	./tests/test-video-pace
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_pb.cpp -o tests/test-pb
 	./tests/test-pb
 	$(HOST_CXX) $(HOST_FLAGS) tests/test_volume_pill.cpp -o tests/test-volume-pill
