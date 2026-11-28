@@ -134,17 +134,20 @@ Auto occupe lui-même l'emplacement des BMW Apps (`takes SPP 0` dans le journal 
 pas de ligne `[WifiLink]`.
 
 Avant chaque échange Wi-Fi avec le téléphone, le service demande au point d'accès de la voiture de ne plus proposer
-U-APSD, une économie d'énergie du téléphone, et écrit une ligne `car access point:` (journal du service, toujours) :
+U-APSD, une économie d'énergie du téléphone, ni le 802.11n (sur une X1 F48, des trames acquittées par la voiture se
+perdaient à l'intérieur pendant les saccades, [#203](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/203) ;
+le réglage vaut pour tout le Wi-Fi de la voiture et limite son débit à 54 Mbit/s), et écrit une ligne
+`car access point:` (journal du service, toujours) :
 
 | Fin de la ligne | Sens |
 |---|---|
-| `beacon rebuilt: the phone joins without it` | Fait : le téléphone rejoint le Wi-Fi sans U-APSD |
+| `beacon rebuilt: the phone joins without them` | Fait : le téléphone rejoint le Wi-Fi sans U-APSD ni 802.11n |
 | `disconnected once and joins again without it` | Fait : un appareil était déjà sur le Wi-Fi de la voiture (téléphone qui l'a rejoint tout seul, téléphone revenu, ordinateur, iPhone en CarPlay) ; il est déconnecté une fois et le rejoint aussitôt sans U-APSD |
 | `beacon already rebuilt for this hostapd start` | Déjà fait depuis le dernier démarrage du point d'accès, même par un service arrêté puis relancé depuis : le réglage seul, sans reconstruire la balise une seconde fois |
 | `beacon left, nobody disconnected` | Un appareil était déjà sur le Wi-Fi, mais le démarrage du point d'accès n'a pas pu être reconnu : personne n'est déconnecté (sinon ce serait à chaque échange), et cet appareil garde U-APSD jusqu'à sa prochaine connexion |
 | `RELOAD refused` | hostapd a pris le réglage mais refusé de reconstruire sa balise, sans déconnecter personne : le téléphone peut encore demander U-APSD ; redemandé au prochain échange |
 | `RELOAD not answered` | hostapd n'a pas répondu à temps : la balise a pu être reconstruite ; pas redemandé avant le prochain démarrage du point d'accès, pour ne pas déconnecter le téléphone à chaque échange |
-| `left on` | hostapd a refusé le réglage ou n'a pas répondu : rien n'a changé |
+| `left on` | hostapd a refusé un des deux réglages ou n'a pas répondu : la balise n'est pas reconstruite |
 
 Le réglage est fait dans la mémoire de hostapd, jamais dans un fichier de la voiture : un redémarrage de l'unité, ou
 de hostapd par le système, remet celui de BMW.
