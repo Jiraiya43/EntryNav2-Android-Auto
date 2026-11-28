@@ -200,6 +200,46 @@ void neverSwitches() {
     run.end();
 }
 
+void quickReplugAfterResetLimit() {
+    fake::Bus bus;
+    fake::Phone held, replacement;
+    held.held = true;
+    replacement.address = 40;
+    g_phones.clear();
+    g_phones.push_back(&held);
+    g_phones.push_back(&replacement);
+    held.plug(bus, "1-1");
+    Run run(bus);
+    CHECK(fake::within(10000, [&]() { return held.count(&fake::Phone::claims) == 40; }));
+    usleep(300000);  // the last held interface reaches the reset limit
+    CHECK(held.count(&fake::Phone::resets) == 3 && run.host.handed == 0);
+    const unsigned opens = held.count(&fake::Phone::opens);
+    usleep(300000);
+    CHECK(held.count(&fake::Phone::opens) == opens);
+    replacement.plug(bus, "1-1", true);
+    CHECK(run.handed(1));
+    CHECK(replacement.count(&fake::Phone::resets) == 1 && replacement.count(&fake::Phone::started) == 1);
+    run.end();
+}
+
+void resetLimitIsPerPort() {
+    fake::Bus bus;
+    fake::Phone first, second;
+    first.held = second.held = true;
+    second.address = 40;
+    g_phones.clear();
+    g_phones.push_back(&first);
+    g_phones.push_back(&second);
+    first.plug(bus, "1-1");
+    Run run(bus);
+    CHECK(fake::within(10000, [&]() { return first.count(&fake::Phone::claims) == 40; }));
+    usleep(300000);
+    second.plug(bus, "1-2", true);
+    CHECK(fake::within(4000, [&]() { return second.count(&fake::Phone::resets) >= 1; }));
+    CHECK(first.count(&fake::Phone::resets) == 3);
+    run.end();
+}
+
 // A session is running (wired or not): the bus is not touched.
 void busyService() {
     fake::Bus bus;
@@ -231,6 +271,8 @@ int main() {
     onePortOnly();
     heldInterface();
     neverSwitches();
+    quickReplugAfterResetLimit();
+    resetLimitIsPerPort();
     busyService();
     fflush(stdout);
     dup2(console, 1);
