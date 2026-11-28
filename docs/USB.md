@@ -38,7 +38,8 @@ Le fichier est lu à chaque démarrage d'Android Auto et vaut jusqu'à son arrê
    ne reçoivent jamais rien.
 3. Il lui demande de passer en mode accessoire, le mode qu'Android Auto utilise sur un câble
    ([protocole AOA](https://source.android.com/docs/core/interaction/accessories/aoa) : requêtes 51, 52 et 53). Un
-   appareil qui ne répond pas à la première n'est plus sollicité.
+   appareil qui refuse la première n'est plus sollicité. En cas d'erreur temporaire ou de réponse incomplète,
+   cette première requête est réessayée trois fois au plus avant de laisser l'appareil tranquille.
 4. Le téléphone revient en accessoire sur la même prise : le service prend son interface et y fait passer la session
    Android Auto, la même qu'en sans fil. Un téléphone qui accepte la demande sans jamais revenir en accessoire est
    sollicité cinq fois au plus, puis laissé tranquille jusqu'au prochain branchement.

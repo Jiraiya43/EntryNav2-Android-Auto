@@ -49,11 +49,13 @@ bool readAccessoryEndpoints(const char* sysfs, const std::string& port, Accessor
 int readUsbSetting(const char* path, std::string& port);
 
 enum AccessorySwitch {
-    kSwitchAsked,       // the phone knows AOA and was told to start: it leaves the bus and comes back as an accessory
-    kSwitchNotAndroid,  // it does not answer the AOA version request: not asked again
-    kSwitchFailed,      // it answered, then a request failed
+    kSwitchAsked,        // the phone knows AOA and was told to start: it leaves the bus and comes back as an accessory
+    kSwitchNotAndroid,   // the AOA version request was rejected or returned an unsupported protocol
+    kSwitchProbeFailed,  // the version request failed temporarily or returned an incomplete response
+    kSwitchFailed,       // it answered, then a request failed
 };
-AccessorySwitch askAccessoryMode(UsbDevice& device, unsigned& protocol);
+// probeResult is the byte count or negative errno from the AOA version request.
+AccessorySwitch askAccessoryMode(UsbDevice& device, unsigned& protocol, int& probeResult);
 
 }  // namespace evo
 

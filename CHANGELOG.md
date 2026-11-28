@@ -8,6 +8,11 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- USB : une erreur temporaire lors de la première requête au téléphone ne le fait plus abandonner immédiatement ;
+  le service réessaie jusqu'à trois fois. Testé sur PC.
+
 ## [0.13.0-rc.12] - 2026-11-27 · PC
 
 Version candidate pour le sans-fil : l'économie d'énergie U-APSD retirée aussi au téléphone qui a rejoint le

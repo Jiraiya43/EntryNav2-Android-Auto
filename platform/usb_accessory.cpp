@@ -219,12 +219,16 @@ int readUsbSetting(const char* path, std::string& port) {
     return 1;
 }
 
-AccessorySwitch askAccessoryMode(UsbDevice& device, unsigned& protocol) {
+AccessorySwitch askAccessoryMode(UsbDevice& device, unsigned& protocol, int& probeResult) {
     uint8_t version[2] = {0, 0};
     const int n = device.control(0xc0, kGetProtocol, 0, 0, version, sizeof(version), kRequestMs);
+    probeResult = n;
     protocol = version[0] | (static_cast<unsigned>(version[1]) << 8);
-    if (n != static_cast<int>(sizeof(version)) || protocol < 1) {
+    if (n == -EPIPE || (n == static_cast<int>(sizeof(version)) && protocol < 1)) {
         return kSwitchNotAndroid;
+    }
+    if (n != static_cast<int>(sizeof(version))) {
+        return kSwitchProbeFailed;
     }
     for (unsigned i = 0; i < sizeof(kIdentity) / sizeof(kIdentity[0]); ++i) {
         // The string with its ending zero, as the protocol asks.
