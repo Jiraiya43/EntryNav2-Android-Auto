@@ -134,6 +134,8 @@ struct Phone {
     bool stuckOut;   // takes no data
     bool staysPut;   // takes the request to start as an accessory, and never becomes one
     unsigned opens, protocolAsked, started, resets, claims, releases;
+    unsigned probeFailures, protocolVersion;
+    int probeFailureResult;
     std::vector<std::string> strings;
     std::deque<std::vector<uint8_t>> toCar;     // what the phone sends, one transfer each
     std::vector<std::vector<uint8_t>> fromCar;  // each transfer received
@@ -155,7 +157,10 @@ struct Phone {
           started(0),
           resets(0),
           claims(0),
-          releases(0) {
+          releases(0),
+          probeFailures(0),
+          protocolVersion(2),
+          probeFailureResult(-ETIMEDOUT) {
         pthread_mutex_init(&mu, nullptr);
         CHECK(pipe2(wake, O_NONBLOCK | O_CLOEXEC) == 0);
     }
@@ -214,8 +219,15 @@ public:
             if (!phone_.android || type != 0xc0 || size != 2) {
                 return -EPIPE;
             }
-            data[0] = 2;
-            data[1] = 0;
+            if (phone_.probeFailures) {
+                --phone_.probeFailures;
+                if (phone_.probeFailureResult == 1) {
+                    data[0] = static_cast<uint8_t>(phone_.protocolVersion);
+                }
+                return phone_.probeFailureResult;
+            }
+            data[0] = static_cast<uint8_t>(phone_.protocolVersion);
+            data[1] = static_cast<uint8_t>(phone_.protocolVersion >> 8);
             return 2;
         }
         if (request == 52) {

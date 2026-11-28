@@ -50,11 +50,11 @@ struct Run {
     Host host;
     evo::UsbLoopSetup setup;
     pthread_t thread;
-    explicit Run(const fake::Bus& bus, const char* port = "") {
+    explicit Run(const fake::Bus& bus, const char* port = "", unsigned turnMs = 50) {
         setup.sysfs = bus.root.c_str();
         setup.port = port;
         setup.open = openFake;
-        setup.turnMs = 50;
+        setup.turnMs = turnMs;
         setup.afterResetMs = 100;
         setup.returnMs = 200;
         g_refused = 0;
@@ -133,6 +133,66 @@ void otherDevices() {
     // Asked once whether it is an Android phone, then never again; the others were never opened.
     CHECK(gadget.protocolAsked == 1 && gadget.opens == 1 && gadget.started == 0 && gadget.resets == 0);
     CHECK(g_refused == 0 && run.host.handed == 0);
+}
+
+void temporaryProbeFailure() {
+    fake::Bus bus;
+    fake::Phone phone;
+    phone.probeFailures = 3;
+    g_phones.assign(1, &phone);
+    phone.plug(bus, "1-1");
+    Run run(bus);
+    CHECK(run.handed(1));
+    CHECK(phone.count(&fake::Phone::protocolAsked) == 4 && phone.count(&fake::Phone::started) == 1);
+    run.end();
+}
+
+void probeRetriesAreBounded() {
+    fake::Bus bus;
+    fake::Phone phone;
+    phone.probeFailures = 100;
+    g_phones.assign(1, &phone);
+    phone.plug(bus, "1-1");
+    Run run(bus);
+    CHECK(fake::within(2000, [&]() { return phone.count(&fake::Phone::protocolAsked) == 4; }));
+    usleep(500000);
+    CHECK(phone.count(&fake::Phone::protocolAsked) == 4 && phone.count(&fake::Phone::started) == 0 &&
+          run.host.handed == 0);
+    run.end();
+}
+
+void probeRetriesResetOnNewAddress() {
+    fake::Bus bus;
+    fake::Phone first, replacement;
+    first.probeFailures = 100;
+    replacement.address = 40;
+    replacement.probeFailures = 3;
+    g_phones.clear();
+    g_phones.push_back(&first);
+    g_phones.push_back(&replacement);
+    first.plug(bus, "1-1");
+    Run run(bus, "", 300);
+    CHECK(fake::within(2000, [&]() { return first.count(&fake::Phone::protocolAsked) == 2; }));
+    replacement.plug(bus, "1-1");
+    CHECK(run.handed(1));
+    CHECK(replacement.count(&fake::Phone::protocolAsked) == 4 && replacement.count(&fake::Phone::started) == 1);
+    run.end();
+}
+
+void probeRetriesResetOnUnplug() {
+    fake::Bus bus;
+    fake::Phone phone;
+    phone.probeFailures = 6;
+    g_phones.assign(1, &phone);
+    phone.plug(bus, "1-1");
+    Run run(bus, "", 300);
+    CHECK(fake::within(2000, [&]() { return phone.count(&fake::Phone::protocolAsked) == 3; }));
+    bus.remove("1-1");
+    usleep(700000);
+    phone.plug(bus, "1-1");
+    CHECK(run.handed(1));
+    CHECK(phone.count(&fake::Phone::protocolAsked) == 7 && phone.count(&fake::Phone::started) == 1);
+    run.end();
 }
 
 void onePortOnly() {
@@ -228,6 +288,10 @@ int main() {
     phonePluggedIn();
     staleAccessory();
     otherDevices();
+    temporaryProbeFailure();
+    probeRetriesAreBounded();
+    probeRetriesResetOnNewAddress();
+    probeRetriesResetOnUnplug();
     onePortOnly();
     heldInterface();
     neverSwitches();

@@ -73,7 +73,9 @@ void switchRequests() {
     {
         fake::Device device(phone);
         unsigned protocol = 0;
-        CHECK(evo::askAccessoryMode(device, protocol) == evo::kSwitchAsked && protocol == 2);
+        int probeResult = 0;
+        CHECK(evo::askAccessoryMode(device, protocol, probeResult) == evo::kSwitchAsked && protocol == 2 &&
+              probeResult == 2);
     }
     CHECK(phone.strings.size() == 6 && phone.strings[0] == "Android" && phone.strings[1] == "Android Auto");
     CHECK(phone.started == 1);
@@ -82,9 +84,40 @@ void switchRequests() {
     {
         fake::Device device(other);
         unsigned protocol = 0;
-        CHECK(evo::askAccessoryMode(device, protocol) == evo::kSwitchNotAndroid);
+        int probeResult = 0;
+        CHECK(evo::askAccessoryMode(device, protocol, probeResult) == evo::kSwitchNotAndroid && probeResult == -EPIPE);
     }
     CHECK(other.protocolAsked == 1 && other.strings.empty() && other.started == 0);  // nothing more was sent to it
+
+    fake::Phone temporary;
+    temporary.probeFailures = 1;
+    {
+        fake::Device device(temporary);
+        unsigned protocol = 0;
+        int probeResult = 0;
+        CHECK(evo::askAccessoryMode(device, protocol, probeResult) == evo::kSwitchProbeFailed &&
+              probeResult == -ETIMEDOUT);
+        CHECK(temporary.strings.empty() && temporary.started == 0);
+    }
+    fake::Phone shortReply;
+    shortReply.probeFailures = 1;
+    shortReply.probeFailureResult = 1;
+    {
+        fake::Device device(shortReply);
+        unsigned protocol = 0;
+        int probeResult = 0;
+        CHECK(evo::askAccessoryMode(device, protocol, probeResult) == evo::kSwitchProbeFailed && probeResult == 1);
+        CHECK(shortReply.strings.empty() && shortReply.started == 0);
+    }
+    fake::Phone unsupported;
+    unsupported.protocolVersion = 0;
+    {
+        fake::Device device(unsupported);
+        unsigned protocol = 0;
+        int probeResult = 0;
+        CHECK(evo::askAccessoryMode(device, protocol, probeResult) == evo::kSwitchNotAndroid && probeResult == 2);
+        CHECK(unsupported.strings.empty() && unsupported.started == 0);
+    }
 }
 
 void settingFile() {

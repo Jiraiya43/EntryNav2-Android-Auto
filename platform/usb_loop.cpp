@@ -25,6 +25,7 @@ const unsigned kMaxSilentTries = 24;  // sessions in a row the phone said nothin
 const unsigned kMaxClaimTries = 10;   // turns in a row its interface was held or not ready
 const unsigned kMaxAskFailures = 3;   // switch requests that failed half-way
 const unsigned kMaxUnanswered = 5;    // per phone: switch requests taken, with no accessory back
+const unsigned kMaxProbeRetries = 3;  // retries after a temporary failure of the initial AOA request
 const uint32_t kUnpluggedMs = 6000;   // no phone on the bus for this long: it was unplugged
 const unsigned kReturnStepUs = 20000;
 
@@ -54,10 +55,26 @@ public:
     }
 
 private:
+    struct ProbeRetry {
+        unsigned address, failures;
+        ProbeRetry() : address(0), failures(0) {}
+    };
+
     // Sleeps, but not past a stop request.
     void rest(unsigned ms) {
         for (unsigned waited = 0; waited < ms && !host_.stopRequested(); waited += 50) {
             usleep(50000);
+        }
+    }
+
+    void forgetProbeRetries() {
+        for (std::map<std::string, ProbeRetry>::iterator it = probeRetries_.begin(); it != probeRetries_.end();) {
+            UsbPhone now;
+            if (!readUsbDevice(setup_.sysfs, it->first, now) || now.address != it->second.address) {
+                probeRetries_.erase(it++);
+            } else {
+                ++it;
+            }
         }
     }
 
@@ -76,6 +93,7 @@ private:
         std::vector<UsbPhone> phones;
         listUsbPhones(setup_.sysfs, setup_.port, phones);
         forgetGone();
+        forgetProbeRetries();
         for (size_t i = 0; i < phones.size(); ++i) {
             if (!leftAlone(phones[i])) {
                 noteEmpty(false);
@@ -231,10 +249,33 @@ private:
             return false;
         }
         unsigned protocol = 0;
-        const AccessorySwitch result = askAccessoryMode(*device, protocol);
+        int probeResult = 0;
+        const AccessorySwitch result = askAccessoryMode(*device, protocol, probeResult);
         delete device;
+        if (result == kSwitchProbeFailed) {
+            ProbeRetry& retry = probeRetries_[phone.port];
+            if (retry.address != phone.address) {
+                retry.address = phone.address;
+                retry.failures = 0;
+            }
+            ++retry.failures;
+            const bool exhausted = retry.failures > kMaxProbeRetries;
+            if (probeResult < 0) {
+                ELOG("UsbLoop", "AOA protocol request on %s failed (%s): %s", phone.port.c_str(),
+                     strerror(-probeResult), exhausted ? "retry limit reached, left alone" : "will retry");
+            } else {
+                ELOG("UsbLoop", "AOA protocol request on %s returned %d of 2 bytes: %s", phone.port.c_str(),
+                     probeResult, exhausted ? "retry limit reached, left alone" : "will retry");
+            }
+            if (exhausted) {
+                probeRetries_.erase(phone.port);
+                leaveAlone(phone);
+            }
+            return false;
+        }
+        probeRetries_.erase(phone.port);
         if (result == kSwitchNotAndroid) {
-            ELOG("UsbLoop", "device %04x:%04x on %s is not an Android phone: left alone", phone.vendor, phone.product,
+            ELOG("UsbLoop", "device %04x:%04x on %s does not support AOA: left alone", phone.vendor, phone.product,
                  phone.port.c_str());
             leaveAlone(phone);
             return false;
@@ -303,6 +344,7 @@ private:
 
     const UsbLoopSetup& setup_;
     UsbHost& host_;
+    std::map<std::string, ProbeRetry> probeRetries_;
     UsbBridge* bridge_;
     std::string bridgePort_;
     uint32_t bridgeStart_;
