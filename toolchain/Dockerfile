@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # Copyright (c) 2026 Jiraiya43
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Build image matching the EntryNav2 head unit: eglibc 2.15, GCC 4.7, armhf (VFPv3/NEON).

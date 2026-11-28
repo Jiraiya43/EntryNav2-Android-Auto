@@ -5,6 +5,7 @@ libxsvideo.so.4 FUNC xsv_close
 libxsvideo.so.4 FUNC xsv_configure_stream
 libxsvideo.so.4 FUNC xsv_decode_video_frame
 libxsvideo.so.4 FUNC xsv_enable_frame_events
+libxsvideo.so.4 FUNC xsv_get_event_queue_fd
 libxsvideo.so.4 FUNC xsv_open
 libxsvideo.so.4 FUNC xsv_receive_event
 libxsvideo.so.4 FUNC xsv_set_output_dimension

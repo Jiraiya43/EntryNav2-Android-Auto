@@ -13,6 +13,11 @@ QEMU with the car's libraries).
 
 ## [Unreleased]
 
+### Added
+
+- Optional ARM SDK: build the programs without a copy of the car system using link-only stubs. The outputs remain
+  separate from releases; the programs still need the car's libraries to run. Tested on PC.
+
 ## [0.13.0-rc.12] - 2026-11-27 · PC
 
 Release candidate for wireless: U-APSD power saving also taken away from a phone that joined the car's Wi-Fi
@@ -276,9 +281,6 @@ wireless that comes back quickly after a drop (Bluetooth link dropped by the car
 rebuilt only once). Tested on PC and under QEMU, **not yet tried in a car**.
 
 ### Added
-
-- Optional ARM SDK: build the programs without a copy of the car system using link-only stubs. The outputs remain
-  separate from releases; the programs still need the car's libraries to run. Tested on PC.
 
 - Logs without a PC or SSH. The Android Auto menu in iDrive has two more rows: *Keep logs*, which turns the logs on
   (the `maintenance` file), and *Copy logs to USB stick*, which copies them onto a USB stick plugged into the car, in

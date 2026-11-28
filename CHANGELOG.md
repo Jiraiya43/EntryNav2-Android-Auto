@@ -8,6 +8,12 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Ajouté
+
+- SDK ARM facultatif : compilation des programmes sans copie du système de la voiture, avec des stubs utilisés
+  uniquement pour l'édition de liens. Les résultats restent séparés des versions publiées ; les programmes ont encore
+  besoin des bibliothèques de la voiture pour tourner. Testé sur PC.
+
 ## [0.13.0-rc.12] - 2026-11-27 · PC
 
 Version candidate pour le sans-fil : l'économie d'énergie U-APSD retirée aussi au téléphone qui a rejoint le
@@ -284,10 +290,6 @@ de l'iDrive) et un sans-fil qui revient vite après une coupure (lien Bluetooth 
 balise du point d'accès reconstruite une seule fois). Testée sur PC et sous QEMU, **pas encore essayée en voiture**.
 
 ### Ajouté
-
-- SDK ARM facultatif : compilation des programmes sans copie du système de la voiture, avec des stubs utilisés
-  uniquement pour l'édition de liens. Les résultats restent séparés des versions publiées ; les programmes ont encore
-  besoin des bibliothèques de la voiture pour tourner. Testé sur PC.
 
 - Journaux sans PC ni SSH. Le menu Android Auto de l'iDrive a deux lignes de plus : *Garder les journaux*, qui active
   les journaux (le fichier `maintenance`), et *Copier les journaux sur clé USB*, qui les copie sur une clé USB

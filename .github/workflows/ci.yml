@@ -25,7 +25,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates dbus g++ gcc git libdbus-1-dev libssl-dev make \
-            pkg-config protobuf-compiler python3 python3-protobuf python3-venv shellcheck
+            openssl pkg-config protobuf-compiler python3 python3-protobuf python3-venv shellcheck
           python3 -m venv /opt/style
           /opt/style/bin/pip install --quiet clang-format==18.1.8 ruff==0.6.9
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
