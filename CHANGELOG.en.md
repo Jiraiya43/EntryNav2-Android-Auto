@@ -13,6 +13,11 @@ QEMU with the car's libraries).
 
 ## [Unreleased]
 
+### Added
+
+- Optional ARM SDK: build the programs without a copy of the car system using link-only stubs. The outputs remain
+  separate from releases; the programs still need the car's libraries to run. Tested on PC.
+
 ## [0.13.0-rc.12] - 2026-11-27 · PC
 
 Release candidate for wireless: U-APSD power saving also taken away from a phone that joined the car's Wi-Fi

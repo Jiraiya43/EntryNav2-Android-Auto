@@ -247,7 +247,7 @@ Détails : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 Il faut Linux ou WSL avec Docker, et pour la compilation ARM **une copie du système de la voiture** dans
 `~/entrynav2/rootfs` (`HU_ROOTFS` pour la changer). Cette copie contient des fichiers BMW : elle ne va jamais dans git.
-Sans elle, les tests sur PC tournent quand même, comme dans la CI.
+Les tests PC et le SDK ARM facultatif ci-dessous n'en ont pas besoin.
 
 ```sh
 make check                                              # style, contrôles de contenu, tests PC : ce que fait la CI
@@ -257,6 +257,19 @@ python3 -I tests/run_qemu.py                            # tests ARM sous QEMU av
 make verify_binary verify_wireless                      # enregistre les programmes qui ont passé les tests
 python3 tools/package_release.py --unsigned             # artifacts/entrynav2-android-auto-<version>-armhf.tar
 ```
+
+Pour une **compilation facultative sans système de voiture**, construire l'image de base ci-dessus, puis :
+
+```sh
+docker build -f toolchain/Dockerfile.sdk -t entrynav2-sdk:4.7 toolchain
+bash toolchain/tc.sh --sdk make -j4 all                # résultats isolés dans artifacts/sdk/
+python3 tools/verify_sdk.py                            # nécessite pyelftools et readelf
+```
+
+Le SDK emploie des bibliothèques ARM libres et des stubs pour l'édition de liens seulement ; les programmes ont encore
+besoin des vraies bibliothèques de la voiture pour tourner. Cette compilation ne valide pas une version : les tests
+QEMU avec les bibliothèques de la voiture et la publication utilisent la compilation avec le système de la voiture.
+Les résultats du SDK ne remplacent pas un essai en voiture.
 
 Tests et règles du projet : [CONTRIBUTING.md](CONTRIBUTING.md).
 

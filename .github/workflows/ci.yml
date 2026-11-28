@@ -1,5 +1,5 @@
 # Checks that need no copy of the car's system: style, repository content, PC tests.
-# The ARM build links against the car's libraries (BMW files), so it runs on a developer's machine, not here.
+# The SDK job builds ARM with link-only stubs; car-library validation remains a developer's task.
 name: CI
 
 on:
@@ -25,7 +25,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates dbus g++ gcc git libdbus-1-dev libssl-dev make \
-            pkg-config protobuf-compiler python3 python3-protobuf python3-venv shellcheck
+            openssl pkg-config protobuf-compiler python3 python3-protobuf python3-venv shellcheck
           python3 -m venv /opt/style
           /opt/style/bin/pip install --quiet clang-format==18.1.8 ruff==0.6.9
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,4 +53,24 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: PC tests with ASan, UBSan and LSan
         run: make -j2 test-host-sanitizers
+
+  arm-sdk:
+    name: ARM link-only SDK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install ELF inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends binutils python3-pyelftools
+      - name: Build ARM SDK and binaries
+        run: |
+          docker build -t entrynav2-tc:4.7 toolchain
+          docker build -f toolchain/Dockerfile.sdk -t entrynav2-sdk:4.7 toolchain
+          HU_ROOTFS=/nonexistent-rootfs bash toolchain/tc.sh --sdk make -j4 all
+      - name: Check ARM ELF contracts
+        run: |
+          /usr/bin/python3 tools/verify_sdk.py
+          /usr/bin/python3 -m unittest discover -s tests -p 'test_sdk*.py'
 

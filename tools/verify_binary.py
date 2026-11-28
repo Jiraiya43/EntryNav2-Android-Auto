@@ -22,14 +22,16 @@ LIMITS = (("GLIBC_", (2, 15)), ("GLIBCXX_", (3, 4, 17)))
 QEMU = ["qemu-arm", "-L", str(SYSROOT), "-E", "LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib", "-E", "LD_BIND_NOW=1"]
 
 
-def check_arm_elf(path):
-    """ELF facts of an ARM program, after checking it would run on the car. Returns (interpreter, versions, needed)."""
+def check_arm_elf(path, *, shared=False, readelf="arm-linux-gnueabihf-readelf"):
+    """Check ARM ABI and version limits; return (interpreter, versions, needed). This does not load the file."""
     with path.open("rb") as handle:
         elf = ELFFile(handle)
         if not (elf.elfclass == 32 and elf.little_endian and elf["e_machine"] == "EM_ARM"):
             raise SystemExit(f"FAIL: {path.name} is not a 32-bit little-endian ARM program")
-        interpreter = next(s.get_interp_name() for s in elf.iter_segments() if s["p_type"] == "PT_INTERP")
-        if interpreter != "/lib/ld-linux-armhf.so.3":
+        interpreter = next((s.get_interp_name() for s in elf.iter_segments() if s["p_type"] == "PT_INTERP"), None)
+        if shared and (elf["e_type"] != "ET_DYN" or interpreter is not None):
+            raise SystemExit(f"FAIL: {path.name} is not an ARM shared library")
+        if not shared and interpreter != "/lib/ld-linux-armhf.so.3":
             raise SystemExit(f"FAIL: {path.name} asks for the loader {interpreter}")
         references = elf.get_section_by_name(".gnu.version_r").iter_versions()
         versions = sorted({aux.name for _, entries in references for aux in entries})
@@ -39,7 +41,7 @@ def check_arm_elf(path):
         values = [tuple(map(int, v[len(prefix) :].split("."))) for v in versions if v.startswith(prefix)]
         if values and max(values) > limit:
             raise SystemExit(f"FAIL: {path.name} needs {prefix}{'.'.join(map(str, max(values)))}")
-    attributes = subprocess.check_output(["arm-linux-gnueabihf-readelf", "-A", str(path)], text=True)
+    attributes = subprocess.check_output([readelf, "-A", str(path)], text=True)
     if "Tag_ABI_VFP_args: VFP registers" not in attributes or not re.search(r"Tag_CPU_arch: v7\b", attributes):
         raise SystemExit(f"FAIL: {path.name} is not built for ARMv7 hard-float")
     return interpreter, versions, needed
