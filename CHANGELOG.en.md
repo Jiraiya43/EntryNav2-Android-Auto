@@ -13,6 +13,10 @@ QEMU with the car's libraries).
 
 ## [Unreleased]
 
+### Fixed
+
+- Wireless: the car's access point no longer offers 802.11n (`ieee80211n=0`, set in hostapd's memory with U-APSD, before the same beacon rebuild). On an X1 F48, a decrypted capture taken during stalls showed phone frames acknowledged by the car and then lost inside it (26 % of the data segments), against 0.09 % without 802.11n ([#203](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/203)). The setting holds for everything on the car's Wi-Fi and caps it at 54 Mbit/s. Tried in a car (X1 F48) in a personal build that contains this change: clear improvement in the first tests, no extended testing.
+
 ## [0.13.0-rc.12] - 2026-11-27 · PC
 
 Release candidate for wireless: U-APSD power saving also taken away from a phone that joined the car's Wi-Fi

@@ -8,6 +8,10 @@ QEMU avec les bibliothèques de la voiture).
 
 ## [Non publié]
 
+### Corrigé
+
+- Sans-fil : le point d'accès de la voiture n'offre plus le 802.11n (`ieee80211n=0`, réglé en mémoire de hostapd avec U-APSD, avant la même reconstruction de la balise). Sur une X1 F48, une capture déchiffrée pendant des saccades montrait des trames du téléphone acquittées par la voiture puis perdues à l'intérieur (26 % des segments de données), contre 0,09 % sans 802.11n ([#203](https://github.com/Jiraiya43/EntryNav2-Android-Auto/issues/203)). Le réglage vaut pour tout le Wi-Fi de la voiture et limite son débit à 54 Mbit/s. Essayé en voiture (X1 F48) dans une version personnelle qui contient ce changement : amélioration nette aux premiers essais, pas d'essais prolongés.
+
 ## [0.13.0-rc.12] - 2026-11-27 · PC
 
 Version candidate pour le sans-fil : l'économie d'énergie U-APSD retirée aussi au téléphone qui a rejoint le

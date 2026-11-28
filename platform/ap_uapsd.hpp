@@ -6,6 +6,11 @@
 // frames back for seconds while it saved power (firmware counter ps_poll_upsd_timeouts: 1700 in 12 minutes), and the
 // picture and the sound stalled; with U-APSD off, the stalls were gone.
 //
+// 802.11n is turned off the same way (#203). During stalls on an X1 F48, a decrypted capture showed the car
+// acknowledging the phone's frames on air and about a quarter of them never reaching its TCP; without 802.11n,
+// 0.09 % in one run of 6 re-joins. Not told apart: chip firmware, driver, or mac80211's A-MPDU reordering. It holds
+// for everything on the car's Wi-Fi and caps it at 54 Mbit/s.
+//
 // hostapd on the car is v2.1-devel. SET changes the setting in memory only (hostapd_set_iface): association responses
 // follow it at once, but the beacon and the probe responses, which the chip sends from a template, go on offering
 // U-APSD until hostapd rebuilds them. A phone asks for U-APSD from them in its association request, and hostapd keeps
@@ -53,7 +58,7 @@ enum class UapsdOffer {
 inline const char* describeUapsdOffer(UapsdOffer offer) {
     switch (offer) {
         case UapsdOffer::kWithdrawn:
-            return "U-APSD off, beacon rebuilt: the phone joins without it";
+            return "U-APSD and 802.11n off, beacon rebuilt: the phone joins without them";
         case UapsdOffer::kRejoined:
             return "U-APSD off, beacon rebuilt: what was already on the car's Wi-Fi was disconnected once and joins "
                    "again without it";
@@ -72,7 +77,7 @@ inline const char* describeUapsdOffer(UapsdOffer offer) {
         case UapsdOffer::kSetRefused:
             break;
     }
-    return "hostapd refused the setting: U-APSD left on";
+    return "hostapd refused a setting: U-APSD or 802.11n left on";
 }
 
 namespace uapsd {
@@ -158,19 +163,22 @@ inline bool parseHostapdStart(const std::string& text, HostapdStart& out) {
 }
 
 // call(command, reply): runs one hostapd_cli command on wlan0 ({"set", ...}) and gives its reply; false when it could
-// not run. At most three calls: the setting, the station list, RELOAD. beaconDone: the beacon was rebuilt for this
+// not run. At most four calls: the two settings, the station list, RELOAD. beaconDone: the beacon was rebuilt for this
 // hostapd start already (the caller knows it from HostapdStart): the setting only. startKnown: the hostapd start could
 // be told, so a RELOAD stays once per start and may disconnect who is there. stopping(): true once the service is
-// asked to stop, checked before each call: a stop waits for the call under way only, never for three of up to 5 s each
-// (the supervisor kills the service 10 s after asking it to stop).
+// asked to stop, checked before each call: a stop waits for the call under way only, never for several of up to 5 s
+// each (the supervisor kills the service 10 s after asking it to stop).
 template <typename Call, typename Stopping>
 UapsdOffer withdrawUapsd(Call call, Stopping stopping, bool beaconDone = false, bool startKnown = true) {
     std::string reply;
-    if (stopping()) {
-        return UapsdOffer::kStopped;
-    }
-    if (!call(std::vector<std::string>{"set", "uapsd_advertisement_enabled", "0"}, reply) || !uapsd::ok(reply)) {
-        return UapsdOffer::kSetRefused;
+    // Both settings first, then one RELOAD for the two.
+    for (const char* setting : {"uapsd_advertisement_enabled", "ieee80211n"}) {
+        if (stopping()) {
+            return UapsdOffer::kStopped;
+        }
+        if (!call(std::vector<std::string>{"set", setting, "0"}, reply) || !uapsd::ok(reply)) {
+            return UapsdOffer::kSetRefused;
+        }
     }
     if (beaconDone) {
         return UapsdOffer::kAlreadyDone;
